@@ -1,0 +1,81 @@
+{
+  "client": { "key": "boca-dental-e770de", "name": "Boca Dental", "location": "Boca Raton, Florida" },
+  "lfmpContact": "PJ at Law Firm Marketing Pros",
+  "automations": [
+    {
+      "id": "new-patient",
+      "name": "New Patient Follow-Up",
+      "version": "1.0",
+      "sent": "Sep 28, 2026",
+      "summary": "When someone requests an appointment, this follows up with them by text, email, phone and voicemail over four days until your team confirms the visit.",
+      "glance": [
+        ["Starts when", "A new patient request is moved to “Requested Appointment” on your lead board"],
+        ["Runs for", "4 days"],
+        ["Patient receives", "3 texts, 3 emails, 1 call, 1 voicemail"],
+        ["Your team receives", "1 call to connect, 1 email alert"],
+        ["Ends", "Day 4, after your team is alerted"]
+      ],
+      "steps": [
+        { "id": "s1", "day": "Day 0", "type": "start", "when": "Start", "title": "A new patient requests an appointment",
+          "body": "The follow-up starts when the request is moved to “Requested Appointment” on your lead board." },
+        { "id": "s2", "day": "Day 0", "type": "team", "who": "team", "when": "Immediately", "gap": "Immediately", "title": "A team member is assigned",
+          "body": "One person on your team becomes the patient’s contact. Their first name signs the texts below." },
+        { "id": "s3", "day": "Day 0", "type": "sms", "who": "patient", "when": "Immediately", "gap": "Immediately", "title": "Text 1: Thanks for your request",
+          "sms": "Hi [First name], thanks for requesting an appointment with Boca Dental. The next step is to get your appointment confirmed. Please either respond to this text or give us a call. We look forward to seeing you! [Team member's first name]",
+          "note": "This first text doesn’t include opt-out wording (“Reply STOP to opt out”). Many carriers expect it on the first message. We recommend adding it." },
+        { "id": "s4", "day": "Day 0", "type": "email", "who": "patient", "when": "2 minutes later", "gap": "2 minutes later", "title": "Email 1: Thanks for requesting your appointment",
+          "email": { "subject": "Thanks for requesting your appointment!",
+            "body": "Hi [First name],\n\nThanks for requesting an appointment with Boca Dental.\n\nThe next step is to get your appointment confirmed. Please reply to this email or text/call us at [Office text number] with any questions.\n\nWe look forward to seeing you!\n[Team member's signature]" } },
+        { "id": "s5", "day": "Day 0", "type": "call", "who": "team", "when": "5 minutes later · office hours", "gap": "5 minutes later, during office hours", "title": "Your office calls the patient",
+          "body": "Your office phone rings first. When someone answers, the system connects them to the patient so you can confirm a time while the request is fresh." },
+        { "id": "s6", "day": "Day 1", "type": "sms", "who": "patient", "when": "Next day", "gap": "Next day", "title": "Text 2: We haven’t been able to connect",
+          "sms": "Hi [First name], I'm sorry that we haven't been able to connect. We do need to speak with you just to confirm the time of your appointment.\n\nFeel free to reply to this message or just give us a quick call to get everything confirmed.\n\nThx!\n[Team member's first name]",
+          "note": "This text goes out even if your team already reached the patient on Day 0, which would read oddly. See Question 1." },
+        { "id": "s7", "day": "Day 1", "type": "email", "who": "patient", "when": "A few minutes later", "gap": "A few minutes later", "title": "Email 2: Following up",
+          "email": { "subject": "Yesterday…", "body": "", "pending": "Email wording coming soon. We’re adding it from your account." } },
+        { "id": "s8", "day": "Day 1", "type": "vm", "who": "patient", "when": "Shortly after", "gap": "Shortly after", "title": "A recorded voicemail is left",
+          "body": "The patient gets a pre-recorded voicemail from your office. Their phone doesn’t ring. They just see a new voicemail." },
+        { "id": "s9", "day": "Day 3", "type": "sms", "who": "patient", "when": "2 days later", "gap": "2 days later", "title": "Text 3: Checking in one last time",
+          "sms": "Hi [First name], I just wanted to check in one last time to see if you still wanted your requested appointment with us. I know life gets busy. :) Just let me know when you get a chance. Feel free to give any of us a call or just reply to this text.\n\nThanks!\n[Team member's first name]" },
+        { "id": "s10", "day": "Day 3", "type": "email", "who": "patient", "when": "A few minutes later", "gap": "A few minutes later", "title": "Email 3: Confirming",
+          "email": { "subject": "Confirming", "body": "", "pending": "Email wording coming soon. We’re adding it from your account." } },
+        { "id": "s11", "day": "Day 4", "type": "team", "who": "team", "when": "Next day", "gap": "Next day", "title": "Your team gets an email alert",
+          "body": "The assigned team member receives an email titled “New Lead - [First name] [Last name]”, and the patient’s card is updated on your lead board.",
+          "note": "This alert arrives 4 days after the request, and it’s labeled “New Lead”. Your team would usually want it on Day 0. See Question 2." },
+        { "id": "s12", "day": "Day 4", "type": "end", "when": "End", "gap": "Then", "title": "The follow-up ends",
+          "body": "The patient leaves this automation and won’t receive these messages again." }
+      ],
+      "questions": [
+        { "id": "q1", "text": "Should the follow-up stop as soon as the patient books or replies?", "why": "Right now every patient gets all 8 messages, even after they’ve confirmed.", "options": ["Yes, stop it (recommended)", "No, keep sending"] },
+        { "id": "q2", "text": "Should your team be alerted on Day 0, when the request comes in?", "why": "Today the alert arrives on Day 4.", "options": ["Yes, alert on Day 0 (recommended)", "Keep it on Day 4", "Both"] },
+        { "id": "q3", "text": "Are texts and calls between 9:00 AM and 8:00 PM okay?", "why": "That’s the current sending window.", "options": ["Yes", "Change the hours (tell us in a step comment)"] }
+      ]
+    },
+    {
+      "id": "lead-replies",
+      "name": "Lead Replies Alert",
+      "version": "1.0",
+      "sent": "Sep 28, 2026",
+      "summary": "When a patient replies to one of the New Patient Follow-Up messages, your team is alerted right away and the patient is marked on your lead board.",
+      "glance": [
+        ["Starts when", "A patient replies to a New Patient Follow-Up text or email"],
+        ["Runs for", "Instant"],
+        ["Patient receives", "Nothing from this automation"],
+        ["Your team receives", "1 email alert"],
+        ["Ends", "Right after the alert"]
+      ],
+      "steps": [
+        { "id": "s1", "day": "Instantly", "type": "start", "when": "Start", "title": "A patient replies",
+          "body": "Starts when a patient replies to any message from New Patient Follow-Up. Replies to other messages don’t count." },
+        { "id": "s2", "day": "Instantly", "type": "team", "who": "team", "when": "Immediately", "gap": "Immediately", "title": "The patient is marked on your lead board",
+          "body": "The patient’s card is created or updated on your lead board so you can see they’re engaged." },
+        { "id": "s3", "day": "Instantly", "type": "email", "who": "team", "when": "Immediately", "gap": "Immediately", "title": "Your team gets an email alert",
+          "email": { "subject": "Includes the patient’s name", "body": "", "pending": "Alert wording coming soon. We’re adding it from your account." },
+          "note": "Only your team sees this email." },
+        { "id": "s4", "day": "Instantly", "type": "end", "when": "End", "gap": "Then", "title": "Your team takes it from here",
+          "body": "The automation ends. Your team replies to the patient." }
+      ],
+      "questions": []
+    }
+  ]
+}
