@@ -116,6 +116,18 @@ function doPost(e) {
       contentSheet_().appendRow(CONTENT_HEADERS.map(h => safe_(row[h])));
       return json_({ ok: true, content: row });
     }
+    if (d.action === 'admin_delete') {
+      // Permanently removes responses (for clearing test data). Only rows for this client are touched.
+      if (!isAdmin_(d.key)) return json_({ ok: false, error: 'Not authorized' });
+      const ids = (d.ids || []).map(String);
+      const sh = sheet_();
+      const vals = sh.getDataRange().getValues();
+      let deleted = 0;
+      for (let i = vals.length - 1; i >= 1; i--) {
+        if (vals[i][2] === d.client && ids.indexOf(String(vals[i][0])) !== -1) { sh.deleteRow(i + 1); deleted++; }
+      }
+      return json_({ ok: true, deleted: deleted });
+    }
     if (d.action === 'admin_status') {
       if (!isAdmin_(d.key)) return json_({ ok: false, error: 'Not authorized' });
       const sh = sheet_();
