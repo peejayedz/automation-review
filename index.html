@@ -206,8 +206,10 @@ async function saveResponse(rec){
 }
 
 /* ---------- derived state ---------- */
+// Google Sheets can turn "1.0" into the number 1, so compare versions both as text and as numbers.
+const sameV = (a, b) => String(a) === String(b) || (a !== "" && b !== "" && Number(a) === Number(b));
 const mine = () => responses.filter(r => r.automation === auto.id);
-const cur = () => mine().filter(r => String(r.version) === String(auto.version));
+const cur = () => mine().filter(r => sameV(r.version, auto.version));
 function stepState(stepId){
   const rs = cur().filter(r => r.step === stepId && ["approve","change","copy"].includes(r.action));
   if (!rs.length) return "pending";
@@ -219,7 +221,7 @@ function stepState(stepId){
 }
 const stateLabel = {pending:"Needs your review", changes:"Changes requested", updated:"Updated, please re-check", approved:"Looks good"};
 function autoState(a){
-  const rs = responses.filter(r => r.automation === a.id && String(r.version) === String(a.version));
+  const rs = responses.filter(r => r.automation === a.id && sameV(r.version, a.version));
   if (rs.some(r => r.action === "approve_all")) return "approved";
   if (rs.some(r => (r.action === "change" || r.action === "copy") && r.status !== "Done")) return "changes";
   return "pending";
@@ -323,8 +325,8 @@ function inspectorHTML(){
   }
   const hist = mine().filter(r => r.step === s.id && ["approve","change","copy"].includes(r.action)).slice().reverse();
   const histHTML = hist.length ? `<div class="hist"><h3>Responses on this step</h3>${hist.map(r => `
-     <div class="hitem ${r.action} ${String(r.version)!==String(auto.version)?"old":""}">
-       <span class="who">${esc(r.name||"Someone")}</span> <span class="when">· ${fmt(r.timestamp)}${String(r.version)!==String(auto.version)?" · v"+esc(r.version):""}</span>
+     <div class="hitem ${r.action} ${!sameV(r.version, auto.version)?"old":""}">
+       <span class="who">${esc(r.name||"Someone")}</span> <span class="when">· ${fmt(r.timestamp)}${!sameV(r.version, auto.version)?" · v"+esc(r.version):""}</span>
        <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · <b>${esc(r.status||"Open")==="Done"?"Done":esc(r.status||"Open")}</b>`:""}</div>
        ${r.details?`<div>${esc(r.details)}</div>`:""}
        ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
