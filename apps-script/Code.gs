@@ -36,11 +36,13 @@ function sheet_() {
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
   }
-  // Keep text columns as plain text so "1.0" stays "1.0".
-  sh.getRange(2, HEADERS.indexOf('version') + 1, sh.getMaxRows() - 1, 1).setNumberFormat('@');
-  const statusCol = HEADERS.indexOf('status') + 1;
-  const rule = SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).setAllowInvalid(true).build();
-  sh.getRange(2, statusCol, sh.getMaxRows() - 1, 1).setDataValidation(rule);
+  if (!PropertiesService.getScriptProperties().getProperty('FORMATTED')) {
+    // One-time: keep the version column as text (so "1.0" stays "1.0") and add the status dropdown.
+    sh.getRange(2, HEADERS.indexOf('version') + 1, sh.getMaxRows() - 1, 1).setNumberFormat('@');
+    const rule = SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).setAllowInvalid(true).build();
+    sh.getRange(2, HEADERS.indexOf('status') + 1, sh.getMaxRows() - 1, 1).setDataValidation(rule);
+    PropertiesService.getScriptProperties().setProperty('FORMATTED', '1');
+  }
   return sh;
 }
 
