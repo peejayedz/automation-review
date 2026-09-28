@@ -293,12 +293,18 @@ async function saveResponse(rec){
 const sameV = (a, b) => String(a) === String(b) || (a !== "" && b !== "" && Number(a) === Number(b));
 const mine = () => responses.filter(r => r.automation === auto.id);
 const cur = () => mine().filter(r => sameV(r.version, auto.version));
+// A request is still open if it isn't Done and the client hasn't marked the step "Looks good" after it.
+// A later "Looks good" means the client is happy with the step as it is, so it replaces earlier requests.
+function isReplaced(r, rs){
+  const t = Date.parse(r.timestamp) || 0;
+  return rs.some(x => x.step === r.step && x.action === "approve" && (Date.parse(x.timestamp) || 0) > t);
+}
+function isOpenReq(r, rs){ return (r.action === "change" || r.action === "copy") && r.status !== "Done" && !isReplaced(r, rs); }
 function stepState(stepId){
   const rs = cur().filter(r => r.step === stepId && ["approve","change","copy"].includes(r.action));
   if (!rs.length) return "pending";
   const last = rs[rs.length - 1];
-  const openReq = rs.some(r => (r.action === "change" || r.action === "copy") && r.status !== "Done");
-  if (openReq) return "changes";
+  if (rs.some(r => isOpenReq(r, rs))) return "changes";
   if (last.action === "approve") return "approved";
   return "updated"; // requests done by LFMP, client hasn't re-approved
 }
@@ -306,7 +312,7 @@ const stateLabel = {pending:"Needs your review", changes:"Changes requested", up
 function autoState(a){
   const rs = responses.filter(r => r.automation === a.id && sameV(r.version, a.version));
   if (rs.some(r => r.action === "approve_all")) return "approved";
-  if (rs.some(r => (r.action === "change" || r.action === "copy") && r.status !== "Done")) return "changes";
+  if (rs.some(r => isOpenReq(r, rs))) return "changes";
   return "pending";
 }
 const reviewable = () => auto.steps.filter(s => s.type !== "start");
@@ -420,7 +426,7 @@ function inspectorHTML(){
   const histHTML = hist.length ? `<div class="hist"><h3>Responses on this step</h3>${hist.map(r => `
      <div class="hitem ${r.action} ${r.status==="Done"?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
        <span class="who">${esc(r.name||"Someone")}</span> <span class="when">· ${fmt(r.timestamp)}${!sameV(r.version, auto.version)?" · v"+esc(r.version):""}</span>
-       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · ${statusTag(r.status)}`:""}</div>
+       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · ${r.status!=="Done" && isReplaced(r, cur()) ? '<span class="rs done">Replaced by Looks good</span>' : statusTag(r.status)}`:""}</div>
        ${r.details?`<div>${esc(r.details)}</div>`:""}
        ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
        ${r.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>`:""}
@@ -540,7 +546,7 @@ function approveHTML(){
     const a = rs[rs.length-1];
     return `<section class="section"><h2>Approval</h2><div class="approveall done"><b>Approved by ${esc(a.name)} on ${fmt(a.timestamp)}</b><span>Version ${esc(auto.version)} of ${esc(auto.name)} is approved exactly as shown on this page. We'll turn it on and let you know when it's live.</span>${isAdmin ? `<div>${delBtn(a.id, "Delete this approval")}</div>` : ""}</div></section>`;
   }
-  const open = cur().filter(r => (r.action==="change"||r.action==="copy") && r.status !== "Done").length;
+  const open = cur().filter(r => isOpenReq(r, cur())).length;
   const pending = reviewable().filter(s => stepState(s.id) === "pending").length;
   return `<section class="section"><h2>Approve this automation</h2>
     <form class="approveall" data-form="approve_all">
@@ -696,6 +702,7 @@ document.addEventListener("submit", async (e) => {
 });
 async function approveStep(scope){
   const s = auto.steps.find(x=>x.id===selected);
+  if (stepState(s.id) === "approved"){ toast("Already marked as looks good"); return; }
   const ok = await submit({step:s.id, step_title:s.title, action:"approve", type:"", details:"", new_copy:""}, "Saved: looks good", scope);
   if (!ok) return;
   const i = reviewable().findIndex(x=>x.id===s.id); const next = reviewable().slice(i+1).find(x=>stepState(x.id)==="pending");
