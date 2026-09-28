@@ -134,6 +134,11 @@ textarea{resize:vertical}
 .autopick select,.adminbar select{font-size:15px;font-weight:600;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);max-width:100%}
 .autopick select{min-width:min(360px,100%)}
 .signin{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px;padding:0}
+[hidden]{display:none!important}
+.rs{font-weight:700}.rs.done{color:var(--ok)}.rs.prog{color:var(--warn)}.rs.open{color:var(--accent)}
+.hitem.isdone{border-color:var(--ok)}
+.del{background:none;border:1px solid var(--line);color:var(--bad);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;cursor:pointer}
+.del.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .tools .upd{font-size:12px;color:var(--muted)}
 .btn.small{padding:5px 10px;font-size:13px}
@@ -295,7 +300,7 @@ function stepState(stepId){
   if (last.action === "approve") return "approved";
   return "updated"; // requests done by LFMP, client hasn't re-approved
 }
-const stateLabel = {pending:"Needs your review", changes:"Changes requested", updated:"Updated, please re-check", approved:"✓ Looks good"};
+const stateLabel = {pending:"Needs your review", changes:"Changes requested", updated:"✓ Updated · please re-check", approved:"✓ Looks good"};
 function autoState(a){
   const rs = responses.filter(r => r.automation === a.id && sameV(r.version, a.version));
   if (rs.some(r => r.action === "approve_all")) return "approved";
@@ -411,9 +416,9 @@ function inspectorHTML(){
   }
   const hist = mine().filter(r => r.step === s.id && ["approve","change","copy"].includes(r.action)).slice().reverse();
   const histHTML = hist.length ? `<div class="hist"><h3>Responses on this step</h3>${hist.map(r => `
-     <div class="hitem ${r.action} ${!sameV(r.version, auto.version)?"old":""}">
+     <div class="hitem ${r.action} ${r.status==="Done"?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
        <span class="who">${esc(r.name||"Someone")}</span> <span class="when">· ${fmt(r.timestamp)}${!sameV(r.version, auto.version)?" · v"+esc(r.version):""}</span>
-       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · <b>${esc(r.status||"Open")==="Done"?"Done":esc(r.status||"Open")}</b>`:""}</div>
+       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · ${statusTag(r.status)}`:""}</div>
        ${r.details?`<div>${esc(r.details)}</div>`:""}
        ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
        ${r.lfmp_reply?`<div class="reply">LFMP: ${esc(r.lfmp_reply)}</div>`:""}
@@ -421,6 +426,7 @@ function inspectorHTML(){
          <select aria-label="Status" name="status">${["Open","In progress","Done"].map(o=>`<option ${String(r.status||"Open")===o?"selected":""}>${o}</option>`).join("")}</select>
          <input type="text" name="reply" aria-label="Reply to client" placeholder="Reply shown to the client" value="${esc(r.lfmp_reply||"")}">
          <button class="btn small" type="submit">Save</button></form>` : ""}
+       ${isAdmin ? `<div style="margin-top:6px">${delBtn(r.id)}</div>` : ""}
      </div>`).join("")}</div>` : "";
   return `<div class="ihead">${ICON[s.type]?`<span class="icon" style="width:28px;height:28px">${ICON[s.type]}</span>`:""}<span>${esc(s.day)} · ${esc(s.when)} · ${TYPE[s.type]}</span>${st?`<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>`:""}</div>
     <h2>${chips(s.title)}</h2>${content}${actions}${histHTML}`;
@@ -452,6 +458,15 @@ function copyAdminFormHTML(s){
     <span class="hint">Write names as [First name], [Team member's signature], [Office text number].</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save email</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
 }
+let armed = null; // two-click confirm for deletes
+function statusTag(st){ st = st || "Open"; return st === "Done" ? '<span class="rs done">✓ Done</span>' : st === "In progress" ? '<span class="rs prog">In progress</span>' : '<span class="rs open">Open</span>'; }
+function delBtn(id, label){ const on = armed === id; return `<button class="del ${on?"armed":""}" type="button" data-del="${esc(id)}">${on ? "Click again to delete" : (label || "Delete")}</button>`; }
+async function adminDelete(ids){
+  if (!SAVE_URL){ responses = responses.filter(r => !ids.includes(r.id)); try { localStorage.setItem(demoKey, JSON.stringify(responses)); } catch(e){} return; }
+  const j = await postJSON({action:"admin_delete", key:adminKey, client:clientKey, ids});
+  if (!j.ok) throw new Error(j.error || "Could not delete");
+  responses = responses.filter(r => !ids.includes(r.id));
+}
 function prettyClient(k){ return String(k).replace(/-[0-9a-f]{6}$/i, "").split("-").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" "); }
 async function ping(k){
   if (!SAVE_URL) return {ok:true, clients:[clientKey]};
@@ -464,7 +479,7 @@ function renderAdminBar(){
   const bar = $("#adminbar"); if (!wantAdmin){ bar.hidden = true; return; }
   bar.hidden = false;
   $("#adminbarIn").innerHTML = isAdmin
-    ? `<b>Admin mode</b>${adminClients.length ? `<label for="clientSelect" class="hint">Client</label><select id="clientSelect">${adminClients.map(k => `<option value="${esc(k)}" ${k===clientKey?"selected":""}>${esc(prettyClient(k))}</option>`).join("")}</select>` : ""}<span>Edit names, versions and copy, and update request statuses. Clients never see these controls.</span><button class="btn small" type="button" data-admin-exit>Sign out</button>`
+    ? `<b>Admin mode</b>${adminClients.length ? `<label for="clientSelect" class="hint">Client</label><select id="clientSelect">${adminClients.map(k => `<option value="${esc(k)}" ${k===clientKey?"selected":""}>${esc(prettyClient(k))}</option>`).join("")}</select>` : ""}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button><button class="btn small" type="button" data-admin-exit>Sign out</button>`
     : `<b>Team sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Password</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Sign in</button><button class="btn small" type="button" data-admin-close>Cancel</button></form>`;
 }
 function whoFields(p){
@@ -513,7 +528,7 @@ function questionsHTML(){
     <div class="qs">${auto.questions.map((q,i) => { const a = ans(q.id); return `<div class="q">
       <p><b>${i+1}. ${esc(q.text)}</b></p><p class="hint">${esc(q.why)}</p>
       <div class="chips" role="group" aria-label="Answer ${i+1}">${q.options.map(o => `<button type="button" data-q="${esc(q.id)}" data-a="${esc(o)}" aria-pressed="${a&&a.details===o}">${esc(o)}</button>`).join("")}</div>
-      ${a?`<span class="hint">Saved · ${esc(a.name||"")} · ${fmt(a.timestamp)}${a.lfmp_reply?` · LFMP: ${esc(a.lfmp_reply)}`:""}</span>`:""}
+      ${a?`<span class="hint">Saved · ${esc(a.name||"")} · ${fmt(a.timestamp)}${a.lfmp_reply?` · LFMP: ${esc(a.lfmp_reply)}`:""}</span>${isAdmin ? `<div>${delBtn(a.id, "Delete answer")}</div>` : ""}`:""}
     </div>`; }).join("")}</div></section>`;
 }
 
@@ -521,7 +536,7 @@ function approveHTML(){
   const rs = cur().filter(r => r.action === "approve_all");
   if (rs.length){
     const a = rs[rs.length-1];
-    return `<section class="section"><h2>Approval</h2><div class="approveall done"><b>Approved by ${esc(a.name)} on ${fmt(a.timestamp)}</b><span>Version ${esc(auto.version)} of ${esc(auto.name)} is approved exactly as shown on this page. We'll turn it on and let you know when it's live.</span></div></section>`;
+    return `<section class="section"><h2>Approval</h2><div class="approveall done"><b>Approved by ${esc(a.name)} on ${fmt(a.timestamp)}</b><span>Version ${esc(auto.version)} of ${esc(auto.name)} is approved exactly as shown on this page. We'll turn it on and let you know when it's live.</span>${isAdmin ? `<div>${delBtn(a.id, "Delete this approval")}</div>` : ""}</div></section>`;
   }
   const open = cur().filter(r => (r.action==="change"||r.action==="copy") && r.status !== "Done").length;
   const pending = reviewable().filter(s => stepState(s.id) === "pending").length;
@@ -562,6 +577,21 @@ async function submit(rec, okMsg, scope){
 document.addEventListener("click", async (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
   if (t.id === "refreshBtn"){ await refresh(true); return; }
+  if (t.dataset.del){
+    const id = t.dataset.del;
+    if (armed !== id){ armed = id; render(); setTimeout(() => { if (armed === id){ armed = null; render(); } }, 4000); return; }
+    armed = null;
+    try { await adminDelete([id]); toast("Deleted"); } catch(err){ toast("Couldn't delete: " + err.message); }
+    render(); return;
+  }
+  if (t.hasAttribute("data-clear")){
+    if (armed !== "clear"){ armed = "clear"; render(); setTimeout(() => { if (armed === "clear"){ armed = null; render(); } }, 5000); return; }
+    armed = null;
+    const ids = responses.filter(r => r.automation === auto.id).map(r => r.id);
+    if (!ids.length){ toast("Nothing to clear"); render(); return; }
+    try { await adminDelete(ids); toast("Cleared " + ids.length + " response" + (ids.length > 1 ? "s" : "")); } catch(err){ toast("Couldn't clear: " + err.message); }
+    render(); return;
+  }
   if (t.dataset.admin){ adminForm = adminForm === t.dataset.admin ? null : t.dataset.admin; render(); return; }
   if (t.hasAttribute("data-admin-cancel")){ adminForm = null; render(); return; }
   if (t.hasAttribute("data-admin-exit")){ try { localStorage.removeItem("ar_admin_key"); } catch(e){} adminKey = ""; isAdmin = false; adminForm = null; const u = new URL(location.href); u.searchParams.delete("admin"); location.href = u.toString(); return; }
