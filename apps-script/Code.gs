@@ -13,6 +13,8 @@
 // ---- Settings ----------------------------------------------------------
 // Client codes allowed to save. Must match the file name in data/<code>.json.
 const ALLOWED_CLIENTS = ['boca-dental-e770de'];
+// You can also add client codes without editing this file: Project Settings > Script properties >
+// CLIENTS = comma-separated codes, e.g. "boca-dental-e770de, palm-beach-plastic-surgery-4b9c21".
 // Who gets an email for each new client response. Leave '' to turn emails off.
 const NOTIFY_EMAIL = '';
 // Link used in the notification email.
@@ -69,6 +71,11 @@ function toObj_(headers, r) {
   headers.forEach((h, i) => { o[h] = r[i] instanceof Date ? r[i].toISOString() : r[i]; });
   return o;
 }
+function clients_() {
+  const extra = (PropertiesService.getScriptProperties().getProperty('CLIENTS') || '')
+    .split(',').map(s => s.trim()).filter(Boolean);
+  return ALLOWED_CLIENTS.concat(extra.filter(k => ALLOWED_CLIENTS.indexOf(k) === -1));
+}
 function isAdmin_(key) {
   const k = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
   return !!k && String(key || '') === k;
@@ -77,7 +84,7 @@ function isAdmin_(key) {
 /** GET ?client=<code>  -> responses + content edits for that client */
 function doGet(e) {
   const client = (e.parameter.client || '').trim();
-  if (ALLOWED_CLIENTS.indexOf(client) === -1) return json_({ ok: false, error: 'Unknown client' });
+  if (clients_().indexOf(client) === -1) return json_({ ok: false, error: 'Unknown client' });
   const rows = sheet_().getDataRange().getValues().slice(1)
     .filter(r => r[2] === client).map(r => toObj_(HEADERS, r));
   const content = contentSheet_().getDataRange().getValues().slice(1)
@@ -89,14 +96,15 @@ function doGet(e) {
 function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Bad request' }); }
-  if (ALLOWED_CLIENTS.indexOf(d.client) === -1) return json_({ ok: false, error: 'Unknown client' });
+  if (clients_().indexOf(d.client) === -1) return json_({ ok: false, error: 'Unknown client' });
 
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     // ---- Admin actions ----
     if (d.action === 'admin_ping') {
-      return json_({ ok: isAdmin_(d.key) });
+      // A correct password also returns the client list for the client switcher.
+      return isAdmin_(d.key) ? json_({ ok: true, clients: clients_() }) : json_({ ok: false });
     }
     if (d.action === 'admin_edit') {
       if (!isAdmin_(d.key)) return json_({ ok: false, error: 'Not authorized' });
