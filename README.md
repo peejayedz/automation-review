@@ -51,6 +51,28 @@ Definition of done for one request:
 
 An **approve_all** row is the client's sign-off. It records who approved, which version and when. Publish in GHL only after that row exists.
 
+## Admin mode (edit on the page)
+
+Open any review link with `&admin` on the end, e.g. `…/?c=boca-dental-e770de&admin`, and enter the admin key. On that device you can then:
+
+- Edit an automation's **name, summary and version**. Changing the version (1.0 → 1.1) starts a new review round.
+- Edit the **copy of any text or email** (subject and body), including pasting in email wording that isn't on the page yet.
+- Set a request's **status** (Open / In progress / Done) and write the **reply** the client sees, right under their request.
+
+Edits are saved to the **Content** tab of the Sheet and shown to everyone straight away. The data file in GitHub stays as the starting point, and the newest edit wins. Admin controls never show for clients. Click **Exit admin** to sign out on a shared computer.
+
+**One-time setup for admin mode:** in Apps Script, open **Project Settings › Script properties**, add `ADMIN_KEY` with a long random value, then redeploy (Deploy › Manage deployments › Edit › Version: New version). Never put the key in `Code.gs`, because that file is public in the repo.
+
+## Refresh
+
+The **↻ Refresh** button at the top reloads the data file and everything in the Sheet without reloading the page. Use it after you change a status or reply directly in the Sheet. The time next to it shows when the page last loaded.
+
+## What the client sees when something is approved
+
+- A step marked **Looks good** gets a green check in the flow.
+- When the automation is approved, a green **Approved by [name] on [date] · version** banner appears at the top. The automation's tab shows a check, and the step buttons lock.
+- **Approve automation** stays disabled while any change request is still open (not Done).
+
 ## Adding a new client or automation
 
 1. Copy `data/boca-dental-e770de.json` to `data/<client>-<6 random letters/numbers>.json`. The random part keeps links hard to guess.
