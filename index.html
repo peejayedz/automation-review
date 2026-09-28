@@ -129,6 +129,22 @@ textarea{resize:vertical}
 .approveall.done{border-color:var(--ok);background:var(--ok-soft)}
 .check{display:flex;gap:8px;align-items:flex-start;font-size:14px}
 .check input{margin-top:4px}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tools .upd{font-size:12px;color:var(--muted)}
+.btn.small{padding:5px 10px;font-size:13px}
+.adminbar{background:var(--team-soft);border-bottom:1px solid var(--line);font-size:13px}
+.adminbar .wrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-block:8px}
+.adminbar b{color:var(--team)}
+.adminbar input{width:220px;padding:5px 8px;font-size:13px}
+.adm{display:inline-flex;align-items:center;gap:4px;border:1px dashed var(--team);color:var(--team);background:transparent;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer}
+.admform{border:1px dashed var(--team);background:var(--team-soft)}
+.hadmin{display:grid;grid-template-columns:1fr 1.4fr auto;gap:6px;margin-top:6px}
+.hadmin select,.hadmin input{padding:5px 8px;font-size:13px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.okbanner{display:flex;gap:10px;align-items:center;background:var(--ok-soft);color:var(--ink);border:1px solid var(--ok);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:14px}
+.okbanner svg{width:22px;height:22px;color:var(--ok);flex:none}
+.node.isok .icon{background:var(--ok-soft);color:var(--ok)}
+.tabok{width:14px;height:14px;color:var(--ok);flex:none}
+.edited{font-size:11px;color:var(--team);font-weight:600;margin-left:6px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:9px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 .foot{margin:40px 0 30px;font-size:12px;color:var(--muted)}
@@ -155,8 +171,11 @@ textarea{resize:vertical}
 <div id="banner" class="banner" hidden></div>
 <header class="top"><div class="wrap topin">
   <div class="brand"><b id="clientName">Automation Review</b><span id="clientSub">Law Firm Marketing Pros</span></div>
-  <nav class="autotabs" id="autotabs" aria-label="Automations"></nav>
-</div></header>
+  <div class="tools"><span class="upd" id="updated"></span><button class="btn small" id="refreshBtn" type="button" title="Load the latest changes from the Sheet">↻ Refresh</button></div>
+</div>
+<div class="wrap" style="padding-bottom:10px"><nav class="autotabs" id="autotabs" aria-label="Automations"></nav></div>
+</header>
+<div class="adminbar" id="adminbar" hidden><div class="wrap" id="adminbarIn"></div></div>
 
 <main class="wrap" id="app">
   <div class="empty">Loading your review…</div>
@@ -172,7 +191,11 @@ const params = new URLSearchParams(location.search);
 const clientKey = (params.get("c") || "").replace(/[^a-z0-9-]/gi, "");
 let autoId = params.get("a") || "";
 
-let data = null, auto = null, responses = [], selected = null, openForm = null, chipChoice = {};
+let baseData = null, data = null, auto = null, responses = [], content = [], selected = null, openForm = null, chipChoice = {}, lastLoaded = null;
+const wantAdmin = params.has("admin");
+let adminKey = ""; try { adminKey = localStorage.getItem("ar_admin_key") || ""; } catch(e){}
+let isAdmin = false, adminForm = null;
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const chips = (s) => esc(s).replace(/\[([^\]]+)\]/g, '<span class="chip">$1</span>');
@@ -184,14 +207,60 @@ function setReviewer(r){ try { localStorage.setItem("ar_reviewer", JSON.stringif
 
 /* ---------- storage: Google Sheet via Apps Script, or demo (this browser) ---------- */
 const demoKey = "ar_demo_" + clientKey;
-async function loadResponses(){
+async function loadAll(){
   if (!SAVE_URL){
-    try { return JSON.parse(localStorage.getItem(demoKey) || "[]"); } catch(e){ return []; }
+    let rows = [], cont = [];
+    try { rows = JSON.parse(localStorage.getItem(demoKey) || "[]"); cont = JSON.parse(localStorage.getItem(demoKey + "_content") || "[]"); } catch(e){}
+    return {rows, content: cont};
   }
-  const res = await fetch(SAVE_URL + "?client=" + encodeURIComponent(clientKey) + "&t=" + Date.now());
+  const res = await fetch(SAVE_URL + "?client=" + encodeURIComponent(clientKey) + "&t=" + Date.now(), {cache:"no-store"});
   const j = await res.json();
   if (!j.ok) throw new Error(j.error || "Could not load responses");
-  return j.rows || [];
+  return {rows: j.rows || [], content: j.content || []};
+}
+async function loadResponses(){ return (await loadAll()).rows; }
+async function postJSON(obj){
+  const res = await fetch(SAVE_URL, { method:"POST", body: JSON.stringify(obj) });
+  return res.json();
+}
+/* ---------- admin: content edits and request status ---------- */
+async function adminEdit(automation, field, value){
+  const who = getReviewer().name || "Admin";
+  if (!SAVE_URL){
+    const row = {timestamp:new Date().toISOString(), client:clientKey, automation, field, value, edited_by:who};
+    const all = (await loadAll()).content; all.push(row);
+    try { localStorage.setItem(demoKey + "_content", JSON.stringify(all)); } catch(e){}
+    content.push(row); return row;
+  }
+  const j = await postJSON({action:"admin_edit", key:adminKey, client:clientKey, automation, field, value, name:who});
+  if (!j.ok) throw new Error(j.error || "Could not save");
+  content.push(j.content); return j.content;
+}
+async function adminStatus(id, status, reply){
+  if (!SAVE_URL){
+    const r = responses.find(x => x.id === id); if (r){ r.status = status; r.lfmp_reply = reply; }
+    try { localStorage.setItem(demoKey, JSON.stringify(responses)); } catch(e){}
+    return;
+  }
+  const j = await postJSON({action:"admin_status", key:adminKey, client:clientKey, id, status, lfmp_reply:reply});
+  if (!j.ok) throw new Error(j.error || "Could not save");
+  const i = responses.findIndex(x => x.id === id); if (i > -1) responses[i] = j.row;
+}
+// Rebuild the automations from the data file plus any admin edits (newest edit wins).
+function applyContent(){
+  data = JSON.parse(JSON.stringify(baseData));
+  content.slice().sort((a,b) => String(a.timestamp).localeCompare(String(b.timestamp))).forEach(c => {
+    const a = data.automations.find(x => x.id === c.automation); if (!a) return;
+    const f = String(c.field || ""), v = c.value == null ? "" : String(c.value);
+    if (["name","summary","version"].includes(f)){ a[f] = v; a._edited = true; return; }
+    const m = f.match(/^step:([^:]+):(sms|title|body|email\.subject|email\.body)$/); if (!m) return;
+    const st = a.steps.find(x => x.id === m[1]); if (!st) return;
+    if (m[2].startsWith("email.")){ st.email = st.email || {subject:"", body:""}; st.email[m[2].slice(6)] = v; }
+    else st[m[2]] = v;
+    st._edited = true;
+  });
+  const id = auto ? auto.id : autoId;
+  auto = data.automations.find(a => a.id === id) || data.automations[0];
 }
 async function saveResponse(rec){
   if (!SAVE_URL){
@@ -219,7 +288,7 @@ function stepState(stepId){
   if (last.action === "approve") return "approved";
   return "updated"; // requests done by LFMP, client hasn't re-approved
 }
-const stateLabel = {pending:"Needs your review", changes:"Changes requested", updated:"Updated, please re-check", approved:"Looks good"};
+const stateLabel = {pending:"Needs your review", changes:"Changes requested", updated:"Updated, please re-check", approved:"✓ Looks good"};
 function autoState(a){
   const rs = responses.filter(r => r.automation === a.id && sameV(r.version, a.version));
   if (rs.some(r => r.action === "approve_all")) return "approved";
@@ -246,21 +315,22 @@ function render(){
   $("#clientSub").textContent = "Prepared by " + data.lfmpContact;
   document.title = auto.name + " · " + data.client.name;
   $("#autotabs").innerHTML = data.automations.map(a =>
-    `<a href="?c=${encodeURIComponent(clientKey)}&a=${encodeURIComponent(a.id)}" data-auto="${esc(a.id)}" ${a.id===auto.id?'aria-current="page"':''}><span class="dot ${autoState(a)}"></span>${esc(a.name)}</a>`).join("");
+    `<a href="?c=${encodeURIComponent(clientKey)}&a=${encodeURIComponent(a.id)}${wantAdmin?"&admin":""}" data-auto="${esc(a.id)}" ${a.id===auto.id?'aria-current="page"':''} title="${autoState(a)==="approved"?"Approved":autoState(a)==="changes"?"Changes requested":"Needs review"}">${autoState(a)==="approved"?`<span class="tabok">${CHECK}</span>`:`<span class="dot ${autoState(a)}"></span>`}${esc(a.name)}</a>`).join("");
 
   const steps = reviewable();
   const counts = {approved:0, changes:0, updated:0, pending:0};
   steps.forEach(s => counts[stepState(s.id)]++);
   const pct = (n) => (100 * n / steps.length) + "%";
   const as = autoState(auto);
-  const asPill = as === "approved" ? '<span class="pill approved">Approved</span>' : as === "changes" ? '<span class="pill changes">Changes requested</span>' : '<span class="pill pending">Needs your review</span>';
+  const asPill = as === "approved" ? '<span class="pill approved">✓ Approved</span>' : as === "changes" ? '<span class="pill changes">Changes requested</span>' : '<span class="pill pending">Needs your review</span>';
 
   let html = `<section class="hero">
     <div>
       <div class="eyebrow">Automation ${data.automations.indexOf(auto)+1} of ${data.automations.length}</div>
       <h1>${esc(auto.name)}</h1>
-      <div class="meta">${asPill}<span>Version ${esc(auto.version)}</span><span>Sent ${esc(auto.sent)}</span></div>
-      <p class="lead">${esc(auto.summary)}</p>
+      <div class="meta">${asPill}<span>Version ${esc(auto.version)}</span><span>Sent ${esc(auto.sent)}</span>${isAdmin?`<button class="adm" type="button" data-admin="details">✎ Edit name, summary, version</button>`:""}</div>
+      ${isAdmin && adminForm === "details" ? detailsFormHTML() : `<p class="lead">${esc(auto.summary)}</p>`}
+      ${approvedBanner()}
     </div>
     <div class="progress">
       <b>${counts.approved + counts.changes} of ${steps.length} steps reviewed</b>
@@ -278,6 +348,8 @@ function render(){
   ${approveHTML()}
   <p class="foot">Your responses are saved as soon as you click, and the LFMP team sees them right away. You can come back to this page any time to see where each change stands.</p>`;
   $("#app").innerHTML = html;
+  renderAdminBar();
+  $("#updated").textContent = lastLoaded ? "Updated " + lastLoaded.toLocaleTimeString("en-US", {hour:"numeric", minute:"2-digit"}) : "";
 }
 
 function flowHTML(){
@@ -289,8 +361,8 @@ function flowHTML(){
     const st = s.type === "start" ? null : stepState(s.id);
     const cls = (s.type === "team" || s.type === "call") ? "team" : (s.type === "start" || s.type === "end") ? "startend" : "";
     const who = s.who === "patient" ? " · Patient receives" : s.who === "team" ? " · Your team" : "";
-    h += `<button class="node ${cls}" data-step="${esc(s.id)}" aria-pressed="${selected===s.id}">
-      <span class="icon">${ICON[s.type]||""}</span>
+    h += `<button class="node ${cls} ${st==="approved"?"isok":""}" data-step="${esc(s.id)}" aria-pressed="${selected===s.id}">
+      <span class="icon">${st==="approved" ? CHECK : (ICON[s.type]||"")}</span>
       <span><span class="ntitle">${chips(s.title)}</span><span class="nsub" style="display:block">${(s.type==="start"||s.type==="end") ? TYPE[s.type] : esc(s.when) + " · " + TYPE[s.type] + who}</span></span>
       ${st ? `<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>` : ""}
     </button>`;
@@ -311,7 +383,11 @@ function inspectorHTML(){
   if (s.email){
     content += `<div class="email"><div class="subj"><b>Subject:</b> ${chips(s.email.subject)}</div><div class="body">${s.email.body ? chips(s.email.body) : `<span class="pendingtxt">${esc(s.email.pending||"")}</span>`}</div></div>`;
   }
+  if (s._edited && isAdmin) content += `<div class="edited">Edited on this page</div>`;
   if (s.note) content += `<div class="note"><b>Our note:</b> ${chips(s.note)}</div>`;
+  if (isAdmin && (s.sms || s.email)){
+    content += adminForm === "copy:" + s.id ? copyAdminFormHTML(s) : `<div style="margin-top:10px"><button class="adm" type="button" data-admin="copy:${esc(s.id)}">✎ Edit this ${s.sms ? "text" : "email"} (admin)</button></div>`;
+  }
 
   const hasCopy = !!(s.sms || (s.email && s.email.body));
   const locked = autoState(auto) === "approved";
@@ -331,11 +407,48 @@ function inspectorHTML(){
        ${r.details?`<div>${esc(r.details)}</div>`:""}
        ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
        ${r.lfmp_reply?`<div class="reply">LFMP: ${esc(r.lfmp_reply)}</div>`:""}
+       ${isAdmin && (r.action==="change"||r.action==="copy") ? `<form class="hadmin" data-form="status" data-id="${esc(r.id)}">
+         <select aria-label="Status" name="status">${["Open","In progress","Done"].map(o=>`<option ${String(r.status||"Open")===o?"selected":""}>${o}</option>`).join("")}</select>
+         <input type="text" name="reply" aria-label="Reply to client" placeholder="Reply shown to the client" value="${esc(r.lfmp_reply||"")}">
+         <button class="btn small" type="submit">Save</button></form>` : ""}
      </div>`).join("")}</div>` : "";
   return `<div class="ihead">${ICON[s.type]?`<span class="icon" style="width:28px;height:28px">${ICON[s.type]}</span>`:""}<span>${esc(s.day)} · ${esc(s.when)} · ${TYPE[s.type]}</span>${st?`<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>`:""}</div>
     <h2>${chips(s.title)}</h2>${content}${actions}${histHTML}`;
 }
 
+function approvedBanner(){
+  const rs = cur().filter(r => r.action === "approve_all"); if (!rs.length) return "";
+  const a = rs[rs.length-1];
+  return `<div class="okbanner">${CHECK}<span><b>Approved</b> by ${esc(a.name)} on ${fmt(a.timestamp)} · version ${esc(auto.version)}</span></div>`;
+}
+function detailsFormHTML(){
+  return `<form class="form admform" data-form="details">
+    <label for="ad-name">Automation name</label><input type="text" id="ad-name" value="${esc(auto.name)}">
+    <label for="ad-summary">Summary</label><textarea id="ad-summary" rows="3">${esc(auto.summary)}</textarea>
+    <label for="ad-version">Version</label><input type="text" id="ad-version" value="${esc(auto.version)}" style="max-width:120px">
+    <span class="hint">Change the version (for example 1.0 → 1.1) to start a new review round. Earlier responses stay in each step's history.</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save changes</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div>
+  </form>`;
+}
+function copyAdminFormHTML(s){
+  if (s.sms) return `<form class="form admform" data-form="copyadmin">
+    <label for="ac-sms">Text message</label><textarea id="ac-sms" rows="${Math.min(14, s.sms.split("\n").length + 4)}">${esc(s.sms)}</textarea>
+    <span class="hint">Write names as [First name], [Team member's first name], [Office phone].</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save text</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
+  const e = s.email || {};
+  return `<form class="form admform" data-form="copyadmin">
+    <label for="ac-subj">Subject</label><input type="text" id="ac-subj" value="${esc(e.subject||"")}">
+    <label for="ac-body">Email body</label><textarea id="ac-body" rows="10" placeholder="Paste the email wording from GHL">${esc(e.body||"")}</textarea>
+    <span class="hint">Write names as [First name], [Team member's signature], [Office text number].</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save email</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
+}
+function renderAdminBar(){
+  const bar = $("#adminbar"); if (!wantAdmin){ bar.hidden = true; return; }
+  bar.hidden = false;
+  $("#adminbarIn").innerHTML = isAdmin
+    ? `<b>Admin mode</b><span>You can edit names, summaries, versions and message copy, and update request statuses. Clients never see these controls.</span><button class="btn small" type="button" data-admin-exit>Exit admin</button>`
+    : `<b>Admin sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Admin key</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Unlock</button></form>`;
+}
 function whoFields(p){
   p = p || "rv"; const r = getReviewer();
   return `<div class="row2"><div><label for="${p}-name">Your name</label><input type="text" id="${p}-name" data-who="name" autocomplete="name" value="${esc(r.name||"")}"></div>
@@ -397,7 +510,7 @@ function approveHTML(){
   return `<section class="section"><h2>Approve this automation</h2>
     <form class="approveall" data-form="approve_all">
       <span>Approving tells us version ${esc(auto.version)} can go live exactly as shown on this page.</span>
-      ${open ? `<span class="pill changes" style="justify-self:start">${open} change request${open>1?"s":""} still open</span><span class="hint" style="font-size:14px">We'll update the automation and send you a new version to approve. You don't need to do anything else right now.</span>` : ""}
+      ${open ? `<span class="pill changes" style="justify-self:start">${open} change request${open>1?"s":""} still open</span><span class="hint" style="font-size:14px">Approving unlocks once LFMP has finished these changes. We'll update the automation and let you know when the new version is ready to approve. You don't need to do anything else right now.</span>` : ""}
       ${!open && pending ? `<span class="hint" style="font-size:14px">${pending} step${pending>1?"s":""} not reviewed yet. You can still approve if you're happy with everything.</span>` : ""}
       ${whoFields("ap")}
       <label class="check"><input type="checkbox" id="ap-check" ${open?"disabled":""}> I approve ${esc(auto.name)}, version ${esc(auto.version)}.</label>
@@ -430,7 +543,11 @@ async function submit(rec, okMsg, scope){
 
 document.addEventListener("click", async (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
-  if (t.dataset.auto){ e.preventDefault(); autoId = t.dataset.auto; auto = data.automations.find(a=>a.id===autoId); selected = null; openForm = null; history.replaceState(null,"",t.getAttribute("href")); render(); window.scrollTo(0,0); return; }
+  if (t.id === "refreshBtn"){ await refresh(true); return; }
+  if (t.dataset.admin){ adminForm = adminForm === t.dataset.admin ? null : t.dataset.admin; render(); return; }
+  if (t.hasAttribute("data-admin-cancel")){ adminForm = null; render(); return; }
+  if (t.hasAttribute("data-admin-exit")){ try { localStorage.removeItem("ar_admin_key"); } catch(e){} adminKey = ""; isAdmin = false; adminForm = null; const u = new URL(location.href); u.searchParams.delete("admin"); location.href = u.toString(); return; }
+  if (t.dataset.auto){ e.preventDefault(); adminForm = null; autoId = t.dataset.auto; auto = data.automations.find(a=>a.id===autoId); selected = null; openForm = null; history.replaceState(null,"",t.getAttribute("href")); render(); window.scrollTo(0,0); return; }
   if (t.dataset.step){ selected = selected === t.dataset.step && matchMedia("(max-width:980px)").matches ? null : t.dataset.step; openForm = null; render(); return; }
   if (t.dataset.act === "approve"){
     if (!getReviewer().name){ openForm = "who"; render(); const f = $("#rv-name"); if (f) f.focus(); return; }
@@ -450,6 +567,35 @@ document.addEventListener("submit", async (e) => {
   const f = e.target; const kind = f.dataset.form;
   const s = auto.steps.find(x=>x.id===selected);
   if (kind === "who"){ await approveStep(f); return; }
+  if (kind === "adminkey"){
+    const k = $("#ak").value.trim(); if (!k) return;
+    let ok = !SAVE_URL; // demo mode: any key unlocks the local editor
+    if (SAVE_URL){ try { ok = (await postJSON({action:"admin_ping", key:k, client:clientKey})).ok; } catch(e){ ok = false; } }
+    if (!ok){ toast("That admin key didn't work"); return; }
+    adminKey = k; isAdmin = true; try { localStorage.setItem("ar_admin_key", k); } catch(e){}
+    toast("Admin mode on"); render(); return;
+  }
+  if (kind === "details"){
+    const changes = [["name", $("#ad-name").value.trim()], ["summary", $("#ad-summary").value.trim()], ["version", $("#ad-version").value.trim()]]
+      .filter(([k, v]) => v && v !== String(auto[k]));
+    if (!changes.length){ adminForm = null; render(); return; }
+    try { for (const [k, v] of changes) await adminEdit(auto.id, k, v); applyContent(); adminForm = null; toast("Saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); }
+    return;
+  }
+  if (kind === "copyadmin"){
+    const edits = s.sms ? [["sms", $("#ac-sms").value.trim()]] : [["email.subject", $("#ac-subj").value.trim()], ["email.body", $("#ac-body").value.trim()]];
+    const cur0 = { "sms": s.sms, "email.subject": s.email && s.email.subject, "email.body": s.email && s.email.body };
+    const changes = edits.filter(([k, v]) => v !== String(cur0[k] || ""));
+    try { for (const [k, v] of changes) await adminEdit(auto.id, "step:" + s.id + ":" + k, v); applyContent(); adminForm = null; toast(changes.length ? "Copy saved" : "No changes"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); }
+    return;
+  }
+  if (kind === "status"){
+    try { await adminStatus(f.dataset.id, f.elements.status.value, f.elements.reply.value.trim()); toast("Status saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); }
+    return;
+  }
   if (kind === "change"){
     const d = $("#f-details").value.trim(); if (!d){ $("#f-details").focus(); return; }
     const type = chipChoice[s.id] || "Change timing";
@@ -480,15 +626,35 @@ matchMedia("(max-width:980px)").addEventListener("change", (m) => { if (m.matche
 async function boot(){
   if (!SAVE_URL){ const b = $("#banner"); b.hidden = false; b.textContent = "Demo mode: responses are saved only in this browser until the Google Sheet connection is set up."; }
   if (!clientKey){ $("#app").innerHTML = '<div class="empty">This review link is missing its client code. Please use the link LFMP sent you.</div>'; return; }
-  try {
-    const r = await fetch("data/" + clientKey + ".json?t=" + Date.now());
-    if (!r.ok) throw new Error("not found");
-    data = await r.json();
-  } catch(e){ $("#app").innerHTML = '<div class="empty">We couldn\'t find this review. Please check the link LFMP sent you.</div>'; return; }
-  auto = data.automations.find(a => a.id === autoId) || data.automations[0];
-  try { responses = await loadResponses(); } catch(e){ responses = []; toast("Couldn't load saved responses. Showing the automation only."); }
+  const ok = await refresh(false);
+  if (!ok) return;
+  if (wantAdmin && adminKey){
+    if (!SAVE_URL) isAdmin = true;
+    else { try { isAdmin = (await postJSON({action:"admin_ping", key:adminKey, client:clientKey})).ok; } catch(e){ isAdmin = false; } }
+  }
   if (!matchMedia("(max-width:980px)").matches) selected = (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
   render();
+}
+// Reload the data file and everything saved in the Sheet. Used on load and by the Refresh button.
+async function refresh(manual){
+  const btn = $("#refreshBtn"); if (btn){ btn.disabled = true; btn.textContent = "↻ Refreshing…"; }
+  try {
+    try {
+      const r = await fetch("data/" + clientKey + ".json?t=" + Date.now(), {cache:"no-store"});
+      if (!r.ok) throw new Error("not found");
+      baseData = await r.json();
+    } catch(e){
+      if (!baseData){ $("#app").innerHTML = '<div class="empty">We couldn\'t find this review. Please check the link LFMP sent you.</div>'; return false; }
+    }
+    try { const all = await loadAll(); responses = all.rows; content = all.content; lastLoaded = new Date(); }
+    catch(e){ toast("Couldn't load saved responses. Try Refresh again in a moment."); }
+    applyContent();
+    if (selected && !auto.steps.some(x => x.id === selected)) selected = null;
+    if (manual){ render(); toast("Up to date"); }
+    return true;
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = "↻ Refresh"; }
+  }
 }
 boot();
 })();
