@@ -122,6 +122,7 @@ textarea{resize:vertical}
 .reply b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--team);margin-bottom:2px}
 body.saving .actions button,body.saving form button[type=submit],body.saving [data-q]{pointer-events:none;opacity:.55}
 .hitem .old{opacity:.7}
+.loadnote{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:14px}
 .section{margin-top:34px}
 .section h2{font-family:var(--serif);font-size:24px;margin-bottom:6px}
 .qs{display:grid;gap:10px;margin-top:12px}
@@ -208,7 +209,7 @@ let autoId = params.get("a") || "";
 let baseData = null, data = null, auto = null, responses = [], content = [], selected = null, openForm = null, chipChoice = {}, lastLoaded = null;
 let wantAdmin = params.has("admin"); let adminClients = [];
 let adminKey = ""; try { adminKey = localStorage.getItem("ar_admin_key") || ""; } catch(e){}
-let isAdmin = false, adminForm = null, rendered = false;
+let isAdmin = false, adminForm = null, rendered = false, loaded = false, loadFailed = false;
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -301,6 +302,7 @@ function isReplaced(r, rs){
 }
 function isOpenReq(r, rs){ return (r.action === "change" || r.action === "copy") && r.status !== "Done" && !isReplaced(r, rs); }
 function stepState(stepId){
+  if (!loaded) return "loading";
   const rs = cur().filter(r => r.step === stepId && ["approve","change","copy"].includes(r.action));
   if (!rs.length) return "pending";
   const last = rs[rs.length - 1];
@@ -308,8 +310,9 @@ function stepState(stepId){
   if (last.action === "approve") return "approved";
   return "updated"; // requests done by LFMP, client hasn't re-approved
 }
-const stateLabel = {pending:"Needs your review", changes:"Changes requested", updated:"✓ Updated · please re-check", approved:"✓ Looks good"};
+const stateLabel = {loading:"Loading…", pending:"Needs your review", changes:"Changes requested", updated:"✓ Updated · please re-check", approved:"✓ Looks good"};
 function autoState(a){
+  if (!loaded) return "loading";
   const rs = responses.filter(r => r.automation === a.id && sameV(r.version, a.version));
   if (rs.some(r => r.action === "approve_all")) return "approved";
   if (rs.some(r => isOpenReq(r, rs))) return "changes";
@@ -334,17 +337,17 @@ function render(){
   $("#clientName").textContent = data.client.name + " · Automation Review";
   $("#clientSub").textContent = "Powered by Law Firm Marketing Pros";
   document.title = auto.name + " · " + data.client.name;
-  const mark = {approved:"✓ Approved", changes:"● Changes requested", pending:"○ Needs review"};
+  const mark = {loading:"Loading…", approved:"✓ Approved", changes:"● Changes requested", pending:"○ Needs review"};
   $("#autoSelect").innerHTML = data.automations.map((a, i) => `<option value="${esc(a.id)}" ${a.id===auto.id?"selected":""}>${i+1}. ${esc(a.name)} · ${mark[autoState(a)]}</option>`).join("");
   const nApproved = data.automations.filter(a => autoState(a) === "approved").length;
   $("#autoCount").textContent = nApproved + " of " + data.automations.length + " approved";
 
   const steps = reviewable();
-  const counts = {approved:0, changes:0, updated:0, pending:0};
+  const counts = {loading:0, approved:0, changes:0, updated:0, pending:0};
   steps.forEach(s => counts[stepState(s.id)]++);
   const pct = (n) => (100 * n / steps.length) + "%";
   const as = autoState(auto);
-  const asPill = as === "approved" ? '<span class="pill approved">✓ Approved</span>' : as === "changes" ? '<span class="pill changes">Changes requested</span>' : '<span class="pill pending">Needs your review</span>';
+  const asPill = as === "approved" ? '<span class="pill approved">✓ Approved</span>' : as === "changes" ? '<span class="pill changes">Changes requested</span>' : as === "loading" ? '<span class="pill none">Loading saved responses…</span>' : '<span class="pill pending">Needs your review</span>';
 
   let html = `<section class="hero">
     <div>
@@ -415,7 +418,9 @@ function inspectorHTML(){
   const hasCopy = !!(s.sms || (s.email && s.email.body));
   const locked = autoState(auto) === "approved";
   let actions = "";
-  if (s.type !== "start" && !locked){
+  if (!loaded && s.type !== "start"){
+    actions = `<div class="loadnote">${loadFailed ? "Couldn't load saved responses and comments. Click ↻ Refresh at the top to try again." : "Loading saved responses and comments… this can take up to 30 seconds."}</div>`;
+  } else if (s.type !== "start" && !locked){
     actions = `<div class="actions">
       <button class="btn ok" data-act="approve">✓ Looks good</button>
       <button class="btn warn" data-act="change" aria-pressed="${openForm==="change"}">Request a change</button>
@@ -546,6 +551,7 @@ function approveHTML(){
     const a = rs[rs.length-1];
     return `<section class="section"><h2>Approval</h2><div class="approveall done"><b>Approved by ${esc(a.name)} on ${fmt(a.timestamp)}</b><span>Version ${esc(auto.version)} of ${esc(auto.name)} is approved exactly as shown on this page. We'll turn it on and let you know when it's live.</span>${isAdmin ? `<div>${delBtn(a.id, "Delete this approval")}</div>` : ""}</div></section>`;
   }
+  if (!loaded) return `<section class="section"><h2>Approve this automation</h2><div class="loadnote">${loadFailed ? "Couldn't load saved responses. Click ↻ Refresh at the top to try again." : "Loading saved responses…"}</div></section>`;
   const open = cur().filter(r => isOpenReq(r, cur())).length;
   const pending = reviewable().filter(s => stepState(s.id) === "pending").length;
   return `<section class="section"><h2>Approve this automation</h2>
@@ -743,8 +749,8 @@ async function refresh(manual){
       render(); rendered = true;
       $("#updated").textContent = SAVE_URL ? "Loading saved responses…" : "";
     } else if (manual){ $("#updated").textContent = "Refreshing…"; }
-    try { const all = await loadAll(); responses = all.rows; content = all.content; lastLoaded = new Date(); }
-    catch(e){ toast("Couldn't load saved responses. Try Refresh again in a moment."); }
+    try { const all = await loadAll(); responses = all.rows; content = all.content; lastLoaded = new Date(); loaded = true; loadFailed = false; }
+    catch(e){ loadFailed = !loaded; toast("Couldn't load saved responses. Try Refresh again in a moment."); }
     applyContent();
     if (selected && !auto.steps.some(x => x.id === selected)) selected = null;
     render(); if (manual) toast("Up to date");
