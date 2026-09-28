@@ -194,7 +194,7 @@ let autoId = params.get("a") || "";
 let baseData = null, data = null, auto = null, responses = [], content = [], selected = null, openForm = null, chipChoice = {}, lastLoaded = null;
 const wantAdmin = params.has("admin");
 let adminKey = ""; try { adminKey = localStorage.getItem("ar_admin_key") || ""; } catch(e){}
-let isAdmin = false, adminForm = null;
+let isAdmin = false, adminForm = null, rendered = false;
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -646,11 +646,18 @@ async function refresh(manual){
     } catch(e){
       if (!baseData){ $("#app").innerHTML = '<div class="empty">We couldn\'t find this review. Please check the link LFMP sent you.</div>'; return false; }
     }
+    // Show the automation straight away, then fill in saved responses when the Sheet answers.
+    applyContent();
+    if (!rendered){
+      if (!matchMedia("(max-width:980px)").matches) selected = (reviewable()[0] || auto.steps[0]).id;
+      render(); rendered = true;
+      $("#updated").textContent = SAVE_URL ? "Loading saved responses…" : "";
+    } else if (manual){ $("#updated").textContent = "Refreshing…"; }
     try { const all = await loadAll(); responses = all.rows; content = all.content; lastLoaded = new Date(); }
     catch(e){ toast("Couldn't load saved responses. Try Refresh again in a moment."); }
     applyContent();
     if (selected && !auto.steps.some(x => x.id === selected)) selected = null;
-    if (manual){ render(); toast("Up to date"); }
+    render(); if (manual) toast("Up to date");
     return true;
   } finally {
     if (btn){ btn.disabled = false; btn.textContent = "↻ Refresh"; }
