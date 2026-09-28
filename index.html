@@ -129,6 +129,11 @@ textarea{resize:vertical}
 .approveall.done{border-color:var(--ok);background:var(--ok-soft)}
 .check{display:flex;gap:8px;align-items:flex-start;font-size:14px}
 .check input{margin-top:4px}
+.autopick{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.autopick label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.autopick select,.adminbar select{font-size:15px;font-weight:600;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);max-width:100%}
+.autopick select{min-width:min(360px,100%)}
+.signin{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px;padding:0}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .tools .upd{font-size:12px;color:var(--muted)}
 .btn.small{padding:5px 10px;font-size:13px}
@@ -143,6 +148,8 @@ textarea{resize:vertical}
 .okbanner{display:flex;gap:10px;align-items:center;background:var(--ok-soft);color:var(--ink);border:1px solid var(--ok);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:14px}
 .okbanner svg{width:22px;height:22px;color:var(--ok);flex:none}
 .node.isok .icon{background:var(--ok-soft);color:var(--ok)}
+.node.isok{border-color:var(--ok);background:linear-gradient(90deg,var(--ok-soft),var(--paper) 55%)}
+.node.isok .pill.approved{background:var(--ok);color:var(--paper)}
 .tabok{width:14px;height:14px;color:var(--ok);flex:none}
 .edited{font-size:11px;color:var(--team);font-weight:600;margin-left:6px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:9px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -171,9 +178,9 @@ textarea{resize:vertical}
 <div id="banner" class="banner" hidden></div>
 <header class="top"><div class="wrap topin">
   <div class="brand"><b id="clientName">Automation Review</b><span id="clientSub">Law Firm Marketing Pros</span></div>
-  <div class="tools"><span class="upd" id="updated"></span><button class="btn small" id="refreshBtn" type="button" title="Load the latest changes from the Sheet">↻ Refresh</button></div>
+  <div class="tools"><span class="upd" id="updated"></span><button class="btn small" id="refreshBtn" type="button" title="Load the latest changes from the Sheet">↻ Refresh</button><button class="btn small" id="signinBtn" type="button" data-signin>🔒 Admin login</button></div>
 </div>
-<div class="wrap" style="padding-bottom:10px"><nav class="autotabs" id="autotabs" aria-label="Automations"></nav></div>
+<div class="wrap" style="padding-bottom:12px"><div class="autopick"><label for="autoSelect">Automation</label><select id="autoSelect"></select><span id="autoCount" class="hint"></span></div></div>
 </header>
 <div class="adminbar" id="adminbar" hidden><div class="wrap" id="adminbarIn"></div></div>
 
@@ -192,7 +199,7 @@ const clientKey = (params.get("c") || "").replace(/[^a-z0-9-]/gi, "");
 let autoId = params.get("a") || "";
 
 let baseData = null, data = null, auto = null, responses = [], content = [], selected = null, openForm = null, chipChoice = {}, lastLoaded = null;
-const wantAdmin = params.has("admin");
+let wantAdmin = params.has("admin"); let adminClients = [];
 let adminKey = ""; try { adminKey = localStorage.getItem("ar_admin_key") || ""; } catch(e){}
 let isAdmin = false, adminForm = null, rendered = false;
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
@@ -314,8 +321,10 @@ function render(){
   $("#clientName").textContent = data.client.name + " · Automation Review";
   $("#clientSub").textContent = "Prepared by " + data.lfmpContact;
   document.title = auto.name + " · " + data.client.name;
-  $("#autotabs").innerHTML = data.automations.map(a =>
-    `<a href="?c=${encodeURIComponent(clientKey)}&a=${encodeURIComponent(a.id)}${wantAdmin?"&admin":""}" data-auto="${esc(a.id)}" ${a.id===auto.id?'aria-current="page"':''} title="${autoState(a)==="approved"?"Approved":autoState(a)==="changes"?"Changes requested":"Needs review"}">${autoState(a)==="approved"?`<span class="tabok">${CHECK}</span>`:`<span class="dot ${autoState(a)}"></span>`}${esc(a.name)}</a>`).join("");
+  const mark = {approved:"✓ Approved", changes:"● Changes requested", pending:"○ Needs review"};
+  $("#autoSelect").innerHTML = data.automations.map((a, i) => `<option value="${esc(a.id)}" ${a.id===auto.id?"selected":""}>${i+1}. ${esc(a.name)} · ${mark[autoState(a)]}</option>`).join("");
+  const nApproved = data.automations.filter(a => autoState(a) === "approved").length;
+  $("#autoCount").textContent = nApproved + " of " + data.automations.length + " approved";
 
   const steps = reviewable();
   const counts = {approved:0, changes:0, updated:0, pending:0};
@@ -346,9 +355,10 @@ function render(){
   </div>
   ${questionsHTML()}
   ${approveHTML()}
-  <p class="foot">Your responses are saved as soon as you click, and the LFMP team sees them right away. You can come back to this page any time to see where each change stands.</p>`;
+  <p class="foot">Your responses are saved as soon as you click, and the LFMP team sees them right away. You can come back to this page any time to see where each change stands.${isAdmin ? "" : ` <button class="signin" type="button" data-signin>Team sign-in</button>`}</p>`;
   $("#app").innerHTML = html;
   renderAdminBar();
+  $("#signinBtn").hidden = isAdmin;
   $("#updated").textContent = lastLoaded ? "Updated " + lastLoaded.toLocaleTimeString("en-US", {hour:"numeric", minute:"2-digit"}) : "";
 }
 
@@ -442,12 +452,20 @@ function copyAdminFormHTML(s){
     <span class="hint">Write names as [First name], [Team member's signature], [Office text number].</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save email</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
 }
+function prettyClient(k){ return String(k).replace(/-[0-9a-f]{6}$/i, "").split("-").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" "); }
+async function ping(k){
+  if (!SAVE_URL) return {ok:true, clients:[clientKey]};
+  for (let i = 0; i < 2; i++){ // retry once: the first call after the script sits idle can fail
+    try { const j = await postJSON({action:"admin_ping", key:k, client:clientKey}); return j; } catch(e){}
+  }
+  return {ok:false};
+}
 function renderAdminBar(){
   const bar = $("#adminbar"); if (!wantAdmin){ bar.hidden = true; return; }
   bar.hidden = false;
   $("#adminbarIn").innerHTML = isAdmin
-    ? `<b>Admin mode</b><span>You can edit names, summaries, versions and message copy, and update request statuses. Clients never see these controls.</span><button class="btn small" type="button" data-admin-exit>Exit admin</button>`
-    : `<b>Admin sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Admin key</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Unlock</button></form>`;
+    ? `<b>Admin mode</b>${adminClients.length ? `<label for="clientSelect" class="hint">Client</label><select id="clientSelect">${adminClients.map(k => `<option value="${esc(k)}" ${k===clientKey?"selected":""}>${esc(prettyClient(k))}</option>`).join("")}</select>` : ""}<span>Edit names, versions and copy, and update request statuses. Clients never see these controls.</span><button class="btn small" type="button" data-admin-exit>Sign out</button>`
+    : `<b>Team sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Password</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Sign in</button><button class="btn small" type="button" data-admin-close>Cancel</button></form>`;
 }
 function whoFields(p){
   p = p || "rv"; const r = getReviewer();
@@ -547,6 +565,8 @@ document.addEventListener("click", async (e) => {
   if (t.dataset.admin){ adminForm = adminForm === t.dataset.admin ? null : t.dataset.admin; render(); return; }
   if (t.hasAttribute("data-admin-cancel")){ adminForm = null; render(); return; }
   if (t.hasAttribute("data-admin-exit")){ try { localStorage.removeItem("ar_admin_key"); } catch(e){} adminKey = ""; isAdmin = false; adminForm = null; const u = new URL(location.href); u.searchParams.delete("admin"); location.href = u.toString(); return; }
+  if (t.hasAttribute("data-signin")){ wantAdmin = true; renderAdminBar(); window.scrollTo(0, 0); const f = $("#ak"); if (f) f.focus(); return; }
+  if (t.hasAttribute("data-admin-close")){ wantAdmin = false; renderAdminBar(); return; }
   if (t.dataset.auto){ e.preventDefault(); adminForm = null; autoId = t.dataset.auto; auto = data.automations.find(a=>a.id===autoId); selected = null; openForm = null; history.replaceState(null,"",t.getAttribute("href")); render(); window.scrollTo(0,0); return; }
   if (t.dataset.step){ selected = selected === t.dataset.step && matchMedia("(max-width:980px)").matches ? null : t.dataset.step; openForm = null; render(); return; }
   if (t.dataset.act === "approve"){
@@ -562,6 +582,17 @@ document.addEventListener("click", async (e) => {
     if (ok) render(); return;
   }
 });
+document.addEventListener("change", (e) => {
+  if (e.target.id === "autoSelect"){
+    adminForm = null; openForm = null; autoId = e.target.value; auto = data.automations.find(a => a.id === autoId);
+    selected = matchMedia("(max-width:980px)").matches ? null : (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
+    const u = new URL(location.href); u.searchParams.set("a", autoId); history.replaceState(null, "", u.toString());
+    render(); window.scrollTo(0, 0);
+  }
+  if (e.target.id === "clientSelect" && e.target.value && e.target.value !== clientKey){
+    const u = new URL(location.href); u.search = "?c=" + encodeURIComponent(e.target.value); location.href = u.toString();
+  }
+});
 document.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target; const kind = f.dataset.form;
@@ -569,9 +600,9 @@ document.addEventListener("submit", async (e) => {
   if (kind === "who"){ await approveStep(f); return; }
   if (kind === "adminkey"){
     const k = $("#ak").value.trim(); if (!k) return;
-    let ok = !SAVE_URL; // demo mode: any key unlocks the local editor
-    if (SAVE_URL){ try { ok = (await postJSON({action:"admin_ping", key:k, client:clientKey})).ok; } catch(e){ ok = false; } }
-    if (!ok){ toast("That admin key didn't work"); return; }
+    const j = await ping(k);
+    if (!j.ok){ toast("That password didn't work"); return; }
+    adminClients = j.clients || [];
     adminKey = k; isAdmin = true; try { localStorage.setItem("ar_admin_key", k); } catch(e){}
     toast("Admin mode on"); render(); return;
   }
@@ -628,9 +659,9 @@ async function boot(){
   if (!clientKey){ $("#app").innerHTML = '<div class="empty">This review link is missing its client code. Please use the link LFMP sent you.</div>'; return; }
   const ok = await refresh(false);
   if (!ok) return;
-  if (wantAdmin && adminKey){
-    if (!SAVE_URL) isAdmin = true;
-    else { try { isAdmin = (await postJSON({action:"admin_ping", key:adminKey, client:clientKey})).ok; } catch(e){ isAdmin = false; } }
+  if (adminKey){ // signed in before on this device
+    const j = await ping(adminKey);
+    if (j.ok){ isAdmin = true; wantAdmin = true; adminClients = j.clients || []; }
   }
   if (!matchMedia("(max-width:980px)").matches) selected = (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
   render();
