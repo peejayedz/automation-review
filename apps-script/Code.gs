@@ -1,7 +1,8 @@
 /**
- * LFMP Automation Review: response + content storage (v2)
+ * LFMP Automation Review: response + content storage (v3)
  *
- * "Responses" tab: every client response (looks good / change request / new wording / answer / approval).
+ * One tab per client (named in CLIENT_TABS below): every response from that client
+ * (looks good / change request / new wording / answer / approval).
  *   Team columns: status (Open -> In progress -> Done) and lfmp_reply, shown to the client on the page.
  * "Content" tab: admin edits made on the page (automation name, summary, version, SMS/email copy).
  *   The page applies these on top of the data file, newest edit wins.
@@ -12,7 +13,14 @@
 
 // ---- Settings ----------------------------------------------------------
 // Client codes allowed to save. Must match the file name in data/<code>.json.
-const ALLOWED_CLIENTS = ['boca-dental-e770de'];
+const ALLOWED_CLIENTS = ['boca-dental-e770de', 'palm-beach-plastic-n9umxi'];
+// The Sheet tab each client's responses go to. A client not listed here gets a tab named after its code.
+const CLIENT_TABS = {
+  'boca-dental-e770de': 'Boca Dental',
+  'palm-beach-plastic-n9umxi': 'Palm Beach Plastic'
+};
+// Slack alerts: put a Slack incoming-webhook URL in Project Settings > Script properties as SLACK_WEBHOOK_URL.
+// Every new client response is then posted there. Leave it unset to turn Slack alerts off.
 // You can also add client codes without editing this file: Project Settings > Script properties >
 // CLIENTS = comma-separated codes, e.g. "boca-dental-e770de, palm-beach-plastic-surgery-4b9c21".
 // Who gets an email for each new client response. Leave '' to turn emails off.
@@ -21,7 +29,7 @@ const NOTIFY_EMAIL = '';
 const REVIEW_BASE_URL = 'https://peejayedz.github.io/automation-review/';
 // -----------------------------------------------------------------------
 
-const SHEET_NAME = 'Responses';
+const LEGACY_SHEET = 'Responses'; // the old single tab. Its rows all belonged to Boca Dental.
 const HEADERS = ['id', 'timestamp', 'client', 'automation', 'version', 'step', 'step_title', 'action',
                  'type', 'details', 'new_copy', 'name', 'email', 'status', 'lfmp_reply'];
 const CONTENT_SHEET = 'Content';
@@ -29,21 +37,32 @@ const CONTENT_HEADERS = ['timestamp', 'client', 'automation', 'field', 'value', 
 const ACTIONS = ['approve', 'change', 'copy', 'answer', 'approve_all'];
 const STATUSES = ['Open', 'In progress', 'Done'];
 
-function sheet_() {
+function tabName_(client) { return CLIENT_TABS[client] || client; }
+
+/** The response tab for one client. Created (and formatted) the first time it's needed. */
+function sheet_(client) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sh = ss.getSheetByName(SHEET_NAME);
+  const name = tabName_(client);
+  let sh = ss.getSheetByName(name);
+  if (!sh && client === 'boca-dental-e770de') {
+    // One-time move: the old "Responses" tab only ever held Boca Dental, so it becomes their tab.
+    const old = ss.getSheetByName(LEGACY_SHEET);
+    if (old) { old.setName(name); sh = old; }
+  }
   if (!sh) {
-    sh = ss.insertSheet(SHEET_NAME);
+    sh = ss.insertSheet(name);
     sh.appendRow(HEADERS);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
   }
-  if (!PropertiesService.getScriptProperties().getProperty('FORMATTED')) {
-    // One-time: keep the version column as text (so "1.0" stays "1.0") and add the status dropdown.
+  const props = PropertiesService.getScriptProperties();
+  const flag = 'FORMATTED_' + name;
+  if (!props.getProperty(flag)) {
+    // One-time per tab: keep the version column as text (so "1.0" stays "1.0") and add the status dropdown.
     sh.getRange(2, HEADERS.indexOf('version') + 1, sh.getMaxRows() - 1, 1).setNumberFormat('@');
     const rule = SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).setAllowInvalid(true).build();
     sh.getRange(2, HEADERS.indexOf('status') + 1, sh.getMaxRows() - 1, 1).setDataValidation(rule);
-    PropertiesService.getScriptProperties().setProperty('FORMATTED', '1');
+    props.setProperty(flag, '1');
   }
   return sh;
 }
@@ -85,7 +104,7 @@ function isAdmin_(key) {
 function doGet(e) {
   const client = (e.parameter.client || '').trim();
   if (clients_().indexOf(client) === -1) return json_({ ok: false, error: 'Unknown client' });
-  const rows = sheet_().getDataRange().getValues().slice(1)
+  const rows = sheet_(client).getDataRange().getValues().slice(1)
     .filter(r => r[2] === client).map(r => toObj_(HEADERS, r));
   const content = contentSheet_().getDataRange().getValues().slice(1)
     .filter(r => r[1] === client).map(r => toObj_(CONTENT_HEADERS, r));
@@ -120,7 +139,7 @@ function doPost(e) {
       // Permanently removes responses (for clearing test data). Only rows for this client are touched.
       if (!isAdmin_(d.key)) return json_({ ok: false, error: 'Not authorized' });
       const ids = (d.ids || []).map(String);
-      const sh = sheet_();
+      const sh = sheet_(d.client);
       const vals = sh.getDataRange().getValues();
       let deleted = 0;
       for (let i = vals.length - 1; i >= 1; i--) {
@@ -130,7 +149,7 @@ function doPost(e) {
     }
     if (d.action === 'admin_status') {
       if (!isAdmin_(d.key)) return json_({ ok: false, error: 'Not authorized' });
-      const sh = sheet_();
+      const sh = sheet_(d.client);
       const ids = sh.getRange(2, 1, Math.max(sh.getLastRow() - 1, 1), 1).getValues().map(r => r[0]);
       const i = ids.indexOf(d.id);
       if (i === -1) return json_({ ok: false, error: 'Response not found' });
@@ -161,21 +180,53 @@ function doPost(e) {
       status: (d.action === 'change' || d.action === 'copy') ? 'Open' : '',
       lfmp_reply: ''
     };
-    sheet_().appendRow(HEADERS.map(h => safe_(row[h])));
-    notify_(row);
+    sheet_(d.client).appendRow(HEADERS.map(h => safe_(row[h])));
+    try { notify_(row); } catch (err) { console.warn('Email alert failed: ' + err); }
+    try { slack_(row); } catch (err) { console.warn('Slack alert failed: ' + err); }
     return json_({ ok: true, row: row });
   } finally {
     lock.releaseLock();
   }
 }
 
+const LABELS = {
+  approve: 'marked a step as looks good', change: 'requested a change', copy: 'sent new wording',
+  answer: 'answered a question', approve_all: 'APPROVED the automation'
+};
+function reviewLink_(row) {
+  return REVIEW_BASE_URL + '?c=' + encodeURIComponent(row.client) + '&a=' + encodeURIComponent(row.automation);
+}
+
+/** Posts a new response to Slack (incoming webhook in the SLACK_WEBHOOK_URL script property). */
+function slack_(row) {
+  const url = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL');
+  if (!url) return;
+  const icon = { approve: ':white_check_mark:', change: ':pencil2:', copy: ':memo:', answer: ':speech_balloon:', approve_all: ':tada:' }[row.action] || ':bell:';
+  const lines = [
+    icon + ' *' + row.name + '* ' + LABELS[row.action] + ' · *' + tabName_(row.client) + '*',
+    '*Automation:* ' + row.automation + ' (v' + row.version + ')',
+    row.step_title ? '*Step:* ' + row.step_title : '',
+    row.type ? '*Type:* ' + row.type : '',
+    row.details ? '*Details:* ' + clip_(row.details, 600) : '',
+    row.new_copy ? '*New wording:*\n>' + clip_(row.new_copy, 1500).replace(/\n/g, '\n>') : '',
+    '<' + reviewLink_(row) + '|Open the review page> · <' + SpreadsheetApp.getActiveSpreadsheet().getUrl() + '|Open the Sheet>'
+  ].filter(Boolean);
+  UrlFetchApp.fetch(url, {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    payload: JSON.stringify({ text: lines.join('\n') })
+  });
+}
+
+/** One-off test: run this from the Apps Script editor to check the Slack alert works. */
+function testSlack() {
+  slack_({ client: 'boca-dental-e770de', automation: 'new-patient', version: '1.0', step_title: 'Test alert',
+           action: 'change', type: 'Test', details: 'If you can read this, Slack alerts are working.', new_copy: '', name: 'LFMP test' });
+}
+
 function notify_(row) {
   if (!NOTIFY_EMAIL || row.action === 'approve') return;
-  const label = {
-    change: 'requested a change', copy: 'sent new wording',
-    answer: 'answered a question', approve_all: 'APPROVED the automation'
-  }[row.action];
-  const link = REVIEW_BASE_URL + '?c=' + encodeURIComponent(row.client) + '&a=' + encodeURIComponent(row.automation);
+  const label = LABELS[row.action];
+  const link = reviewLink_(row);
   const body = [
     row.name + ' ' + label + '.', ' ',
     'Client: ' + row.client,
