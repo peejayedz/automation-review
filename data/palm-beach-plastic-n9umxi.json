@@ -1,0 +1,743 @@
+{
+ "client": {
+  "key": "palm-beach-plastic-n9umxi",
+  "name": "Palm Beach Plastic and Cosmetic Surgery",
+  "location": "West Palm Beach, Florida"
+ },
+ "lfmpContact": "PJ at Law Firm Marketing Pros",
+ "automations": [
+  {
+   "id": "new-lead",
+   "name": "New Lead Follow-Up",
+   "version": "1.0",
+   "sent": "Sep 30, 2026",
+   "summary": "When someone claims an offer on your website or through a Facebook lead form, this follows up right away by email and text, connects your office by phone if they don't reply, and checks in again the next day.",
+   "glance": [
+    [
+     "Starts when",
+     "Someone claims an offer on your website or a Facebook lead form"
+    ],
+    [
+     "Runs for",
+     "1 day"
+    ],
+    [
+     "Patient receives",
+     "1 email, 2–3 texts, 1 call, 1 voicemail"
+    ],
+    [
+     "Your team receives",
+     "1 call to connect with the new lead"
+    ],
+    [
+     "Ends",
+     "The next day, after the check-in text"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "Someone claims an offer",
+     "body": "The follow-up starts when someone submits the Claim Offer form on your website or a Facebook lead form.",
+     "note": "All six of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The lead is added to your lead board",
+     "body": "They're added to the Marketing Pipeline as a New Lead, and also start the Long-Term Nurture emails (automation 5)."
+    },
+    {
+     "id": "s3",
+     "day": "Day 0",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email 1: Thanks for claiming our offer",
+     "email": {
+      "subject": "Thanks for claiming our offer [First name]",
+      "body": "Thanks for claiming our [Promotion name] promotion [First name]!\n\nWe're looking forward to seeing you. Be sure to check out our calendar to schedule your appointment: [Booking link]\n\nWe also shot you a text if you have any questions in the meantime.\n\nPalm Beach Plastic and Cosmetic Surgery"
+     },
+     "note": "[Promotion name] comes from a custom value in your account. Please confirm what the promotion is called so it reads correctly."
+    },
+    {
+     "id": "s4",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Text 1: Thanks for claiming our offer",
+     "sms": "Hi [First name], thanks for claiming our [Promotion name] promotion - Have you been to a medical spa in the past?\n\n- Palm Beach Plastic and Cosmetic Surgery",
+     "note": "This text asks about a “medical spa”. If that isn’t how you describe your practice, we can change the question. It also has no opt-out wording (“Reply STOP to opt out”), which carriers expect on the first message."
+    },
+    {
+     "id": "s5",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "If they reply and want to book",
+     "gap": "Waits up to 2 minutes for a reply",
+     "title": "Text 2: If they reply and want to book",
+     "sms": "Got it, so you know a little about what to expect. And just as a reminder: if you haven't already, be sure to schedule an appointment on our calendar here: [Booking link] You can also call us directly at [Practice phone]",
+     "body": "When someone replies, they move to Hot Lead on your lead board. If their reply shows they want to book, they get this text.",
+     "note": "The booking link in this message uses a merge field ({{custom_values.marketing__website_booking_page_url}}) we couldn't find in your account's custom values. If it isn't set up, the link will be blank. We'll confirm it before going live."
+    },
+    {
+     "id": "s6",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "If they reply but aren't ready",
+     "gap": "Or",
+     "title": "Text 2: If they reply but aren't ready to book",
+     "sms": "No problem. The next step is to book a time to come in - grab a spot that works for you here: [Booking link]"
+    },
+    {
+     "id": "s7",
+     "day": "Day 0",
+     "type": "call",
+     "who": "team",
+     "when": "If there's no reply after 2 minutes",
+     "gap": "If there's no reply after 2 minutes",
+     "title": "Your office is connected to the lead",
+     "body": "Your office phone rings with the message “A new lead has been generated. Their name is [Contact name]. Press any key to connect with [First name].” Pressing a key calls the lead."
+    },
+    {
+     "id": "s8",
+     "day": "Day 0",
+     "type": "vm",
+     "who": "patient",
+     "when": "Right after",
+     "gap": "Right after",
+     "title": "A recorded voicemail is left",
+     "body": "A pre-recorded voicemail is dropped on the lead's phone.",
+     "note": "We couldn't see a recording attached to this step. Please send us the voicemail you'd like to use, or we can help you record one."
+    },
+    {
+     "id": "s9",
+     "day": "Day 1",
+     "type": "sms",
+     "who": "patient",
+     "when": "Next day",
+     "gap": "1 day later",
+     "title": "Text 3: Any questions?",
+     "sms": "Hi [First name], just checking back to see if you're ready to book an appointment so we can apply your discount. Are there any questions we can answer for you in the meantime? - Palm Beach Plastic and Cosmetic Surgery"
+    },
+    {
+     "id": "s10",
+     "day": "Day 1",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The follow-up ends",
+     "body": "The lead leaves this automation. They keep getting the weekly Long-Term Nurture emails until they buy."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "What is the offer or promotion called?",
+     "why": "It's filled into the first email and text as [Promotion name].",
+     "options": [
+      "I'll send the name",
+      "There's no promotion, remove it"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Should the first text ask about a medical spa?",
+     "why": "The question came from a template. It may not fit a plastic surgery practice.",
+     "options": [
+      "Keep it",
+      "Change the question (recommended)"
+     ]
+    },
+    {
+     "id": "q3",
+     "text": "Who should get the call when a new lead doesn't reply?",
+     "why": "Right now the call goes to your main office line.",
+     "options": [
+      "Main office line",
+      "A specific team member"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "appointment",
+   "name": "Appointment Confirmation + Reminders",
+   "version": "1.0",
+   "sent": "Sep 30, 2026",
+   "summary": "When an appointment is confirmed, this sends a confirmation email, then reminders 24 hours and 1 hour before the visit.",
+   "glance": [
+    [
+     "Starts when",
+     "An appointment is confirmed in your main calendar"
+    ],
+    [
+     "Runs for",
+     "Until the appointment"
+    ],
+    [
+     "Patient receives",
+     "3 emails, 1 text"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "At the appointment time"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Booking",
+     "type": "start",
+     "when": "Start",
+     "title": "An appointment is confirmed",
+     "body": "Starts when an appointment is confirmed in your main booking calendar.",
+     "note": "All six of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Booking",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The new-lead follow-up stops",
+     "body": "The patient leaves the New Lead Follow-Up and moves to New Booking on your lead board.",
+     "note": "They don't leave the Long-Term Nurture emails (automation 5), so they'll keep getting promotional emails after booking. We recommend stopping those too. See Question 1."
+    },
+    {
+     "id": "s3",
+     "day": "Booking",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email 1: Your appointment is confirmed",
+     "email": {
+      "subject": "Spa Appointment Confirmation",
+      "body": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nPalm Beach Plastic and Cosmetic Surgery\n[Practice address]\n\nAdd to Google calendar | Add to Outlook\nCancel | Reschedule"
+     },
+     "note": "The subject says “Spa Appointment”. We suggest “Your appointment is confirmed” unless “spa” is right for you."
+    },
+    {
+     "id": "s4",
+     "day": "Day before",
+     "type": "email",
+     "who": "patient",
+     "when": "24 hours before",
+     "gap": "24 hours before the appointment",
+     "title": "Email 2: Your appointment is in 24 hours",
+     "email": {
+      "subject": "Your Appointment Visit is in 24 Hours!",
+      "body": "Hi [First name],\n\nJust a friendly reminder that your Appointment is in 24 Hours.\n\nWe look forward to seeing you then!\n\nPalm Beach Plastic and Cosmetic Surgery\n[Practice address]\n\nAdd to google calendar | Add to outlook\nCancel | Reschedule"
+     }
+    },
+    {
+     "id": "s5",
+     "day": "Appointment day",
+     "type": "email",
+     "who": "patient",
+     "when": "1 hour before",
+     "gap": "1 hour before the appointment",
+     "title": "Email 3: Your appointment is in one hour",
+     "email": {
+      "subject": "[First name] your Showroom Visit appointment is in one hour!",
+      "body": "Hi [First name],\n\nJust a friendly reminder that your appointment is in one hour.\n\nWe look forward to seeing you!\n\nPalm Beach Plastic and Cosmetic Surgery\n[Practice address]\n\nAdd to google calendar | Add to outlook\nCancel | Reschedule"
+     },
+     "note": "The subject says “Showroom Visit”, which came from a template. We recommend “your appointment is in one hour”."
+    },
+    {
+     "id": "s6",
+     "day": "Appointment day",
+     "type": "sms",
+     "who": "patient",
+     "when": "1 hour before",
+     "gap": "At the same time",
+     "title": "Text 1: Your appointment is in one hour",
+     "sms": "Hi [First name], just a friendly reminder that your Appointment is in one hour. Please confirm you're still available by replying YES - Palm Beach Plastic and Cosmetic Surgery",
+     "note": "This asks the patient to reply YES, but nothing happens when they do. Your team would need to watch for replies, or we can remove that line."
+    },
+    {
+     "id": "s7",
+     "day": "Appointment day",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The reminders end",
+     "body": "The patient leaves this automation at the appointment time."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Should the Long-Term Nurture emails stop once someone books?",
+     "why": "Right now they keep going after booking.",
+     "options": [
+      "Yes, stop them (recommended)",
+      "No, keep sending"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Would you like a text reminder the day before too?",
+     "why": "Today the day-before reminder is email only.",
+     "options": [
+      "Yes, add a text",
+      "Email is enough"
+     ]
+    },
+    {
+     "id": "q3",
+     "text": "What should happen when a patient replies YES to the 1-hour text?",
+     "why": "Nothing is set up to handle the reply.",
+     "options": [
+      "Remove the reply-YES line",
+      "Mark the appointment confirmed",
+      "Your team will watch replies"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "no-show",
+   "name": "Missed Appointment Follow-Up",
+   "version": "1.0",
+   "sent": "Sep 30, 2026",
+   "summary": "When a patient misses their appointment, this sends a reschedule email and text straight away, then one more text the next day if they haven't replied.",
+   "glance": [
+    [
+     "Starts when",
+     "An appointment is marked No-show in your main calendar"
+    ],
+    [
+     "Runs for",
+     "1 day"
+    ],
+    [
+     "Patient receives",
+     "1 email, 2 texts"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "The next day, or as soon as the patient replies"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "A patient misses their appointment",
+     "body": "Starts when an appointment in your main calendar is marked No-show.",
+     "note": "All six of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email 1: Let's get you rescheduled",
+     "email": {
+      "subject": "Let's get you rescheduled [First name]!",
+      "body": "Hi [First name],\n\nSorry you weren't able to make it to your appointment - let's get you rescheduled!\n\nYou can book another day/time that will work for you by clicking here: [Booking link]\n\nWe look forward to seeing with you!\n\nPalm Beach Plastic and Cosmetic Surgery\n[Practice address]"
+     },
+     "note": "There's a small typo: “seeing with you” should be “seeing you”. The booking link in this message uses a merge field ({{custom_values.marketing__website_booking_page_url}}) we couldn't find in your account's custom values. If it isn't set up, the link will be blank. We'll confirm it before going live."
+    },
+    {
+     "id": "s3",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "At the same time",
+     "title": "Text 1: Let's get you rescheduled",
+     "sms": "Hi [First name]! Sorry you weren't able to make it to your appointment - let's get you rescheduled!\n\nYou can book another day/time that will work for you by clicking here: [Booking link]\n\nWe look forward to seeing you! - Palm Beach Plastic and Cosmetic Surgery"
+    },
+    {
+     "id": "s4",
+     "day": "Day 1",
+     "type": "sms",
+     "who": "patient",
+     "when": "Next day, if no reply",
+     "gap": "1 day later, if they haven't replied",
+     "title": "Text 2: Checking back in",
+     "sms": "Hi [First name], just wanted to check back to see if we can get you rescheduled or if you had any questions we can help with - Palm Beach Plastic and Cosmetic Surgery"
+    },
+    {
+     "id": "s5",
+     "day": "Day 1",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The follow-up ends",
+     "body": "The patient leaves this automation. It also stops early as soon as they reply."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Should your team be alerted when someone misses an appointment?",
+     "why": "Right now nobody on your team is notified.",
+     "options": [
+      "Yes, alert the team",
+      "No alert needed"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "review",
+   "name": "Review Request After a Sale",
+   "version": "1.0",
+   "sent": "Sep 30, 2026",
+   "summary": "When a lead is marked Won, this stops the promotional emails, sends a review request by email and text, and reminds your team 3 days later to check whether a review came in.",
+   "glance": [
+    [
+     "Starts when",
+     "A lead is marked Won on your lead board"
+    ],
+    [
+     "Runs for",
+     "3 days"
+    ],
+    [
+     "Patient receives",
+     "1 review request email, 1 review request text"
+    ],
+    [
+     "Your team receives",
+     "1 email 3 days later"
+    ],
+    [
+     "Ends",
+     "Day 3, after your team is reminded"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "A lead is marked Won",
+     "body": "Starts when a lead in the Marketing Pipeline is marked Won.",
+     "note": "All six of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The Long-Term Nurture emails stop",
+     "body": "The patient leaves the Long-Term Nurture emails (automation 5)."
+    },
+    {
+     "id": "s3",
+     "day": "Day 0",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Review request email",
+     "body": "Your standard review request email is sent, with a link to leave a Google review.",
+     "note": "This uses the review request set up in GHL's Reputation settings. We'll add the exact wording here for you to review."
+    },
+    {
+     "id": "s4",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "At the same time",
+     "title": "Review request text",
+     "body": "Your standard review request text is sent, with a link to leave a Google review.",
+     "note": "This also uses the wording from your Reputation settings. We'll add it here for you to review."
+    },
+    {
+     "id": "s5",
+     "day": "Day 3",
+     "type": "team",
+     "who": "team",
+     "when": "3 days later",
+     "gap": "3 days later",
+     "title": "Your team is reminded to check for a review",
+     "body": "Everyone on your team gets an email: “Has [Contact name] left a review yet?”"
+    },
+    {
+     "id": "s6",
+     "day": "Day 3",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The review request ends",
+     "body": "The patient leaves this automation."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Who should get the 3-day review reminder?",
+     "why": "Right now it goes to every user in your account.",
+     "options": [
+      "Everyone",
+      "One person (tell us who)"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Is “Won” the right moment to ask for a review?",
+     "why": "Some practices prefer to wait until after the procedure or follow-up visit.",
+     "options": [
+      "Yes, when marked Won",
+      "After the procedure (tell us when)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "long-term",
+   "name": "Long-Term Nurture",
+   "version": "1.0",
+   "sent": "Sep 30, 2026",
+   "summary": "New leads who don't book straight away get one promotional email a week for five weeks, each featuring a different treatment.",
+   "glance": [
+    [
+     "Starts when",
+     "A new lead comes in through automation 1"
+    ],
+    [
+     "Runs for",
+     "5 weeks"
+    ],
+    [
+     "Patient receives",
+     "5 emails, one a week"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "After the fifth email, or when marked Won"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Week 0",
+     "type": "start",
+     "when": "Start",
+     "title": "A new lead starts the nurture emails",
+     "body": "Leads join this automation from the New Lead Follow-Up (automation 1).",
+     "note": "All six of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Week 1",
+     "type": "email",
+     "who": "patient",
+     "when": "7 days later",
+     "gap": "7 days later",
+     "title": "Email 1",
+     "email": {
+      "subject": "Reveal Your Radiant Skin with Our Luxurious Hydrafacial Experience!",
+      "body": "",
+      "pending": "We couldn't find the content of this email in GHL. The template it points to seems to be missing. We'll add the wording here once it's rebuilt."
+     },
+     "note": "These five emails promote Hydrafacial, body contouring, laser hair removal, microneedling and PRP. Please confirm these are services you offer and want to promote. See Question 1."
+    },
+    {
+     "id": "s3",
+     "day": "Week 2",
+     "type": "email",
+     "who": "patient",
+     "when": "7 days later",
+     "gap": "7 days later",
+     "title": "Email 2",
+     "email": {
+      "subject": "Transform Your Body with Our Advanced Body Contouring Service!",
+      "body": "",
+      "pending": "We couldn't find the content of this email in GHL. The template it points to seems to be missing. We'll add the wording here once it's rebuilt."
+     }
+    },
+    {
+     "id": "s4",
+     "day": "Week 3",
+     "type": "email",
+     "who": "patient",
+     "when": "7 days later",
+     "gap": "7 days later",
+     "title": "Email 3",
+     "email": {
+      "subject": "Say Goodbye to Unwanted Hair with Our Advanced Laser Hair Removal!",
+      "body": "",
+      "pending": "We couldn't find the content of this email in GHL. The template it points to seems to be missing. We'll add the wording here once it's rebuilt."
+     }
+    },
+    {
+     "id": "s5",
+     "day": "Week 4",
+     "type": "email",
+     "who": "patient",
+     "when": "7 days later",
+     "gap": "7 days later",
+     "title": "Email 4",
+     "email": {
+      "subject": "Unlock Flawless Skin with Our Advanced MicroNeedling Treatment!",
+      "body": "",
+      "pending": "We couldn't find the content of this email in GHL. The template it points to seems to be missing. We'll add the wording here once it's rebuilt."
+     }
+    },
+    {
+     "id": "s6",
+     "day": "Week 5",
+     "type": "email",
+     "who": "patient",
+     "when": "7 days later",
+     "gap": "7 days later",
+     "title": "Email 5",
+     "email": {
+      "subject": "Revitalize Your Skin Naturally with PRP Injections!",
+      "body": "",
+      "pending": "We couldn't find the content of this email in GHL. The template it points to seems to be missing. We'll add the wording here once it's rebuilt."
+     }
+    },
+    {
+     "id": "s7",
+     "day": "Week 5",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The nurture emails end",
+     "body": "The lead leaves this automation after the fifth email. It also stops early if they're marked Won."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Which treatments should these emails promote?",
+     "why": "The current five came from a template. Tell us which fit your practice.",
+     "options": [
+      "Keep all five",
+      "I'll send the list"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Should these emails stop when someone books an appointment?",
+     "why": "Today they only stop when a lead is marked Won.",
+     "options": [
+      "Yes, stop on booking (recommended)",
+      "No, keep going until Won"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stale-leads",
+   "name": "Stale Leads Clean-Up",
+   "version": "1.0",
+   "sent": "Sep 30, 2026",
+   "summary": "Leads that sit in the same stage of your lead board for 7 days without any activity are marked Abandoned, so the board stays current.",
+   "glance": [
+    [
+     "Starts when",
+     "A lead has no activity for 7 days"
+    ],
+    [
+     "Runs for",
+     "Instant"
+    ],
+    [
+     "Patient receives",
+     "Nothing"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "Straight away"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 7",
+     "type": "start",
+     "when": "Start",
+     "title": "A lead has had no activity for 7 days",
+     "body": "Starts when a lead has sat in New Lead, Hot Lead or Booked for 7 days with nothing happening.",
+     "note": "All six of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve. These triggers also point to a lead board that no longer exists in your account, so they would never fire. We'll reconnect them to your Marketing Pipeline."
+    },
+    {
+     "id": "s2",
+     "day": "Day 7",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The lead is marked Abandoned",
+     "body": "The lead moves to Abandoned on your Marketing Pipeline."
+    },
+    {
+     "id": "s3",
+     "day": "Day 7",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "Done",
+     "body": "Nothing is sent to the patient."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Is 7 days the right cut-off?",
+     "why": "Longer consult cycles may need more time before a lead is written off.",
+     "options": [
+      "7 days is fine",
+      "14 days",
+      "30 days"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Should booked patients be marked Abandoned after 7 days?",
+     "why": "Someone booked 3 weeks out would be marked Abandoned before their visit.",
+     "options": [
+      "No, leave booked leads alone (recommended)",
+      "Yes"
+     ]
+    }
+   ]
+  }
+ ]
+}
