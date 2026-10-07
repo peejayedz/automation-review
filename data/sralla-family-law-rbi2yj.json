@@ -12,11 +12,11 @@
    "name": "New Lead Follow-Up",
    "version": "1.0",
    "sent": "Oct 8, 2026",
-   "summary": "When someone fills in your offer form or a Facebook lead form, this follows up right away by email and text, connects your office by phone if they don't reply, and checks in again the next day.",
+   "summary": "When someone submits the lead form on your website, this follows up right away by email and text, connects your office by phone if they don't reply, and checks in again the next day.",
    "glance": [
     [
      "Starts when",
-     "Someone fills in your offer form or a Facebook lead form"
+     "Someone submits the lead form on your website"
     ],
     [
      "Runs for",
@@ -41,9 +41,9 @@
      "day": "Day 0",
      "type": "start",
      "when": "Start",
-     "title": "Someone fills in your offer form",
-     "body": "The follow-up starts when someone submits your Claim Offer form on the website or a Facebook lead form.",
-     "note": "All six of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve. The website trigger doesn't have a form selected yet, so it wouldn't fire. We'll connect it to the right form."
+     "title": "Someone submits your website lead form",
+     "body": "The follow-up starts when someone submits the lead (intake) form on your website.",
+     "note": "All six of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve. We're connecting this trigger to your website lead form (it was set up for an offer form and a Facebook lead form from a template)."
     },
     {
      "id": "s2",
@@ -62,12 +62,12 @@
      "who": "patient",
      "when": "Immediately",
      "gap": "Immediately",
-     "title": "Email 1: Thanks for reaching out",
+     "title": "Email 1: Thanks for contacting us",
      "email": {
       "subject": "Thanks for claiming our offer [First name]!",
       "body": "Thanks for claiming our [Promotion name] promotion [First name]!\n\nWe're looking forward to seeing you. Be sure to check out our calendar to schedule your appointment: [Booking link]\n\nWe also shot you a text if you have any questions in the meantime.\n\nSralla Family Law, PLLC"
      },
-     "note": "This wording talks about “claiming our offer” and a “promotion”. Please confirm what the offer is (for example, a free consultation). If there isn't one, we suggest “Thanks for contacting Sralla Family Law” instead."
+     "note": "This wording still talks about “claiming our offer” and a “promotion” from the template. We suggest something like “Thanks for submitting your intake form. We're looking forward to speaking with you.” Use Edit the wording to send the version you prefer."
     },
     {
      "id": "s4",
@@ -76,7 +76,7 @@
      "who": "patient",
      "when": "Immediately",
      "gap": "Immediately",
-     "title": "Text 1: Thanks for reaching out",
+     "title": "Text 1: Thanks for contacting us",
      "sms": "Hi [First name], thanks for claiming our [Promotion name] promotion - Have you worked with a lawyer on this issue in the past?\n\n- Sralla Family Law, PLLC",
      "note": "This first text has no opt-out wording (“Reply STOP to opt out”), which carriers expect on the first message."
     },
@@ -146,12 +146,12 @@
    "questions": [
     {
      "id": "q1",
-     "text": "What is the offer, if any?",
-     "why": "The messages mention a promotion and a discount.",
+     "text": "Is there an offer, such as a free consultation?",
+     "why": "The current texts and email mention a promotion and a discount, which came from a template.",
      "options": [
       "Free consultation",
-      "Discounted consultation",
-      "No offer, remove it"
+      "No offer, remove it",
+      "Something else"
      ]
     },
     {
