@@ -64,6 +64,11 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .glance div{background:var(--paper);padding:12px 14px;font-size:14px}
 .glanceedit{border:1px dashed var(--team);border-radius:8px;padding:8px 10px;display:grid;gap:6px}
 .glanceedit legend{font-size:12px;font-weight:700;color:var(--team);padding:0 4px}
+.overview{margin:-10px 0 22px;display:grid;gap:10px}
+.ovbtn{justify-self:start;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+.ovbtn:hover{color:var(--ink);border-color:var(--warn)}
+.ovform{max-width:720px}
+.ovhist{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0}
 .glance b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:22px;align-items:start}
 .flow{display:flex;flex-direction:column}
@@ -387,6 +392,7 @@ function render(){
     </div>
   </section>
   <div class="glance">${auto.glance.map(g => `<div><b>${esc(g[0])}</b>${chips(g[1])}</div>`).join("")}</div>
+  ${overviewHTML()}
   <div class="main">
     <div class="flow" id="flow">${flowHTML()}</div>
     <aside id="sideInspector" aria-live="polite">${selected && !matchMedia("(max-width:980px)").matches ? `<div class="inspector">${inspectorHTML()}</div>` : ""}</aside>
@@ -419,6 +425,41 @@ function flowHTML(){
   return h;
 }
 
+function histItemsHTML(list){
+  return list.map(r => `
+     <div class="hitem ${r.action} ${r.status==="Done"?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
+       <span class="who">${esc(r.name||"Someone")}</span> <span class="when">· ${fmt(r.timestamp)}${!sameV(r.version, auto.version)?" · v"+esc(r.version):""}</span>
+       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · ${r.status!=="Done" && isReplaced(r, cur()) ? '<span class="rs done">Replaced by Looks good</span>' : statusTag(r.status)}`:""}</div>
+       ${r.details?`<div>${esc(r.details)}</div>`:""}
+       ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
+       ${r.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>`:""}
+       ${isAdmin && (r.action==="change"||r.action==="copy") ? `<form class="hadmin" data-form="status" data-id="${esc(r.id)}">
+         <select aria-label="Status" name="status">${["Open","In progress","Done"].map(o=>`<option ${String(r.status||"Open")===o?"selected":""}>${o}</option>`).join("")}</select>
+         <input type="text" name="reply" aria-label="Reply to client" placeholder="Reply shown to the client" value="${esc(r.lfmp_reply||"")}">
+         <button class="btn small" type="submit">Save</button></form>` : ""}
+       ${isAdmin ? `<div style="margin-top:6px">${delBtn(r.id)}</div>` : ""}
+     </div>`).join("");
+}
+let ovOpen = false, ovKind = null;
+function overviewHTML(){
+  const list = mine().filter(r => r.step === "overview" && r.action === "change").slice().reverse();
+  const locked = autoState(auto) === "approved";
+  const parts = ["The description", ...(auto.glance || []).map(g => g[0]), "Automation name", "Something else"];
+  const pick = ovKind && parts.includes(ovKind) ? ovKind : parts[0];
+  let h = "";
+  if (loaded && !locked){
+    h += ovOpen ? `<form class="form ovform" data-form="ovchange">
+      <label>What needs correcting?</label>
+      <div class="chips" role="group" aria-label="Part of the overview">${parts.map(k => `<button type="button" data-ovkind="${esc(k)}" aria-pressed="${k===pick}">${esc(k)}</button>`).join("")}</div>
+      <label for="ov-details">What should it say instead?</label>
+      <textarea id="ov-details" rows="3" required placeholder="e.g. It runs for 3 days, not 1"></textarea>
+      ${whoFields("ov")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Send correction</button><button class="btn" type="button" data-ov-cancel>Cancel</button></div>
+    </form>` : `<button class="ovbtn" type="button" data-act="ovchange">✎ Something not right in this overview? Request a correction</button>`;
+  }
+  if (list.length) h += `<div class="hist ovhist"><h3>Corrections requested for this overview</h3>${histItemsHTML(list)}</div>`;
+  return h ? `<div class="overview">${h}</div>` : "";
+}
 function inspectorHTML(){
   const s = auto.steps.find(x => x.id === selected); if (!s) return "";
   let st = stepState(s.id); if (s.type === "start" && (st === "pending" || st === "loading")) st = null;
@@ -446,8 +487,8 @@ function inspectorHTML(){
   if (!loaded && s.type !== "start"){
     actions = `<div class="loadnote">${loadFailed ? "Couldn't load saved responses and comments. Click ↻ Refresh at the top to try again." : "Loading saved responses and comments… this can take up to 30 seconds."}</div>`;
   } else if (s.type === "start" && !locked){
-    actions = `<div class="actions"><button class="btn warn" data-act="change" aria-pressed="${openForm==="change"}">Request a change</button></div>
-      <p class="hint" style="font-size:13px;margin:6px 0 0">Use this for changes to how the automation starts, this description, or the summary boxes at the top.</p>${formHTML(s)}`;
+    actions = `<div class="actions"><button class="btn ok" data-act="approve">✓ Looks good</button><button class="btn warn" data-act="change" aria-pressed="${openForm==="change"}">Request a change</button></div>
+      <p class="hint" style="font-size:13px;margin:6px 0 0">This is what starts the automation. Request a change if it should start differently, or if the description isn't right.</p>${formHTML(s)}`;
   } else if (s.type !== "start" && !locked){
     actions = `<div class="actions">
       <button class="btn ok" data-act="approve">✓ Looks good</button>
@@ -456,19 +497,7 @@ function inspectorHTML(){
     </div>${formHTML(s)}`;
   }
   const hist = mine().filter(r => r.step === s.id && ["approve","change","copy"].includes(r.action)).slice().reverse();
-  const histHTML = hist.length ? `<div class="hist"><h3>Responses on this step</h3>${hist.map(r => `
-     <div class="hitem ${r.action} ${r.status==="Done"?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
-       <span class="who">${esc(r.name||"Someone")}</span> <span class="when">· ${fmt(r.timestamp)}${!sameV(r.version, auto.version)?" · v"+esc(r.version):""}</span>
-       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · ${r.status!=="Done" && isReplaced(r, cur()) ? '<span class="rs done">Replaced by Looks good</span>' : statusTag(r.status)}`:""}</div>
-       ${r.details?`<div>${esc(r.details)}</div>`:""}
-       ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
-       ${r.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>`:""}
-       ${isAdmin && (r.action==="change"||r.action==="copy") ? `<form class="hadmin" data-form="status" data-id="${esc(r.id)}">
-         <select aria-label="Status" name="status">${["Open","In progress","Done"].map(o=>`<option ${String(r.status||"Open")===o?"selected":""}>${o}</option>`).join("")}</select>
-         <input type="text" name="reply" aria-label="Reply to client" placeholder="Reply shown to the client" value="${esc(r.lfmp_reply||"")}">
-         <button class="btn small" type="submit">Save</button></form>` : ""}
-       ${isAdmin ? `<div style="margin-top:6px">${delBtn(r.id)}</div>` : ""}
-     </div>`).join("")}</div>` : "";
+  const histHTML = hist.length ? `<div class="hist"><h3>Responses on this step</h3>${histItemsHTML(hist)}</div>` : "";
   return `<div class="ihead">${ICON[s.type]?`<span class="icon" style="width:28px;height:28px">${ICON[s.type]}</span>`:""}<span>${esc(s.day)} · ${esc(s.when)} · ${TYPE[s.type]}</span>${st?`<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>`:""}</div>
     <h2>${chips(s.title)}</h2>${content}${actions}${histHTML}`;
 }
@@ -552,7 +581,7 @@ function formHTML(s){
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ok" type="submit">✓ Mark as looks good</button><button class="btn" type="button" data-cancel>Cancel</button></div></form>`;
   }
   if (openForm === "change"){
-    const kinds = s.type === "start" ? ["Change how it starts","Change the description","Change the summary boxes","Something else"] : ["Change timing","Remove this step","Add a step after this","Notify someone here","Something else"];
+    const kinds = s.type === "start" ? ["Change what starts it","Correct the description","Something else"] : ["Change timing","Remove this step","Add a step after this","Notify someone here","Something else"];
     const pick = chipChoice[s.id] || kinds[0];
     return `<form class="form" data-form="change">
       <label>What would you like changed?</label>
@@ -685,6 +714,9 @@ document.addEventListener("click", async (e) => {
   }
   if (t.dataset.act === "change" || t.dataset.act === "copy"){ openForm = openForm === t.dataset.act ? null : t.dataset.act; render(); const f = document.getElementById(openForm==="copy"?"f-copy":"f-details"); if (f) f.focus(); return; }
   if (t.hasAttribute("data-cancel")){ openForm = null; render(); return; }
+  if (t.dataset.act === "ovchange"){ ovOpen = true; render(); const f = $("#ov-details"); if (f) f.focus(); return; }
+  if (t.hasAttribute("data-ov-cancel")){ ovOpen = false; render(); return; }
+  if (t.dataset.ovkind){ ovKind = t.dataset.ovkind; t.parentElement.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }
   if (t.dataset.kind){ chipChoice[selected] = t.dataset.kind; t.parentElement.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }
   if (t.dataset.q){
     const q = auto.questions.find(x=>x.id===t.dataset.q);
@@ -774,9 +806,15 @@ document.addEventListener("submit", async (e) => {
     catch(err){ toast("Couldn't save: " + err.message); } });
     return;
   }
+  if (kind === "ovchange"){
+    const d = $("#ov-details").value.trim(); if (!d){ $("#ov-details").focus(); return; }
+    const pressed = f.querySelector('[data-ovkind][aria-pressed="true"]'); const part = pressed ? pressed.dataset.ovkind : "The description";
+    if (await submit({step:"overview", step_title:"Overview: " + part, action:"change", type:"Correction: " + part, details:d, new_copy:""}, "Correction sent", f)){ ovOpen = false; ovKind = null; render(); }
+    return;
+  }
   if (kind === "change"){
     const d = $("#f-details").value.trim(); if (!d){ $("#f-details").focus(); return; }
-    const type = chipChoice[s.id] || (s.type === "start" ? "Change how it starts" : "Change timing");
+    const type = chipChoice[s.id] || (s.type === "start" ? "Change what starts it" : "Change timing");
     if (await submit({step:s.id, step_title:s.title, action:"change", type, details:d, new_copy:""}, "Change request sent", f)){ openForm = null; render(); }
   }
   if (kind === "copy"){
