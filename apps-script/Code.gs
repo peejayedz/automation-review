@@ -1,5 +1,8 @@
 /**
- * LFMP Automation Review: response + content storage (v4)
+ * LFMP Automation Review: response + content storage (v5)
+ *
+ * "To-do" tab: rebuilt automatically from every client tab. Lists what still needs doing (open change
+ * requests and new wording), the client's answers to questions, and what was finished in the last 14 days.
  *
  * One tab per client (named in CLIENT_TABS below): every response from that client
  * (looks good / change request / new wording / answer / approval).
@@ -155,6 +158,7 @@ function doPost(e) {
       for (let i = vals.length - 1; i >= 1; i--) {
         if (vals[i][2] === d.client && ids.indexOf(String(vals[i][0])) !== -1) { sh.deleteRow(i + 1); deleted++; }
       }
+      try { buildTodo(); } catch (err) {}
       return json_({ ok: true, deleted: deleted });
     }
     if (d.action === 'admin_status') {
@@ -167,6 +171,7 @@ function doPost(e) {
       if (d.status && STATUSES.indexOf(d.status) !== -1) sh.getRange(rowNum, HEADERS.indexOf('status') + 1).setValue(d.status);
       if (d.lfmp_reply != null) sh.getRange(rowNum, HEADERS.indexOf('lfmp_reply') + 1).setValue(safe_(clip_(d.lfmp_reply, 2000)));
       const updated = toObj_(HEADERS, sh.getRange(rowNum, 1, 1, HEADERS.length).getValues()[0]);
+      try { buildTodo(); } catch (err) {}
       return json_({ ok: true, row: updated });
     }
 
@@ -191,12 +196,98 @@ function doPost(e) {
       lfmp_reply: ''
     };
     sheet_(d.client).appendRow(HEADERS.map(h => safe_(row[h])));
+    try { buildTodo(); } catch (err) { console.warn('To-do rebuild failed: ' + err); }
     try { notify_(row); } catch (err) { console.warn('Email alert failed: ' + err); }
     try { slack_(row); } catch (err) { console.warn('Slack alert failed: ' + err); }
     return json_({ ok: true, row: row });
   } finally {
     lock.releaseLock();
   }
+}
+
+// ---- To-do summary tab --------------------------------------------------
+const TODO_SHEET = 'To-do';
+
+/** Adds a menu to the Sheet so the To-do tab can be refreshed by hand. */
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('Automation Review')
+    .addItem('Refresh To-do list', 'buildTodo')
+    .addToUi();
+}
+
+/** Keeps the To-do tab current when a status or reply is changed directly in a client tab. */
+function onEdit(e) {
+  try {
+    const sh = e.range.getSheet();
+    if (sh.getName() === TODO_SHEET || sh.getName() === CONTENT_SHEET) return;
+    const col = e.range.getColumn();
+    if (col === HEADERS.indexOf('status') + 1 || col === HEADERS.indexOf('lfmp_reply') + 1) buildTodo();
+  } catch (err) {}
+}
+
+/** Rebuilds the To-do tab from every client tab. */
+function buildTodo() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const all = [];
+  clients_().forEach(code => {
+    const sh = ss.getSheetByName(tabName_(code));
+    if (!sh || sh.getLastRow() < 2) return;
+    sh.getDataRange().getValues().slice(1).forEach(r => { const o = toObj_(HEADERS, r); o._tab = tabName_(code); all.push(o); });
+  });
+  const when = ts => { const d = new Date(ts); return isNaN(d) ? '' : Utilities.formatDate(d, 'America/New_York', 'MMM d, h:mm a') + ' ET'; };
+  const link = r => REVIEW_BASE_URL + '?c=' + encodeURIComponent(r.client) + '&a=' + encodeURIComponent(r.automation);
+  const what = r => [r.details, r.new_copy ? 'NEW WORDING:\n' + r.new_copy : ''].filter(String).join('\n\n');
+  const byTime = (a, b) => String(a.timestamp).localeCompare(String(b.timestamp));
+
+  const isReq = r => r.action === 'change' || r.action === 'copy';
+  // A request is replaced when the client later marked that same step "Looks good".
+  const replaced = r => all.some(x => x.client === r.client && x.automation === r.automation && x.step === r.step &&
+                                      x.action === 'approve' && String(x.timestamp) > String(r.timestamp));
+  const open = all.filter(r => isReq(r) && r.status !== 'Done' && !replaced(r)).sort(byTime);
+  const cutoff = new Date(Date.now() - 14 * 864e5).toISOString();
+  const done = all.filter(r => isReq(r) && r.status === 'Done' && String(r.timestamp) >= cutoff).sort(byTime).reverse();
+  // Latest answer per question.
+  const ansMap = {};
+  all.filter(r => r.action === 'answer').sort(byTime).forEach(r => { ansMap[r.client + '|' + r.automation + '|' + r.step] = r; });
+  const answers = Object.keys(ansMap).map(k => ansMap[k]);
+  const approvals = all.filter(r => r.action === 'approve_all').sort(byTime).reverse();
+
+  let sh = ss.getSheetByName(TODO_SHEET);
+  if (!sh) { sh = ss.insertSheet(TODO_SHEET, 0); }
+  sh.clear(); sh.clearConditionalFormatRules();
+  const COLS = ['Status', 'Client', 'Automation', 'Step', 'Request', 'Details / new wording', 'Requested by', 'When', 'Version', 'LFMP reply', 'Review page'];
+  const rows = [];
+  const fmts = []; // [rowIndex, kind]
+  const section = (title) => { rows.push([title].concat(Array(COLS.length - 1).fill(''))); fmts.push([rows.length, 'section']); };
+  rows.push(['Automation Review · To-do', '', '', '', '', 'Updated ' + when(new Date().toISOString()) + '. Change statuses on the review page or in the client tab.', '', '', '', '', '']);
+  fmts.push([1, 'title']);
+  rows.push(COLS); fmts.push([2, 'header']);
+  section('TO DO · ' + open.length + ' open request' + (open.length === 1 ? '' : 's'));
+  if (!open.length) rows.push(['Nothing open 🎉'].concat(Array(COLS.length - 1).fill('')));
+  open.forEach(r => rows.push([r.status || 'Open', r._tab, r.automation, r.step_title || r.step, r.type || (r.action === 'copy' ? 'New wording' : 'Change'),
+    what(r), r.name + (r.email ? ' <' + r.email + '>' : ''), when(r.timestamp), 'v' + r.version, r.lfmp_reply, link(r)]));
+  section('CLIENT ANSWERS TO QUESTIONS · ' + answers.length);
+  answers.forEach(r => rows.push(['Answered', r._tab, r.automation, r.step_title, 'Answer', r.details, r.name, when(r.timestamp), 'v' + r.version, r.lfmp_reply, link(r)]));
+  section('APPROVED AUTOMATIONS · ' + approvals.length);
+  approvals.forEach(r => rows.push(['Approved', r._tab, r.automation, r.step_title, 'Approved', r.details, r.name, when(r.timestamp), 'v' + r.version, '', link(r)]));
+  section('DONE IN THE LAST 14 DAYS · ' + done.length);
+  done.forEach(r => rows.push(['Done', r._tab, r.automation, r.step_title || r.step, r.type || 'Change', what(r), r.name, when(r.timestamp), 'v' + r.version, r.lfmp_reply, link(r)]));
+
+  sh.getRange(1, 1, rows.length, COLS.length).setValues(rows.map(r => r.map(v => safe_(v == null ? '' : v))));
+  sh.setFrozenRows(2);
+  sh.getRange(1, 1, rows.length, COLS.length).setVerticalAlignment('top').setWrap(true).setFontSize(10);
+  [110, 140, 130, 220, 150, 420, 160, 120, 70, 220, 120].forEach((w, i) => sh.setColumnWidth(i + 1, w));
+  fmts.forEach(([r, kind]) => {
+    const rg = sh.getRange(r, 1, 1, COLS.length);
+    if (kind === 'title') rg.setFontWeight('bold').setFontSize(13).setBackground('#EFEAF8');
+    if (kind === 'header') rg.setFontWeight('bold').setBackground('#16202B').setFontColor('#FFFFFF');
+    if (kind === 'section') rg.setFontWeight('bold').setBackground('#DCE2E9');
+  });
+  const statusCol = sh.getRange(3, 1, Math.max(rows.length - 2, 1), 1);
+  const rule = (text, bg, fg) => SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(text).setBackground(bg).setFontColor(fg).setRanges([statusCol]).build();
+  sh.setConditionalFormatRules([rule('Open', '#E8F0FE', '#1A4FA0'), rule('In progress', '#FDF1DC', '#9A5B00'),
+    rule('Done', '#E3F4EC', '#13795B'), rule('Approved', '#E3F4EC', '#13795B'), rule('Answered', '#F5F7FA', '#5B6775')]);
+  return open.length;
 }
 
 const LABELS = {
