@@ -69,6 +69,9 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .ovbtn:hover{color:var(--ink);border-color:var(--warn)}
 .ovform{max-width:720px}
 .ovhist{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0}
+.verlock{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.vbadge{font-weight:700;border:1px solid var(--line);border-radius:7px;padding:4px 10px;background:var(--paper)}
+.meta .updated{color:var(--ok);font-weight:600}
 .glance b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:22px;align-items:start}
 .flow{display:flex;flex-direction:column}
@@ -290,6 +293,8 @@ function applyContent(){
   content.slice().sort((a,b) => String(a.timestamp).localeCompare(String(b.timestamp))).forEach(c => {
     const a = data.automations.find(x => x.id === c.automation); if (!a) return;
     const f = String(c.field || ""), v = c.value == null ? "" : String(c.value);
+    if (f !== "version"){ a._edits = (a._edits || 0) + 1; if (!a._lastEdit || String(c.timestamp) > a._lastEdit) a._lastEdit = String(c.timestamp); }
+    else { a._edits = 0; a._lastEdit = null; a._roundStart = String(c.timestamp); }
     if (["name","summary","version"].includes(f)){ a[f] = v; a._edited = true; return; }
     const g = f.match(/^glance:(\d+):(label|value)$/);
     if (g){ a.glance = a.glance || []; const i = +g[1]; a.glance[i] = a.glance[i] || ["", ""]; a.glance[i][g[2] === "label" ? 0 : 1] = v; return; }
@@ -380,7 +385,7 @@ function render(){
     <div>
       <div class="eyebrow">Automation ${data.automations.indexOf(auto)+1} of ${data.automations.length}</div>
       <h1>${esc(auto.name)}</h1>
-      <div class="meta">${asPill}<span>Version ${esc(auto.version)}</span><span>Sent ${esc(auto.sent)}</span>${isAdmin?`<button class="adm" type="button" data-admin="details">✎ Edit name, summary, version</button>`:""}</div>
+      <div class="meta">${asPill}<span>Version ${esc(auto.version)}</span><span>Sent ${esc(auto.sent)}</span>${auto._lastEdit ? `<span class="updated">Updated ${fmt(auto._lastEdit)}${isAdmin ? ` · ${auto._edits} edit${auto._edits===1?"":"s"} this round` : ""}</span>` : ""}${isAdmin?`<button class="adm" type="button" data-admin="details">✎ Edit name, summary, boxes</button>`:""}</div>
       ${isAdmin && adminForm === "details" ? detailsFormHTML() : `<p class="lead">${esc(auto.summary)}</p>`}
       ${approvedBanner()}
     </div>
@@ -425,6 +430,10 @@ function flowHTML(){
   return h;
 }
 
+function nextVersion(v){
+  const m = String(v || "1.0").match(/^(\d+)\.(\d+)$/);
+  return m ? m[1] + "." + (Number(m[2]) + 1) : (Number(v) ? (Number(v) + 0.1).toFixed(1) : String(v || "1") + ".1");
+}
 function histItemsHTML(list){
   return list.map(r => `
      <div class="hitem ${r.action} ${r.status==="Done"?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
@@ -511,9 +520,11 @@ function detailsFormHTML(){
   return `<form class="form admform" data-form="details">
     <label for="ad-name">Automation name</label><input type="text" id="ad-name" value="${esc(auto.name)}">
     <label for="ad-summary">Summary</label><textarea id="ad-summary" rows="3">${esc(auto.summary)}</textarea>
-    <label for="ad-version">Version</label><input type="text" id="ad-version" value="${esc(auto.version)}" style="max-width:120px">
+    <label>Version</label>
+    <div class="verlock"><span class="vbadge">🔒 v${esc(auto.version)}</span><span class="hint">${auto._lastEdit ? `Last updated ${fmt(auto._lastEdit)} · ${auto._edits} edit${auto._edits===1?"":"s"} this round` : "No edits yet this round"}</span>
+      <button class="del ${armed==="newround"?"armed":""}" type="button" data-newround>${armed==="newround" ? `Click again to start v${esc(nextVersion(auto.version))}` : `Start new review round (v${esc(nextVersion(auto.version))})`}</button></div>
     <fieldset class="glanceedit"><legend>Summary boxes</legend>${(auto.glance || []).map((g, i) => `<div class="row2"><div><label for="ag-l${i}">Box ${i+1} label</label><input type="text" id="ag-l${i}" value="${esc(g[0])}"></div><div><label for="ag-v${i}">Box ${i+1} text</label><textarea id="ag-v${i}" rows="2">${esc(g[1])}</textarea></div></div>`).join("")}</fieldset>
-    <span class="hint">Change the version (for example 1.0 → 1.1) to start a new review round. Earlier responses stay in each step's history.</span>
+    <span class="hint">The version is locked. Saving edits updates the "Updated" date without resetting the client's reviews. When you're ready for the client to re-review everything, start a new review round: all steps go back to "Needs review" and earlier responses stay in each step's history.</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save changes</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div>
   </form>`;
 }
@@ -693,6 +704,12 @@ document.addEventListener("click", async (e) => {
     try { await adminDelete([id]); toast("Deleted"); } catch(err){ toast("Couldn't delete: " + err.message); } finally { busy = false; }
     render(); return;
   }
+  if (t.hasAttribute("data-newround")){
+    if (armed !== "newround"){ armed = "newround"; render(); setTimeout(() => { if (armed === "newround"){ armed = null; render(); } }, 5000); return; }
+    armed = null; const nv = nextVersion(auto.version);
+    await guarded(null, async () => { try { await adminEdit(auto.id, "version", nv); applyContent(); adminForm = null; unlockUI(); toast("New review round started · v" + nv); render(); } catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
   if (t.hasAttribute("data-clear")){
     if (armed !== "clear"){ armed = "clear"; render(); setTimeout(() => { if (armed === "clear"){ armed = null; render(); } }, 5000); return; }
     armed = null;
@@ -761,7 +778,7 @@ document.addEventListener("submit", async (e) => {
     return;
   }
   if (kind === "details"){
-    const changes = [["name", $("#ad-name").value.trim()], ["summary", $("#ad-summary").value.trim()], ["version", $("#ad-version").value.trim()]]
+    const changes = [["name", $("#ad-name").value.trim()], ["summary", $("#ad-summary").value.trim()]]
       .filter(([k, v]) => v && v !== String(auto[k]));
     (auto.glance || []).forEach((g, i) => {
       const l = $("#ag-l" + i).value.trim(), v = $("#ag-v" + i).value.trim();
