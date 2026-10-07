@@ -62,6 +62,8 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .howto{font-size:13px;color:var(--muted);margin:10px 0 0;padding:0 0 0 18px}
 .glance{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
 .glance div{background:var(--paper);padding:12px 14px;font-size:14px}
+.glanceedit{border:1px dashed var(--team);border-radius:8px;padding:8px 10px;display:grid;gap:6px}
+.glanceedit legend{font-size:12px;font-weight:700;color:var(--team);padding:0 4px}
 .glance b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:22px;align-items:start}
 .flow{display:flex;flex-direction:column}
@@ -284,7 +286,11 @@ function applyContent(){
     const a = data.automations.find(x => x.id === c.automation); if (!a) return;
     const f = String(c.field || ""), v = c.value == null ? "" : String(c.value);
     if (["name","summary","version"].includes(f)){ a[f] = v; a._edited = true; return; }
-    const m = f.match(/^step:([^:]+):(sms|title|body|email\.subject|email\.body)$/); if (!m) return;
+    const g = f.match(/^glance:(\d+):(label|value)$/);
+    if (g){ a.glance = a.glance || []; const i = +g[1]; a.glance[i] = a.glance[i] || ["", ""]; a.glance[i][g[2] === "label" ? 0 : 1] = v; return; }
+    const q = f.match(/^q:([^:]+):(text|why|options)$/);
+    if (q){ const qq = (a.questions || []).find(x => x.id === q[1]); if (!qq) return; qq[q[2]] = q[2] === "options" ? v.split("\n").map(x => x.trim()).filter(Boolean) : v; qq._edited = true; return; }
+    const m = f.match(/^step:([^:]+):(sms|title|body|when|gap|note|email\.subject|email\.body)$/); if (!m) return;
     const st = a.steps.find(x => x.id === m[1]); if (!st) return;
     if (m[2].startsWith("email.")){ st.email = st.email || {subject:"", body:""}; st.email[m[2].slice(6)] = v; }
     else st[m[2]] = v;
@@ -400,7 +406,7 @@ function flowHTML(){
   auto.steps.forEach((s) => {
     if (s.day !== lastDay){ h += `<div class="dayhead">${esc(s.day)}</div>`; lastDay = s.day; }
     else if (s.gap){ h += `<div class="conn">${esc(s.gap)}</div>`; }
-    const st = s.type === "start" ? null : stepState(s.id);
+    let st = stepState(s.id); if (s.type === "start" && (st === "pending" || st === "loading")) st = null;
     const cls = (s.type === "team" || s.type === "call") ? "team" : (s.type === "start" || s.type === "end") ? "startend" : "";
     const who = s.who === "patient" ? " · " + (data.audience || "Patient") + " receives" : s.who === "team" ? " · Your team" : "";
     h += `<button class="node ${cls} ${st==="approved"?"isok":""}" data-step="${esc(s.id)}" aria-pressed="${selected===s.id}">
@@ -415,7 +421,7 @@ function flowHTML(){
 
 function inspectorHTML(){
   const s = auto.steps.find(x => x.id === selected); if (!s) return "";
-  const st = s.type === "start" ? null : stepState(s.id);
+  let st = stepState(s.id); if (s.type === "start" && (st === "pending" || st === "loading")) st = null;
   let content = "";
   if (s.body) content += `<p>${chips(s.body)}</p>`;
   if (s.sms){
@@ -430,12 +436,18 @@ function inspectorHTML(){
   if (isAdmin && (s.sms || s.email)){
     content += adminForm === "copy:" + s.id ? copyAdminFormHTML(s) : `<div style="margin-top:10px"><button class="adm" type="button" data-admin="copy:${esc(s.id)}">✎ Edit this ${s.sms ? "text" : "email"} (admin)</button></div>`;
   }
+  if (isAdmin){
+    content += adminForm === "step:" + s.id ? stepAdminFormHTML(s) : `<div style="margin-top:8px"><button class="adm" type="button" data-admin="step:${esc(s.id)}">✎ Edit step title, timing, description, note (admin)</button></div>`;
+  }
 
   const hasCopy = !!(s.sms || (s.email && s.email.body));
   const locked = autoState(auto) === "approved";
   let actions = "";
   if (!loaded && s.type !== "start"){
     actions = `<div class="loadnote">${loadFailed ? "Couldn't load saved responses and comments. Click ↻ Refresh at the top to try again." : "Loading saved responses and comments… this can take up to 30 seconds."}</div>`;
+  } else if (s.type === "start" && !locked){
+    actions = `<div class="actions"><button class="btn warn" data-act="change" aria-pressed="${openForm==="change"}">Request a change</button></div>
+      <p class="hint" style="font-size:13px;margin:6px 0 0">Use this for changes to how the automation starts, this description, or the summary boxes at the top.</p>${formHTML(s)}`;
   } else if (s.type !== "start" && !locked){
     actions = `<div class="actions">
       <button class="btn ok" data-act="approve">✓ Looks good</button>
@@ -471,9 +483,26 @@ function detailsFormHTML(){
     <label for="ad-name">Automation name</label><input type="text" id="ad-name" value="${esc(auto.name)}">
     <label for="ad-summary">Summary</label><textarea id="ad-summary" rows="3">${esc(auto.summary)}</textarea>
     <label for="ad-version">Version</label><input type="text" id="ad-version" value="${esc(auto.version)}" style="max-width:120px">
+    <fieldset class="glanceedit"><legend>Summary boxes</legend>${(auto.glance || []).map((g, i) => `<div class="row2"><div><label for="ag-l${i}">Box ${i+1} label</label><input type="text" id="ag-l${i}" value="${esc(g[0])}"></div><div><label for="ag-v${i}">Box ${i+1} text</label><textarea id="ag-v${i}" rows="2">${esc(g[1])}</textarea></div></div>`).join("")}</fieldset>
     <span class="hint">Change the version (for example 1.0 → 1.1) to start a new review round. Earlier responses stay in each step's history.</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save changes</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div>
   </form>`;
+}
+function stepAdminFormHTML(s){
+  const timing = s.type === "start" ? "" : `<div class="row2"><div><label for="as-when">When (shown under the title)</label><input type="text" id="as-when" value="${esc(s.when||"")}"></div><div><label for="as-gap">Line between steps</label><input type="text" id="as-gap" value="${esc(s.gap||"")}"></div></div>`;
+  return `<form class="form admform" data-form="stepadmin">
+    <label for="as-title">Step title</label><input type="text" id="as-title" value="${esc(s.title||"")}">
+    ${timing}
+    <label for="as-body">Description</label><textarea id="as-body" rows="3">${esc(s.body||"")}</textarea>
+    <label for="as-note">Our note (leave empty to hide it)</label><textarea id="as-note" rows="3">${esc(s.note||"")}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save step</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
+}
+function questionAdminFormHTML(q){
+  return `<form class="form admform" data-form="qadmin" data-qid="${esc(q.id)}">
+    <label for="aq-text">Question</label><input type="text" id="aq-text" value="${esc(q.text||"")}">
+    <label for="aq-why">Why we're asking</label><textarea id="aq-why" rows="2">${esc(q.why||"")}</textarea>
+    <label for="aq-opts">Answer buttons (one per line)</label><textarea id="aq-opts" rows="4">${esc((q.options||[]).join("\n"))}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save question</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
 }
 function copyAdminFormHTML(s){
   if (s.sms) return `<form class="form admform" data-form="copyadmin">
@@ -523,7 +552,7 @@ function formHTML(s){
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ok" type="submit">✓ Mark as looks good</button><button class="btn" type="button" data-cancel>Cancel</button></div></form>`;
   }
   if (openForm === "change"){
-    const kinds = ["Change timing","Remove this step","Add a step after this","Notify someone here","Something else"];
+    const kinds = s.type === "start" ? ["Change how it starts","Change the description","Change the summary boxes","Something else"] : ["Change timing","Remove this step","Add a step after this","Notify someone here","Something else"];
     const pick = chipChoice[s.id] || kinds[0];
     return `<form class="form" data-form="change">
       <label>What would you like changed?</label>
@@ -555,8 +584,8 @@ function questionsHTML(){
   return `<section class="section"><h2>${auto.questions.length} question${auto.questions.length>1?"s":""} for you</h2>
     <p class="hint" style="font-size:14px;margin:0">We found these while documenting the automation. Your answers decide whether we change anything before it goes live.</p>
     ${getReviewer().name ? "" : `<div class="form" id="q-who" style="max-width:560px">${whoFields("q")}</div>`}
-    <div class="qs">${auto.questions.map((q,i) => { const a = ans(q.id); return `<div class="q">
-      <p><b>${i+1}. ${esc(q.text)}</b></p><p class="hint">${esc(q.why)}</p>
+    <div class="qs">${auto.questions.map((q,i) => { const a = ans(q.id); if (isAdmin && adminForm === "q:" + q.id) return `<div class="q">${questionAdminFormHTML(q)}</div>`; return `<div class="q">
+      <p><b>${i+1}. ${esc(q.text)}</b></p><p class="hint">${esc(q.why)}</p>${isAdmin ? `<div><button class="adm" type="button" data-admin="q:${esc(q.id)}">✎ Edit question (admin)</button></div>` : ""}
       <div class="chips" role="group" aria-label="Answer ${i+1}">${q.options.map(o => `<button type="button" data-q="${esc(q.id)}" data-a="${esc(o)}" aria-pressed="${a&&a.details===o}">${esc(o)}</button>`).join("")}</div>
       ${a?`<span class="hint">Saved · ${esc(a.name||"")} · ${fmt(a.timestamp)}</span>${a.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(a.lfmp_reply)}</div>`:""}${isAdmin ? `<div>${delBtn(a.id, "Delete answer")}</div>` : ""}`:""}
     </div>`; }).join("")}</div></section>`;
@@ -702,8 +731,33 @@ document.addEventListener("submit", async (e) => {
   if (kind === "details"){
     const changes = [["name", $("#ad-name").value.trim()], ["summary", $("#ad-summary").value.trim()], ["version", $("#ad-version").value.trim()]]
       .filter(([k, v]) => v && v !== String(auto[k]));
+    (auto.glance || []).forEach((g, i) => {
+      const l = $("#ag-l" + i).value.trim(), v = $("#ag-v" + i).value.trim();
+      if (l !== String(g[0])) changes.push(["glance:" + i + ":label", l]);
+      if (v !== String(g[1])) changes.push(["glance:" + i + ":value", v]);
+    });
     if (!changes.length){ adminForm = null; render(); return; }
     await guarded(f, async () => { try { for (const [k, v] of changes) await adminEdit(auto.id, k, v); applyContent(); adminForm = null; unlockUI(); toast("Saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
+  if (kind === "stepadmin"){
+    const val = (id) => { const el = $(id); return el ? el.value.trim() : null; };
+    const edits = [["title", val("#as-title")], ["when", val("#as-when")], ["gap", val("#as-gap")], ["body", val("#as-body")], ["note", val("#as-note")]]
+      .filter(([k, v]) => v !== null && v !== String(s[k] || ""));
+    if (!edits.length){ adminForm = null; render(); return; }
+    await guarded(f, async () => { try { for (const [k, v] of edits) await adminEdit(auto.id, "step:" + s.id + ":" + k, v); applyContent(); adminForm = null; unlockUI(); toast("Step saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
+  if (kind === "qadmin"){
+    const q = auto.questions.find(x => x.id === f.dataset.qid); if (!q) return;
+    const opts = $("#aq-opts").value.split("\n").map(x => x.trim()).filter(Boolean);
+    const edits = [["text", $("#aq-text").value.trim()], ["why", $("#aq-why").value.trim()], ["options", opts.join("\n")]]
+      .filter(([k, v]) => v !== (k === "options" ? (q.options || []).join("\n") : String(q[k] || "")));
+    if (!opts.length){ toast("Add at least one answer button"); return; }
+    if (!edits.length){ adminForm = null; render(); return; }
+    await guarded(f, async () => { try { for (const [k, v] of edits) await adminEdit(auto.id, "q:" + q.id + ":" + k, v); applyContent(); adminForm = null; unlockUI(); toast("Question saved"); render(); }
     catch(err){ toast("Couldn't save: " + err.message); } });
     return;
   }
@@ -722,7 +776,7 @@ document.addEventListener("submit", async (e) => {
   }
   if (kind === "change"){
     const d = $("#f-details").value.trim(); if (!d){ $("#f-details").focus(); return; }
-    const type = chipChoice[s.id] || "Change timing";
+    const type = chipChoice[s.id] || (s.type === "start" ? "Change how it starts" : "Change timing");
     if (await submit({step:s.id, step_title:s.title, action:"change", type, details:d, new_copy:""}, "Change request sent", f)){ openForm = null; render(); }
   }
   if (kind === "copy"){
