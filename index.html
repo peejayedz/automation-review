@@ -72,6 +72,14 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .verlock{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 .vbadge{font-weight:700;border:1px solid var(--line);border-radius:7px;padding:4px 10px;background:var(--paper)}
 .meta .updated{color:var(--ok);font-weight:600}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tool{font-weight:500;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer}
+.tool.live{border-color:var(--bad);color:var(--bad);animation:pulse 1.4s infinite}
+.shotlist,.shots{display:flex;flex-wrap:wrap;gap:8px}
+.shot{position:relative}
+.shot img,.shots img{width:110px;height:76px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block;background:var(--soft)}
+.shot button{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;line-height:1}
+.shots{margin-top:6px}
 .glance b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:22px;align-items:start}
 .flow{display:flex;flex-direction:column}
@@ -430,6 +438,64 @@ function flowHTML(){
   return h;
 }
 
+/* ---------- voice dictation + screenshots ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let shots = [];          // screenshots waiting to be sent with the open form: [{name, type, data(base64), url}]
+let speech = null, recTarget = null;
+function inputTools(target){
+  const mic = SR ? `<button type="button" class="tool" data-mic="${target}">${recTarget === target ? "■ Stop recording" : "🎤 Speak instead of typing"}</button>` : "";
+  return `<div class="tools">${mic}
+    <label class="tool">📎 Attach screenshot<input type="file" accept="image/*" multiple data-shot hidden></label>
+    <span class="hint">You can also paste a screenshot (Ctrl/Cmd+V). Up to 3 images.</span></div>
+    <div class="shotlist">${shots.map((x, i) => `<span class="shot"><img src="${x.url}" alt="Screenshot ${i+1}"><button type="button" data-unshot="${i}" aria-label="Remove screenshot ${i+1}">×</button></span>`).join("")}</div>`;
+}
+function shotsHTML(v){
+  const urls = String(v || "").split(/\s+/).filter(u => /^(https?:|data:image)/.test(u));
+  if (!urls.length) return "";
+  return `<div class="shots">${urls.map((u, i) => {
+    const m = u.match(/\/d\/([\w-]+)/); const thumb = m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w400" : u;
+    return `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(thumb)}" alt="Attached screenshot ${i+1}" loading="lazy"></a>`; }).join("")}</div>`;
+}
+function startMic(target){
+  if (speech){ speech.stop(); return; }
+  const el = document.getElementById(target); if (!el || !SR) return;
+  speech = new SR(); speech.lang = "en-US"; speech.continuous = true; speech.interimResults = true;
+  const base = el.value ? el.value.replace(/\s*$/, " ") : "";
+  let finalText = "";
+  speech.onresult = (ev) => {
+    let interim = "";
+    for (let i = ev.resultIndex; i < ev.results.length; i++){
+      const t = ev.results[i][0].transcript;
+      if (ev.results[i].isFinal) finalText += t; else interim += t;
+    }
+    const box = document.getElementById(target); if (box) box.value = base + finalText + interim;
+  };
+  speech.onerror = (ev) => { toast(ev.error === "not-allowed" ? "Allow microphone access to use voice" : "Voice stopped: " + ev.error); };
+  speech.onend = () => { speech = null; recTarget = null; refreshTools(); };
+  recTarget = target; speech.start(); refreshTools(); toast("Listening… speak now");
+}
+function refreshTools(){
+  document.querySelectorAll("[data-mic]").forEach(b => { b.textContent = recTarget === b.dataset.mic ? "■ Stop recording" : "🎤 Speak instead of typing"; b.classList.toggle("live", recTarget === b.dataset.mic); });
+  document.querySelectorAll(".shotlist").forEach(l => { l.innerHTML = shots.map((x, i) => `<span class="shot"><img src="${x.url}" alt="Screenshot ${i+1}"><button type="button" data-unshot="${i}" aria-label="Remove screenshot ${i+1}">×</button></span>`).join(""); });
+}
+async function addShot(file){
+  if (!file || !/^image\//.test(file.type)) return;
+  if (shots.length >= 3){ toast("Up to 3 screenshots per request"); return; }
+  const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = URL.createObjectURL(file); });
+  const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const url = c.toDataURL("image/jpeg", 0.85);
+  shots.push({ name: (file.name || "screenshot").replace(/\.[^.]+$/, "") + ".jpg", type: "image/jpeg", data: url.split(",")[1], url });
+  refreshTools();
+}
+function resetInputs(){ if (speech) speech.stop(); shots = []; }
+document.addEventListener("paste", (e) => {
+  if (!document.querySelector("[data-shot]")) return;
+  const items = [...(e.clipboardData && e.clipboardData.items || [])].filter(i => i.type.startsWith("image/"));
+  if (!items.length) return;
+  e.preventDefault(); items.forEach(i => addShot(i.getAsFile()));
+});
 function nextVersion(v){
   const m = String(v || "1.0").match(/^(\d+)\.(\d+)$/);
   return m ? m[1] + "." + (Number(m[2]) + 1) : (Number(v) ? (Number(v) + 0.1).toFixed(1) : String(v || "1") + ".1");
@@ -441,6 +507,7 @@ function histItemsHTML(list){
        <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · ${r.status!=="Done" && isReplaced(r, cur()) ? '<span class="rs done">Replaced by Looks good</span>' : statusTag(r.status)}`:""}</div>
        ${r.details?`<div>${esc(r.details)}</div>`:""}
        ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
+       ${shotsHTML(r.attachments)}
        ${r.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>`:""}
        ${isAdmin && (r.action==="change"||r.action==="copy") ? `<form class="hadmin" data-form="status" data-id="${esc(r.id)}">
          <select aria-label="Status" name="status">${["Open","In progress","Done"].map(o=>`<option ${String(r.status||"Open")===o?"selected":""}>${o}</option>`).join("")}</select>
@@ -462,6 +529,7 @@ function overviewHTML(){
       <div class="chips" role="group" aria-label="Part of the overview">${parts.map(k => `<button type="button" data-ovkind="${esc(k)}" aria-pressed="${k===pick}">${esc(k)}</button>`).join("")}</div>
       <label for="ov-details">What should it say instead?</label>
       <textarea id="ov-details" rows="3" required placeholder="e.g. It runs for 3 days, not 1"></textarea>
+      ${inputTools("ov-details")}
       ${whoFields("ov")}
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Send correction</button><button class="btn" type="button" data-ov-cancel>Cancel</button></div>
     </form>` : `<button class="ovbtn" type="button" data-act="ovchange">✎ Something not right in this overview? Request a correction</button>`;
@@ -599,6 +667,7 @@ function formHTML(s){
       <div class="chips" role="group" aria-label="Type of change">${kinds.map(k=>`<button type="button" data-kind="${esc(k)}" aria-pressed="${k===pick}">${k}</button>`).join("")}</div>
       <label for="f-details">Details</label>
       <textarea id="f-details" rows="3" required placeholder="e.g. Send this 3 days after instead of the next day"></textarea>
+      ${inputTools("f-details")}
       ${whoFields()}
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Send request</button><button class="btn" type="button" data-cancel>Cancel</button></div>
     </form>`;
@@ -609,6 +678,7 @@ function formHTML(s){
       <label for="f-copy">Your wording</label>
       <textarea id="f-copy" rows="${Math.min(12, orig.split("\n").length + 4)}" required>${esc(orig)}</textarea>
       <span class="hint">Edit the text directly. Keep words in [brackets] where you want names filled in.</span>
+      ${inputTools("f-copy")}
       <label for="f-details">Anything else? <span class="hint">(optional)</span></label>
       <input type="text" id="f-details" placeholder="e.g. Please sign it from Dr. Lee">
       ${whoFields()}
@@ -681,11 +751,14 @@ async function submit(rec, okMsg, scope){
   const {r:who, nEl} = readWho(scope);
   if (!who.name){ if (nEl){ nEl.focus(); nEl.setAttribute("aria-invalid","true"); } toast("Please add your name first"); return false; }
   Object.assign(rec, {client:clientKey, automation:auto.id, version:auto.version, name:who.name, email:who.email});
+  if (shots.length && (rec.action === "change" || rec.action === "copy")){
+    rec.attachments = SAVE_URL ? shots.map(x => ({ name: x.name, type: x.type, data: x.data })) : shots.map(x => x.url).join(" ");
+  }
   lockUI(scope);
   try {
     const saved = await saveResponse(rec);
     responses.push(saved);
-    unlockUI(); toast(okMsg);
+    unlockUI(); resetInputs(); toast(okMsg);
     return true;
   } catch(e){
     unlockUI(); toast("Couldn't save. Check your connection and try again.");
@@ -696,6 +769,9 @@ async function submit(rec, okMsg, scope){
 document.addEventListener("click", async (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
   if (t.id === "refreshBtn"){ await refresh(true); return; }
+  if (t.dataset.mic){ startMic(t.dataset.mic); return; }
+  if (t.dataset.unshot != null){ shots.splice(+t.dataset.unshot, 1); refreshTools(); return; }
+  if (t.hasAttribute("data-cancel") || t.hasAttribute("data-ov-cancel") || t.dataset.step || t.dataset.act === "change" || t.dataset.act === "copy" || t.dataset.act === "ovchange") resetInputs();
   if (t.dataset.del){
     const id = t.dataset.del;
     if (armed !== id){ armed = id; render(); setTimeout(() => { if (armed === id){ armed = null; render(); } }, 4000); return; }
@@ -742,6 +818,7 @@ document.addEventListener("click", async (e) => {
   }
 });
 document.addEventListener("change", (e) => {
+  if (e.target.matches && e.target.matches("[data-shot]")){ [...e.target.files].forEach(addShot); e.target.value = ""; return; }
   if (e.target.id === "autoSelect"){
     adminForm = null; openForm = null; autoId = e.target.value; auto = data.automations.find(a => a.id === autoId);
     selected = matchMedia("(max-width:980px)").matches ? null : (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
