@@ -149,6 +149,21 @@ body.saving .actions button,body.saving form button[type=submit],body.saving [da
 .adminbar .wrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-block:8px}
 .adminbar b{color:var(--team)}
 .adminbar input{width:220px;padding:5px 8px;font-size:13px}
+.adminbar{transition:background .4s}
+.adminbar.welcome{animation:welcome 3s ease-out}
+@keyframes welcome{0%{background:var(--ok);}25%{background:color-mix(in srgb,var(--ok) 35%,var(--team-soft));}100%{background:var(--team-soft);}}
+.adminbadge{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:var(--team);background:var(--paper);border:1px solid var(--team);border-radius:999px;padding:3px 11px}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 var(--ok);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 70%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.welcomemsg{font-weight:600;color:var(--ok);animation:fadein .4s ease-out}
+@keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.akmsg{font-weight:600}
+.akmsg.bad{color:var(--bad)}
+.shake{animation:shake .4s;border-color:var(--bad)!important}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.spin{display:inline-block;width:11px;height:11px;margin-right:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.adminbar.welcome,.pulse,.shake,.spin,.welcomemsg{animation:none}}
 .adm{display:inline-flex;align-items:center;gap:4px;border:1px dashed var(--team);color:var(--team);background:transparent;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer}
 .admform{border:1px dashed var(--team);background:var(--team-soft)}
 .hadmin{display:grid;grid-template-columns:1fr 1.4fr auto;gap:6px;margin-top:6px}
@@ -209,6 +224,7 @@ let autoId = params.get("a") || "";
 let baseData = null, data = null, auto = null, responses = [], content = [], selected = null, openForm = null, chipChoice = {}, lastLoaded = null;
 let wantAdmin = params.has("admin"); let adminClients = [];
 let adminKey = ""; try { adminKey = localStorage.getItem("ar_admin_key") || ""; } catch(e){}
+let justSignedIn = false;
 let isAdmin = false, adminForm = null, rendered = false, loaded = false, loadFailed = false;
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
 const $ = (s) => document.querySelector(s);
@@ -386,7 +402,7 @@ function flowHTML(){
     else if (s.gap){ h += `<div class="conn">${esc(s.gap)}</div>`; }
     const st = s.type === "start" ? null : stepState(s.id);
     const cls = (s.type === "team" || s.type === "call") ? "team" : (s.type === "start" || s.type === "end") ? "startend" : "";
-    const who = s.who === "patient" ? " · Patient receives" : s.who === "team" ? " · Your team" : "";
+    const who = s.who === "patient" ? " · " + (data.audience || "Patient") + " receives" : s.who === "team" ? " · Your team" : "";
     h += `<button class="node ${cls} ${st==="approved"?"isok":""}" data-step="${esc(s.id)}" aria-pressed="${selected===s.id}">
       <span class="icon">${st==="approved" ? CHECK : (ICON[s.type]||"")}</span>
       <span><span class="ntitle">${chips(s.title)}</span><span class="nsub" style="display:block">${(s.type==="start"||s.type==="end") ? TYPE[s.type] : esc(s.when) + " · " + TYPE[s.type] + who}</span></span>
@@ -491,9 +507,10 @@ async function ping(k){
 function renderAdminBar(){
   const bar = $("#adminbar"); if (!wantAdmin){ bar.hidden = true; return; }
   bar.hidden = false;
+  bar.classList.toggle("welcome", isAdmin && justSignedIn);
   $("#adminbarIn").innerHTML = isAdmin
-    ? `<b>Admin mode</b>${adminClients.length ? `<label for="clientSelect" class="hint">Client</label><select id="clientSelect">${adminClients.map(k => `<option value="${esc(k)}" ${k===clientKey?"selected":""}>${esc(prettyClient(k))}</option>`).join("")}</select>` : ""}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button><button class="btn small" type="button" data-admin-exit>Sign out</button>`
-    : `<b>Team sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Password</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Sign in</button><button class="btn small" type="button" data-admin-close>Cancel</button></form>`;
+    ? `<span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Admin mode on</span>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminClients.length ? `<label for="clientSelect" class="hint">Client</label><select id="clientSelect">${adminClients.map(k => `<option value="${esc(k)}" ${k===clientKey?"selected":""}>${esc(prettyClient(k))}</option>`).join("")}</select>` : ""}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button><button class="btn small" type="button" data-admin-exit>Sign out</button>`
+    : `<b>Team sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Password</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Sign in</button><button class="btn small" type="button" data-admin-close>Cancel</button><span id="akmsg" class="akmsg" role="status" aria-live="polite"></span></form>`;
 }
 function whoFields(p){
   p = p || "rv"; const r = getReviewer();
@@ -663,12 +680,24 @@ document.addEventListener("submit", async (e) => {
   const s = auto.steps.find(x=>x.id===selected);
   if (kind === "who"){ await approveStep(f); return; }
   if (kind === "adminkey"){
-    const k = $("#ak").value.trim(); if (!k) return;
+    const inp = $("#ak"); const k = inp.value.trim();
+    if (!k){ inp.focus(); return; }
+    const btn = f.querySelector("button[type=submit]"); const msg = $("#akmsg");
+    btn.disabled = true; inp.disabled = true; btn.innerHTML = '<span class="spin" aria-hidden="true"></span>Checking…';
+    if (msg){ msg.className = "akmsg"; msg.textContent = ""; }
     const j = await ping(k);
-    if (!j.ok){ toast("That password didn't work"); return; }
+    if (!j.ok){
+      btn.disabled = false; inp.disabled = false; btn.textContent = "Sign in";
+      inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake");
+      inp.setAttribute("aria-invalid", "true"); inp.select(); inp.focus();
+      if (msg){ msg.className = "akmsg bad"; msg.textContent = "✕ That password didn't work. Check it and try again."; }
+      return;
+    }
     adminClients = j.clients || [];
-    adminKey = k; isAdmin = true; try { localStorage.setItem("ar_admin_key", k); } catch(e){}
-    toast("Admin mode on"); render(); return;
+    adminKey = k; isAdmin = true; justSignedIn = true; try { localStorage.setItem("ar_admin_key", k); } catch(e){}
+    toast("✓ Signed in. Admin mode is on"); render();
+    setTimeout(() => { justSignedIn = false; renderAdminBar(); }, 4000);
+    return;
   }
   if (kind === "details"){
     const changes = [["name", $("#ad-name").value.trim()], ["summary", $("#ad-summary").value.trim()], ["version", $("#ad-version").value.trim()]]
