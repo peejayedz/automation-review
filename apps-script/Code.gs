@@ -1,5 +1,5 @@
 /**
- * LFMP Automation Review: response + content storage (v3)
+ * LFMP Automation Review: response + content storage (v4)
  *
  * One tab per client (named in CLIENT_TABS below): every response from that client
  * (looks good / change request / new wording / answer / approval).
@@ -13,16 +13,17 @@
 
 // ---- Settings ----------------------------------------------------------
 // Client codes allowed to save. Must match the file name in data/<code>.json.
-const ALLOWED_CLIENTS = ['boca-dental-e770de', 'palm-beach-plastic-n9umxi'];
+const ALLOWED_CLIENTS = ['boca-dental-e770de', 'palm-beach-plastic-n9umxi', 'sralla-family-law-rbi2yj'];
 // The Sheet tab each client's responses go to. A client not listed here gets a tab named after its code.
 const CLIENT_TABS = {
   'boca-dental-e770de': 'Boca Dental',
-  'palm-beach-plastic-n9umxi': 'Palm Beach Plastic'
+  'palm-beach-plastic-n9umxi': 'Palm Beach Plastic',
+  'sralla-family-law-rbi2yj': 'Sralla Family Law'
 };
 // Slack alerts: put a Slack incoming-webhook URL in Project Settings > Script properties as SLACK_WEBHOOK_URL.
 // Every new client response is then posted there. Leave it unset to turn Slack alerts off.
-// You can also add client codes without editing this file: Project Settings > Script properties >
-// CLIENTS = comma-separated codes, e.g. "boca-dental-e770de, palm-beach-plastic-surgery-4b9c21".
+// Add a new client WITHOUT editing this file or redeploying: Project Settings > Script properties >
+// CLIENTS = comma-separated entries, each "code=Tab name", e.g. "acme-law-x1y2z3=Acme Law, other-firm-a1b2c3=Other Firm".
 // Who gets an email for each new client response. Leave '' to turn emails off.
 const NOTIFY_EMAIL = '';
 // Link used in the notification email.
@@ -37,7 +38,17 @@ const CONTENT_HEADERS = ['timestamp', 'client', 'automation', 'field', 'value', 
 const ACTIONS = ['approve', 'change', 'copy', 'answer', 'approve_all'];
 const STATUSES = ['Open', 'In progress', 'Done'];
 
-function tabName_(client) { return CLIENT_TABS[client] || client; }
+function extraClients_() {
+  // Script property CLIENTS: "code=Tab name, code2=Tab name 2" (the "=Tab name" part is optional).
+  return (PropertiesService.getScriptProperties().getProperty('CLIENTS') || '')
+    .split(',').map(s => s.trim()).filter(Boolean)
+    .map(s => { const i = s.indexOf('='); return i === -1 ? { code: s, tab: '' } : { code: s.slice(0, i).trim(), tab: s.slice(i + 1).trim() }; });
+}
+function tabName_(client) {
+  if (CLIENT_TABS[client]) return CLIENT_TABS[client];
+  const x = extraClients_().find(e => e.code === client);
+  return (x && x.tab) || client;
+}
 
 /** The response tab for one client. Created (and formatted) the first time it's needed. */
 function sheet_(client) {
@@ -91,8 +102,7 @@ function toObj_(headers, r) {
   return o;
 }
 function clients_() {
-  const extra = (PropertiesService.getScriptProperties().getProperty('CLIENTS') || '')
-    .split(',').map(s => s.trim()).filter(Boolean);
+  const extra = extraClients_().map(e => e.code);
   return ALLOWED_CLIENTS.concat(extra.filter(k => ALLOWED_CLIENTS.indexOf(k) === -1));
 }
 function isAdmin_(key) {
