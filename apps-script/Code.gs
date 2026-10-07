@@ -1,5 +1,8 @@
 /**
- * LFMP Automation Review: response + content storage (v5)
+ * LFMP Automation Review: response + content storage (v6)
+ *
+ * Screenshots: clients can attach up to 3 images to a change request. They're saved to Google Drive in
+ * "Automation Review Attachments/<client tab>" (viewable by anyone with the link) and linked in the attachments column.
  *
  * "To-do" tab: rebuilt automatically from every client tab. Lists what still needs doing (open change
  * requests and new wording), the client's answers to questions, and what was finished in the last 14 days.
@@ -35,7 +38,7 @@ const REVIEW_BASE_URL = 'https://peejayedz.github.io/automation-review/';
 
 const LEGACY_SHEET = 'Responses'; // the old single tab. Its rows all belonged to Boca Dental.
 const HEADERS = ['id', 'timestamp', 'client', 'automation', 'version', 'step', 'step_title', 'action',
-                 'type', 'details', 'new_copy', 'name', 'email', 'status', 'lfmp_reply'];
+                 'type', 'details', 'new_copy', 'name', 'email', 'status', 'lfmp_reply', 'attachments'];
 const CONTENT_SHEET = 'Content';
 const CONTENT_HEADERS = ['timestamp', 'client', 'automation', 'field', 'value', 'edited_by'];
 const ACTIONS = ['approve', 'change', 'copy', 'answer', 'approve_all'];
@@ -68,6 +71,10 @@ function sheet_(client) {
     sh.appendRow(HEADERS);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
+  }
+  if (sh.getLastColumn() < HEADERS.length) {
+    // Older tabs: add any new header columns (e.g. attachments) without touching existing rows.
+    sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold');
   }
   const props = PropertiesService.getScriptProperties();
   const flag = 'FORMATTED_' + name;
@@ -155,8 +162,12 @@ function doPost(e) {
       const sh = sheet_(d.client);
       const vals = sh.getDataRange().getValues();
       let deleted = 0;
+      const aCol = HEADERS.indexOf('attachments');
       for (let i = vals.length - 1; i >= 1; i--) {
-        if (vals[i][2] === d.client && ids.indexOf(String(vals[i][0])) !== -1) { sh.deleteRow(i + 1); deleted++; }
+        if (vals[i][2] === d.client && ids.indexOf(String(vals[i][0])) !== -1) {
+          trashAttachments_(vals[i][aCol]);
+          sh.deleteRow(i + 1); deleted++;
+        }
       }
       try { buildTodo(); } catch (err) {}
       return json_({ ok: true, deleted: deleted });
@@ -193,8 +204,12 @@ function doPost(e) {
       name: clip_(d.name, 120),
       email: clip_(d.email, 200),
       status: (d.action === 'change' || d.action === 'copy') ? 'Open' : '',
-      lfmp_reply: ''
+      lfmp_reply: '',
+      attachments: ''
     };
+    if ((d.action === 'change' || d.action === 'copy') && Array.isArray(d.attachments) && d.attachments.length) {
+      row.attachments = saveAttachments_(d.client, row.id, d.attachments).join('\n');
+    }
     sheet_(d.client).appendRow(HEADERS.map(h => safe_(row[h])));
     try { buildTodo(); } catch (err) { console.warn('To-do rebuild failed: ' + err); }
     try { notify_(row); } catch (err) { console.warn('Email alert failed: ' + err); }
@@ -236,7 +251,7 @@ function buildTodo() {
   });
   const when = ts => { const d = new Date(ts); return isNaN(d) ? '' : Utilities.formatDate(d, 'America/New_York', 'MMM d, h:mm a') + ' ET'; };
   const link = r => REVIEW_BASE_URL + '?c=' + encodeURIComponent(r.client) + '&a=' + encodeURIComponent(r.automation);
-  const what = r => [r.details, r.new_copy ? 'NEW WORDING:\n' + r.new_copy : ''].filter(String).join('\n\n');
+  const what = r => [r.details, r.new_copy ? 'NEW WORDING:\n' + r.new_copy : '', r.attachments ? 'SCREENSHOTS:\n' + r.attachments : ''].filter(String).join('\n\n');
   const byTime = (a, b) => String(a.timestamp).localeCompare(String(b.timestamp));
 
   const isReq = r => r.action === 'change' || r.action === 'copy';
@@ -290,6 +305,39 @@ function buildTodo() {
   return open.length;
 }
 
+// ---- Screenshot attachments -----------------------------------------------
+function attachFolder_(client) {
+  const rootName = 'Automation Review Attachments';
+  const roots = DriveApp.getFoldersByName(rootName);
+  const root = roots.hasNext() ? roots.next() : DriveApp.createFolder(rootName);
+  const name = tabName_(client);
+  const subs = root.getFoldersByName(name);
+  return subs.hasNext() ? subs.next() : root.createFolder(name);
+}
+/** Saves up to 3 images (base64) to Drive and returns their view links. */
+function saveAttachments_(client, id, list) {
+  const folder = attachFolder_(client);
+  const urls = [];
+  list.slice(0, 3).forEach((a, i) => {
+    try {
+      const type = /^image\/(png|jpeg|gif|webp)$/.test(a.type) ? a.type : 'image/jpeg';
+      const data = String(a.data || '');
+      if (!data || data.length > 8e6) return; // about 6 MB max per image
+      const blob = Utilities.newBlob(Utilities.base64Decode(data), type, clip_(id + '-' + (i + 1) + '-' + (a.name || 'screenshot'), 120));
+      const f = folder.createFile(blob);
+      f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      urls.push('https://drive.google.com/file/d/' + f.getId() + '/view');
+    } catch (err) { console.warn('Attachment failed: ' + err); }
+  });
+  return urls;
+}
+function trashAttachments_(cell) {
+  String(cell || '').split(/\s+/).forEach(u => {
+    const m = u.match(/\/d\/([\w-]+)/);
+    if (m) { try { DriveApp.getFileById(m[1]).setTrashed(true); } catch (err) {} }
+  });
+}
+
 const LABELS = {
   approve: 'marked a step as looks good', change: 'requested a change', copy: 'sent new wording',
   answer: 'answered a question', approve_all: 'APPROVED the automation'
@@ -310,6 +358,7 @@ function slack_(row) {
     row.type ? '*Type:* ' + row.type : '',
     row.details ? '*Details:* ' + clip_(row.details, 600) : '',
     row.new_copy ? '*New wording:*\n>' + clip_(row.new_copy, 1500).replace(/\n/g, '\n>') : '',
+    row.attachments ? ':paperclip: ' + String(row.attachments).split('\n').map((u, i) => '<' + u + '|Screenshot ' + (i + 1) + '>').join(' · ') : '',
     '<' + reviewLink_(row) + '|Open the review page> · <' + SpreadsheetApp.getActiveSpreadsheet().getUrl() + '|Open the Sheet>'
   ].filter(Boolean);
   UrlFetchApp.fetch(url, {
