@@ -114,6 +114,13 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .pendingtxt{color:var(--muted);font-style:italic}
 .chip{font-size:12px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 5px;white-space:nowrap}
 .len{font-size:12px;color:var(--muted);margin-top:6px}
+.smsreq{margin-top:10px;padding:10px 12px;border:1px dashed var(--warn);border-radius:8px;background:transparent;font-size:12.5px;line-height:1.5;color:var(--ink)}
+.smsreq .smsreq-h{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;margin-bottom:3px}
+.smsreq .smsreq-h b{color:var(--warn);font-size:12.5px}
+.smsreq .smsreq-tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.smsreq ul{margin:6px 0 0;padding-left:18px}
+.smsreq li{margin:2px 0}
+.nreq{display:block;font-size:11.5px;color:var(--warn);margin-top:2px}
 .note{font-size:13px;margin-top:12px;padding:9px 12px;border-radius:8px;background:var(--warn-soft)}
 .note b{color:var(--warn)}
 .actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:16px}
@@ -434,7 +441,7 @@ function flowHTML(){
     const who = s.who === "patient" ? " · " + (data.audience || "Patient") + " receives" : s.who === "team" ? " · Your team" : "";
     h += `<button class="node ${cls} ${st==="approved"?"isok":""}" data-step="${esc(s.id)}" aria-pressed="${selected===s.id}">
       <span class="icon">${st==="approved" ? CHECK : (ICON[s.type]||"")}</span>
-      <span><span class="ntitle">${chips(s.title)}</span><span class="nsub" style="display:block">${(s.type==="start"||s.type==="end") ? TYPE[s.type] : esc(s.when) + " · " + TYPE[s.type] + who}</span></span>
+      <span><span class="ntitle">${chips(s.title)}</span><span class="nsub" style="display:block">${(s.type==="start"||s.type==="end") ? TYPE[s.type] : esc(s.when) + " · " + TYPE[s.type] + who}</span>${s.type === "sms" ? `<span class="nreq">⚠️ Needs a phone number + A2P/10DLC approval</span>` : ""}</span>
       ${st ? `<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>` : ""}
     </button>`;
     if (narrow && selected === s.id) h += `<div class="inspector inline">${inspectorHTML()}</div>`;
@@ -541,6 +548,31 @@ function overviewHTML(){
   if (list.length) h += `<div class="hist ovhist"><h3>Corrections requested for this overview</h3>${histItemsHTML(list)}</div>`;
   return h ? `<div class="overview">${h}</div>` : "";
 }
+/* ---------- SMS setup requirement (informational only, never part of the message) ---------- */
+function smsCompliance(s){
+  // A step can override the extra lines with "smsCompliance": ["..."] in the data file ([] hides them).
+  if (Array.isArray(s.smsCompliance)) return s.smsCompliance;
+  const id = (auto.id || "").toLowerCase();
+  const text = ((s.sms || "") + " " + (s.body || "") + " " + (s.title || "")).toLowerCase();
+  const out = [];
+  const marketing = /reactivation|review|nurture|newsletter|promo/.test(id) || /promotion|offer|gift card|discount|review/.test(text);
+  if (/appointment|consultation|no-show|noshow|reminder/.test(id)) {
+    out.push("Appointment texts are registered as a customer-care / reminder use case. The contact still needs to have agreed to receive texts, e.g. a consent checkbox on the booking form.");
+  } else if (/new-lead|new-patient|enquiry|inquiry|lead/.test(id)) {
+    out.push("Texting new leads: the website form needs an SMS consent checkbox and disclosure, and the first text should include opt-out wording such as “Reply STOP to opt out.”");
+  }
+  if (marketing) out.push("This text is promotional (an offer, review request or re-engagement). The A2P campaign must be registered for marketing use, the contact must have opted in to marketing texts, and the message should include opt-out wording.");
+  if ((data.client && data.client.smsHealthcare) || data.smsHealthcare) out.push("Healthcare: keep texts free of treatment or health details (HIPAA).");
+  return out;
+}
+function smsReqHTML(s){
+  const extra = smsCompliance(s);
+  return `<div class="smsreq" role="note">
+    <div class="smsreq-h"><b>⚠️ SMS Requirement</b><span class="smsreq-tag">Setup note · not part of the text</span></div>
+    Sending SMS through GoHighLevel requires a purchased phone number and an approved A2P/10DLC registration. Business/EIN information may be required for registration, and approval must be in place before any text can be sent.
+    ${extra.length ? `<ul>${extra.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+  </div>`;
+}
 function inspectorHTML(){
   const s = auto.steps.find(x => x.id === selected); if (!s) return "";
   let st = stepState(s.id); if (s.type === "start" && (st === "pending" || st === "loading")) st = null;
@@ -550,6 +582,7 @@ function inspectorHTML(){
     const len = s.sms.replace(/\[[^\]]+\]/g, "Maria").length;
     content += `<div class="sms">${chips(s.sms)}</div><div class="len">About ${Math.round(len/10)*10} characters with names filled in${len>160?` · sends as ${Math.ceil(len/153)} text segments`:""}</div>`;
   }
+  if (s.type === "sms") content += smsReqHTML(s);
   if (s.email){
     content += `<div class="email"><div class="subj"><b>Subject:</b> ${chips(s.email.subject)}</div><div class="body">${s.email.body ? chips(s.email.body) : `<span class="pendingtxt">${esc(s.email.pending||"")}</span>`}</div></div>`;
   }
