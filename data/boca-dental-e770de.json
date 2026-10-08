@@ -1,6 +1,7 @@
 {
  "client": {
   "key": "boca-dental-e770de",
+  "smsHealthcare": true,
   "name": "Boca Dental",
   "location": "Boca Raton, Florida"
  },
