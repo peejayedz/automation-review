@@ -65,8 +65,7 @@
      "title": "Email 1: Thanks for contacting us",
      "email": {
       "subject": "Thanks for claiming our offer [First name]!",
-      "body": "",
-      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+      "body": "Thanks for claiming our [Promotion name] promotion [First name]!\n\nWe're looking forward to seeing you. Be sure to check out our calendar to schedule your appointment: [Booking link]\n\nWe also shot you a text if you have any questions in the meantime.\n\nHedayati Law Group, P.C."
      },
      "note": "The subject talks about “claiming our offer”. If there's no offer, we suggest “Thanks for contacting Hedayati Law Group”."
     },
@@ -224,8 +223,7 @@
      "title": "Email 1: Your consultation is confirmed",
      "email": {
       "subject": "Show Room Appointment Confirmation",
-      "body": "",
-      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+      "body": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nHedayati Law Group, P.C.\n[Office address]\n\nAdd to Google calendar | Add to Outlook\nCancel | Reschedule"
      },
      "note": "“Show Room” came from a template and doesn't fit a law firm. We suggest “Your consultation is confirmed”."
     },
@@ -239,8 +237,7 @@
      "title": "Email 2: Your consultation is in 24 hours",
      "email": {
       "subject": "Your Showroom Visit is in 24 Hours!",
-      "body": "",
-      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+      "body": "Hi [First name],\n\nJust a friendly reminder that your Showroom Appointment is in 24 Hours.\n\nWe look forward to seeing you then!\n\nHedayati Law Group, P.C.\n[Office address]\n\nAdd to Google calendar | Add to Outlook\nCancel | Reschedule"
      },
      "note": "“Showroom” appears in the subject and body. We'll change it to “consultation” unless you prefer other wording."
     },
@@ -254,8 +251,7 @@
      "title": "Email 3: Your consultation is in one hour",
      "email": {
       "subject": "[First name] your Showroom Visit appointment is in one hour!",
-      "body": "",
-      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+      "body": "Hi [First name],\n\nJust a friendly reminder that your Showroom Visit appointment is in one hour.\n\nWe look forward to seeing you!\n\nHedayati Law Group, P.C.\n[Office address]\n\nAdd to Google calendar | Add to Outlook\nCancel | Reschedule"
      },
      "note": "“Showroom Visit” again. We'll change it to “consultation”."
     },
@@ -361,8 +357,7 @@
      "title": "Email 1: Let's get you rescheduled",
      "email": {
       "subject": "Let's get you rescheduled [First name]!",
-      "body": "",
-      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+      "body": "Hi [First name],\n\nSorry you weren't able to make our show room visit - let's get you rescheduled!\n\nYou can book another day/time that will work for you by clicking here: [Booking link]\n\nWe look forward to seeing with you!\n\nHedayati Law Group, P.C.\n[Office address]"
      },
      "note": "“show room visit” should be “consultation”, and “seeing with you” should be “seeing you”."
     },
