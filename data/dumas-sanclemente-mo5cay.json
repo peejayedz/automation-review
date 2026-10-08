@@ -1,0 +1,377 @@
+{
+ "client": {
+  "key": "dumas-sanclemente-mo5cay",
+  "name": "Dumas & Sanclemente",
+  "location": "Lutz, Florida"
+ },
+ "lfmpContact": "PJ at Law Firm Marketing Pros",
+ "audience": "Lead",
+ "automations": [
+  {
+   "id": "new-lead",
+   "name": "New Lead Follow-Up",
+   "version": "1.0",
+   "sent": "Oct 8, 2026",
+   "summary": "When someone submits your website intake form, or a call is logged as a phone lead, this adds them to your lead board and sends three emails over the next two days explaining what happens next and why to choose your firm.",
+   "glance": [
+    [
+     "Starts when",
+     "A website form is submitted, or a contact is tagged “phone lead”"
+    ],
+    [
+     "Runs for",
+     "2 days"
+    ],
+    [
+     "Lead receives",
+     "3 emails"
+    ],
+    [
+     "Your team receives",
+     "Nothing (see Question 1)"
+    ],
+    [
+     "Ends",
+     "Day 2, after the third email"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "A new lead comes in",
+     "body": "It starts two ways: someone submits the website intake form (“GHL Build Out - Optin Form”), or a contact is tagged “phone lead” after a call.",
+     "note": "All three automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The lead is added to your lead board",
+     "body": "Website leads are tagged “web lead” and placed in Stage 1: Web Lead. Phone leads are placed in Stage 2: Phone Lead."
+    },
+    {
+     "id": "s3",
+     "day": "Day 0",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email 1: We've received your submission",
+     "email": {
+      "subject": "Confirmed: We've received your submission!",
+      "body": "Hi [First name],\n\nThank you for reaching out to Dumas & Sanclemente and sharing the details of your incident.\n\nOur dedicated team is now reviewing the information you provided.\n\nIn the coming days, a member of our team will reach out to you to gather more details about your situation.\n\nPlease be on the lookout for a call from our office. The details to watch for are Dumas & Sanclemente office at [Office phone].\n\nIf you see this number, it will be our team getting in touch to discuss your case further.\n\nWe understand the importance of your case and are committed to exploring how we can be of assistance.\n\nThank you for choosing Dumas & Sanclemente.\n\nKind regards,\n[Team member's name]\n[Team member's email]\n[Office phone]\nDumas & Sanclemente"
+     },
+     "note": "Phone leads get this email too, but it thanks them for “submitting” and “sharing the details of your incident”, which won't fit someone who called. We can send phone leads a version that says “thanks for calling”. The signature uses the name and email of the team member assigned to the lead. If no one is assigned yet, those lines come out blank. We can use a fixed signature instead (for example the firm name and intake line)."
+    },
+    {
+     "id": "s4",
+     "day": "Day 1",
+     "type": "email",
+     "who": "patient",
+     "when": "Next day",
+     "gap": "1 day later",
+     "title": "Email 2: How our process works",
+     "email": {
+      "subject": "We're Reviewing Your Incident Form",
+      "body": "Hi [First name],\n\nWe want to assure you that your incident form has been received and our dedicated team is already hard at work reviewing the information you've shared.\n\nNavigating through the complexities of insurance and dealing with the aftermath of an incident can be incredibly frustrating and emotionally taxing.\n\nAt Dumas & Sanclemente, we recognize the burdens you're carrying, and we're here to lighten that load.\n\nHere's How Our Process Works:\n\nStep 1: Discovery\nOnce we accept your case, our dedicated team will carry out a comprehensive discovery phase. This involves contacting relevant insurance companies, obtaining police reports, and gathering essential information.\n\nStep 2: Assessment\nWe dive deep into assessing the damages you've faced, whether it's mounting medical expenses, lost wages, or any other challenges resulting from the incident.\n\nStep 3: Settlement\nOur ultimate goal is to work towards a fair settlement with the responsible parties. Once an agreement is reached, we guide you through the necessary steps, including signing off on the settlement and receiving the funds.\n\nTo give you peace of mind throughout this process, we'd like to share some successfully handled cases similar to yours:\n\n[Insert Case Study/Review]\n\nIf you have any questions or concerns, please feel free to reach out. We are here to provide the support and guidance you need during this challenging time.\n\nKind regards,\n[Team member's name]\n[Team member's email]\n[Office phone]\nDumas & Sanclemente"
+     },
+     "note": "This still has a placeholder: “[Insert Case Study/Review]”. Please send us a short case result or client review to use, or we'll remove that paragraph."
+    },
+    {
+     "id": "s5",
+     "day": "Day 2",
+     "type": "email",
+     "who": "patient",
+     "when": "2 days after",
+     "gap": "1 day later",
+     "title": "Email 3: Why choose us",
+     "email": {
+      "subject": "Why Choose [Insert Name Of Law Firm]?",
+      "body": "Hi [First name],\n\nIn challenging times like these, making the right choice for legal representation is pivotal.\n\nWe understand the gravity of your situation, and we want to share why choosing Dumas & Sanclemente is a decision centered around your needs.\n\nFirst and foremost, we acknowledge the urgency in resolving your case. Our approach is designed to get you the compensation you deserve as quickly as possible.\n\nOur commitment to efficiency is evident in our [XX] rating on [Website], highlighting our dedication to achieving prompt and successful resolutions.\n\nBut beyond our ratings lies what truly sets us apart – our sincere compassion. We extend our heartfelt apologies for the unfortunate events you or your loved one has experienced.\n\nOur team is not only incredibly experienced but also deeply understands the complications that Personal Injury can bring upon a family.\n\nChoosing Dumas & Sanclemente means choosing a partner who prioritizes your peace of mind, values your time, and is dedicated to securing the best outcome for you.\n\nNo case is too difficult or complex for us. With decades of experience dedicated to practicing law, your case benefits from the wealth of knowledge and insight we've gained over [X]+ years.\n\nPlus, with our “No Fee Unless You Win” promise, you can rest assured that your financial well-being is a top priority.\n\nIf you have any questions or concerns, please feel free to reach out. We are here to provide the support and guidance you need during this challenging time.\n\nKind regards,\n[Team member's name]\n[Team member's email]\n[Office phone]\nDumas & Sanclemente"
+     },
+     "note": "Three placeholders need filling: the subject (“[Insert Name Of Law Firm]”), your review rating (“[XX] rating”) and years of experience (“[X]+ years”). Please confirm the numbers, or we'll reword those lines."
+    },
+    {
+     "id": "s6",
+     "day": "Day 2",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The follow-up ends",
+     "body": "The lead leaves this automation."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Should your team get an alert for every new lead?",
+     "why": "Right now nobody is notified when a form comes in. The only alert is when a contact replies.",
+     "options": [
+      "Yes, text the intake team (recommended)",
+      "Yes, email the intake team",
+      "No alert needed"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Should these emails stop once the lead books a consultation or signs?",
+     "why": "Today all three emails go out even if the lead has already booked or signed.",
+     "options": [
+      "Yes, stop them (recommended)",
+      "No, keep sending"
+     ]
+    },
+    {
+     "id": "q3",
+     "text": "Would you like a text message added?",
+     "why": "This follow-up is email only. A quick text on Day 0 usually gets a faster response from injury leads.",
+     "options": [
+      "Yes, add a text",
+      "Email only is fine"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "consultation",
+   "name": "Consultation Confirmation + Reminders",
+   "version": "1.0",
+   "sent": "Oct 8, 2026",
+   "summary": "When a consultation is confirmed, this sends a confirmation email with the Zoom link, then reminders 24 hours, 1 hour and 5 minutes before.",
+   "glance": [
+    [
+     "Starts when",
+     "A consultation appointment is confirmed"
+    ],
+    [
+     "Runs for",
+     "Until the consultation"
+    ],
+    [
+     "Lead receives",
+     "4 emails, 2 texts"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "When the consultation starts"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Booking",
+     "type": "start",
+     "when": "Start",
+     "title": "A consultation is confirmed",
+     "body": "Starts when an appointment is confirmed in GHL.",
+     "note": "All three automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve. Your account doesn't have a booking calendar yet, so nothing can trigger this. We'll set one up (or connect your existing booking tool) before going live."
+    },
+    {
+     "id": "s2",
+     "day": "Booking",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The lead moves to Booked Consultation",
+     "body": "The lead is tagged “consultation booked” and moved to Stage 5: Booked Consultation on your lead board."
+    },
+    {
+     "id": "s3",
+     "day": "Booking",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email 1: Your appointment is confirmed",
+     "email": {
+      "subject": "Appointment Confirmation",
+      "body": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nWhen it is time, please use this Zoom Meeting ID: [Zoom link]\n\n- Dumas & Sanclemente\n\nAdd to google calendar | Add to outlook\nCancel | Reschedule"
+     },
+     "note": "The Zoom link comes from one fixed setting in your account. If different attorneys use different Zoom rooms, or some consultations are in person or by phone, let us know."
+    },
+    {
+     "id": "s4",
+     "day": "Day before",
+     "type": "email",
+     "who": "patient",
+     "when": "24 hours before",
+     "gap": "24 hours before",
+     "title": "Email 2: Your meeting is in 24 hours",
+     "email": {
+      "subject": "Your Meeting is in 24 Hours!",
+      "body": "Hi [First name],\n\nJust a friendly reminder that our appointment is in 24 Hours.\n\nWhen it is time, please use this zoom Meeting ID: [Zoom link]\n\n- Dumas & Sanclemente"
+     }
+    },
+    {
+     "id": "s5",
+     "day": "Consultation day",
+     "type": "email",
+     "who": "patient",
+     "when": "1 hour before",
+     "gap": "1 hour before",
+     "title": "Email 3: Your meeting is in 1 hour",
+     "email": {
+      "subject": "Your Meeting is in 1 hour!",
+      "body": "Hi [First name],\n\nJust a friendly reminder that your appointment is in one hour.\n\nPlease use this zoom Meeting ID: [Zoom link]\n\n- Dumas & Sanclemente"
+     }
+    },
+    {
+     "id": "s6",
+     "day": "Consultation day",
+     "type": "sms",
+     "who": "patient",
+     "when": "1 hour before",
+     "gap": "At the same time",
+     "title": "Text 1: Your appointment is in one hour",
+     "sms": "Hi [First name], just a friendly reminder that our appointment is in one hour. - Dumas & Sanclemente"
+    },
+    {
+     "id": "s7",
+     "day": "Consultation day",
+     "type": "email",
+     "who": "patient",
+     "when": "5 minutes before",
+     "gap": "5 minutes before",
+     "title": "Email 4: Your appointment is starting",
+     "email": {
+      "subject": "Your appointment is starting!",
+      "body": "Hi [First name],\n\nOur appointment is about to start. Please join here:\n[Zoom link]\n\n- Dumas & Sanclemente"
+     }
+    },
+    {
+     "id": "s8",
+     "day": "Consultation day",
+     "type": "sms",
+     "who": "patient",
+     "when": "5 minutes before",
+     "gap": "At the same time",
+     "title": "Text 2: Your appointment is starting",
+     "sms": "Hi [First name], just a friendly reminder that our appointment is in one hour. - Dumas & Sanclemente",
+     "note": "This text goes out 5 minutes before but says “in one hour”. We'll change it to something like “our appointment is starting now, here's the link: [Zoom link]”."
+    },
+    {
+     "id": "s9",
+     "day": "Consultation day",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The reminders end",
+     "body": "The lead leaves this automation when the consultation starts."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "How do leads book a consultation today?",
+     "why": "There's no booking calendar in your GHL account yet, so this automation can't start.",
+     "options": [
+      "Set up a GHL calendar",
+      "We use another booking tool (tell us which)",
+      "Our team books by phone"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Are consultations always on Zoom?",
+     "why": "Every reminder includes a Zoom link.",
+     "options": [
+      "Always Zoom",
+      "Sometimes phone or in person"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "reply-alert",
+   "name": "Reply Alert for Your Team",
+   "version": "1.0",
+   "sent": "Oct 8, 2026",
+   "summary": "Whenever a contact replies by text, email or call, everyone on your team gets a text with who it is and what they said.",
+   "glance": [
+    [
+     "Starts when",
+     "Any contact replies"
+    ],
+    [
+     "Runs for",
+     "Instant"
+    ],
+    [
+     "Lead receives",
+     "Nothing"
+    ],
+    [
+     "Your team receives",
+     "1 text per reply"
+    ],
+    [
+     "Ends",
+     "Straight away"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Any time",
+     "type": "start",
+     "when": "Start",
+     "title": "A contact replies",
+     "body": "Starts every time any contact replies to a text or email, or calls in.",
+     "note": "All three automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Any time",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Your team gets a text",
+     "body": "Everyone on your team gets this text:\n\n“New Incoming Reply / Email / Call from: [Contact name] [Contact email] [Contact phone]\n\nMessage: “[Message]””",
+     "note": "This goes to every user in your account, for every reply from any contact, including existing clients. Busy accounts can get a lot of texts. We can limit it to new leads only, or to one intake person."
+    },
+    {
+     "id": "s3",
+     "day": "Any time",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "Done",
+     "body": "Nothing is sent to the contact."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Who should get these reply alerts?",
+     "why": "Right now every user in your account gets a text for every reply.",
+     "options": [
+      "Everyone",
+      "Only the intake team (tell us who)",
+      "One person (tell us who)"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Which replies should trigger an alert?",
+     "why": "Alerting on every contact, including existing clients, can be noisy.",
+     "options": [
+      "All replies",
+      "Only new leads (recommended)"
+     ]
+    }
+   ]
+  }
+ ]
+}
