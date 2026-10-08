@@ -1,0 +1,605 @@
+{
+ "client": {
+  "key": "hedayati-law-m90omb",
+  "name": "Hedayati Law Group, P.C.",
+  "location": "Garden City, New York"
+ },
+ "lfmpContact": "PJ at Law Firm Marketing Pros",
+ "audience": "Lead",
+ "automations": [
+  {
+   "id": "new-lead",
+   "name": "New Lead Follow-Up",
+   "version": "1.0",
+   "sent": "Oct 8, 2026",
+   "summary": "When someone submits the lead form on your website, this follows up right away by email and text, connects your office by phone if they don't reply, and checks in again the next day.",
+   "glance": [
+    [
+     "Starts when",
+     "Someone submits the lead form on your website"
+    ],
+    [
+     "Runs for",
+     "1 day"
+    ],
+    [
+     "Lead receives",
+     "1 email, 2–3 texts, 1 call, 1 voicemail"
+    ],
+    [
+     "Your team receives",
+     "1 call to connect with the new lead"
+    ],
+    [
+     "Ends",
+     "The next day, after the check-in text"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "Someone submits your website lead form",
+     "body": "The follow-up starts when someone submits the lead (intake) form on your website.",
+     "note": "All of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve. The trigger is set to your website lead form, but no form is selected yet, so it wouldn't fire. We'll connect it to the right form."
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The lead is added to your lead board",
+     "body": "They're added to the Marketing Pipeline as a New Lead."
+    },
+    {
+     "id": "s3",
+     "day": "Day 0",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email 1: Thanks for contacting us",
+     "email": {
+      "subject": "Thanks for claiming our offer [First name]!",
+      "body": "",
+      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+     },
+     "note": "The subject talks about “claiming our offer”. If there's no offer, we suggest “Thanks for contacting Hedayati Law Group”."
+    },
+    {
+     "id": "s4",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Text 1: Thanks for contacting us",
+     "sms": "Hi [First name], thanks for claiming our [Promotion name] promotion - Have you worked with a lawyer on this issue in the past?\n\n- Hedayati Law Group, P.C.",
+     "note": "This first text has no opt-out wording (“Reply STOP to opt out”), which carriers expect on the first message."
+    },
+    {
+     "id": "s5",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "If they reply and want to book",
+     "gap": "Waits up to 2 minutes for a reply",
+     "title": "Text 2: If they reply and want to book",
+     "sms": "Got it, so you know a little about what to expect. And just as a reminder: if you haven't already, be sure to schedule an appointment on our calendar here: [Booking link] You can also call us directly at [Office phone]",
+     "body": "When someone replies, they move to Hot Lead on your lead board. If their reply shows they want to book, they get this text."
+    },
+    {
+     "id": "s6",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "If they reply but aren't ready",
+     "gap": "Or",
+     "title": "Text 2: If they reply but aren't ready to book",
+     "sms": "No problem. The next step is to book a time to come in - grab a spot that works for you here: [Booking link]"
+    },
+    {
+     "id": "s7",
+     "day": "Day 0",
+     "type": "call",
+     "who": "team",
+     "when": "If there's no reply after 2 minutes",
+     "gap": "If there's no reply after 2 minutes",
+     "title": "Your office is connected to the lead",
+     "body": "Your office phone rings with the message “A new lead has been generated. Their name is [Contact name]. Press any key to connect with [First name].” Pressing a key calls the lead."
+    },
+    {
+     "id": "s8",
+     "day": "Day 0",
+     "type": "vm",
+     "who": "patient",
+     "when": "Right after",
+     "gap": "Right after",
+     "title": "A recorded voicemail is left",
+     "body": "A pre-recorded voicemail is dropped on the lead's phone.",
+     "note": "We couldn't see a recording attached to this step. Please send us the voicemail you'd like to use, or we can help you record one."
+    },
+    {
+     "id": "s9",
+     "day": "Day 1",
+     "type": "sms",
+     "who": "patient",
+     "when": "Next day",
+     "gap": "1 day later",
+     "title": "Text 3: Any questions?",
+     "sms": "Hi [First name], just checking back to see if you're ready to book an appointment so we can apply your discount. Are there any questions we can answer for you in the meantime? - Hedayati Law Group, P.C.",
+     "note": "This mentions “apply your discount”. If you don't offer a discount, we'll remove that part."
+    },
+    {
+     "id": "s10",
+     "day": "Day 1",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The follow-up ends",
+     "body": "The lead leaves this automation."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Is there an offer, such as a free consultation?",
+     "why": "The current texts and email mention a promotion and a discount, which came from a template.",
+     "options": [
+      "Free consultation",
+      "No offer, remove it",
+      "Something else"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Who should get the call when a new lead doesn't reply?",
+     "why": "Right now the call goes to your main office line.",
+     "options": [
+      "Main office line",
+      "A specific team member"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "appointment",
+   "name": "Consultation Confirmation + Reminders",
+   "version": "1.0",
+   "sent": "Oct 8, 2026",
+   "summary": "When a consultation is confirmed, this sends a confirmation email, then reminders 24 hours and 1 hour before.",
+   "glance": [
+    [
+     "Starts when",
+     "A consultation is confirmed in your main calendar"
+    ],
+    [
+     "Runs for",
+     "Until the consultation"
+    ],
+    [
+     "Lead receives",
+     "3 emails, 1 text"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "At the consultation time"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Booking",
+     "type": "start",
+     "when": "Start",
+     "title": "A consultation is confirmed",
+     "body": "Starts when an appointment is confirmed in your main booking calendar.",
+     "note": "All of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Booking",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The new-lead follow-up stops",
+     "body": "The lead leaves the New Lead Follow-Up and moves to New Booking on your lead board."
+    },
+    {
+     "id": "s3",
+     "day": "Booking",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email 1: Your consultation is confirmed",
+     "email": {
+      "subject": "Show Room Appointment Confirmation",
+      "body": "",
+      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+     },
+     "note": "“Show Room” came from a template and doesn't fit a law firm. We suggest “Your consultation is confirmed”."
+    },
+    {
+     "id": "s4",
+     "day": "Day before",
+     "type": "email",
+     "who": "patient",
+     "when": "24 hours before",
+     "gap": "24 hours before the consultation",
+     "title": "Email 2: Your consultation is in 24 hours",
+     "email": {
+      "subject": "Your Showroom Visit is in 24 Hours!",
+      "body": "",
+      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+     },
+     "note": "“Showroom” appears in the subject and body. We'll change it to “consultation” unless you prefer other wording."
+    },
+    {
+     "id": "s5",
+     "day": "Consultation day",
+     "type": "email",
+     "who": "patient",
+     "when": "1 hour before",
+     "gap": "1 hour before the consultation",
+     "title": "Email 3: Your consultation is in one hour",
+     "email": {
+      "subject": "[First name] your Showroom Visit appointment is in one hour!",
+      "body": "",
+      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+     },
+     "note": "“Showroom Visit” again. We'll change it to “consultation”."
+    },
+    {
+     "id": "s6",
+     "day": "Consultation day",
+     "type": "sms",
+     "who": "patient",
+     "when": "1 hour before",
+     "gap": "At the same time",
+     "title": "Text 1: Your consultation is in one hour",
+     "sms": "Hi [First name], just a friendly reminder that your Show Room Visit is in one hour. Please confirm you're still available by replying YES - Hedayati Law Group, P.C.",
+     "note": "“Show Room Visit” should be “consultation”. This also asks for a YES reply, but nothing happens when they reply."
+    },
+    {
+     "id": "s7",
+     "day": "Consultation day",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The reminders end",
+     "body": "The lead leaves this automation at the consultation time."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Which practice areas do you take consultations for?",
+     "why": "Your account has calendars for divorce, child custody, mediation, and adoption and guardianship, which look copied from a template. Only the general “Schedule an Appointment” calendar is active, and it has nobody assigned.",
+     "options": [
+      "Use one general calendar",
+      "Set up calendars per practice area (tell us which)"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Are consultations in person, by phone or by video?",
+     "why": "The reminders include your office address. Phone or video consultations need different details.",
+     "options": [
+      "In person",
+      "Phone",
+      "Video",
+      "A mix"
+     ]
+    },
+    {
+     "id": "q3",
+     "text": "What should happen when a lead replies YES to the 1-hour text?",
+     "why": "Nothing is set up to handle the reply.",
+     "options": [
+      "Remove the reply-YES line",
+      "Mark the appointment confirmed",
+      "Your team will watch replies"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "no-show",
+   "name": "Missed Consultation Follow-Up",
+   "version": "1.0",
+   "sent": "Oct 8, 2026",
+   "summary": "When a lead misses their consultation, this sends a reschedule email and text straight away, then one more text the next day if they haven't replied.",
+   "glance": [
+    [
+     "Starts when",
+     "An appointment is marked No-show in your main calendar"
+    ],
+    [
+     "Runs for",
+     "1 day"
+    ],
+    [
+     "Lead receives",
+     "1 email, 2 texts"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "The next day, or as soon as they reply"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "A lead misses their consultation",
+     "body": "Starts when an appointment in your main calendar is marked No-show.",
+     "note": "All of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email 1: Let's get you rescheduled",
+     "email": {
+      "subject": "Let's get you rescheduled [First name]!",
+      "body": "",
+      "pending": "The content of this email is missing in GHL (the template it points to wasn't copied into your account). We'll rebuild it and add the wording here for you to review."
+     },
+     "note": "“show room visit” should be “consultation”, and “seeing with you” should be “seeing you”."
+    },
+    {
+     "id": "s3",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "At the same time",
+     "title": "Text 1: Let's get you rescheduled",
+     "sms": "Hi [First name]! Sorry you weren't able to make our show room visit - let's get you rescheduled!\n\nYou can book another day/time that will work for you by clicking here: [Booking link]\n\nWe look forward to seeing you! - Hedayati Law Group, P.C.",
+     "note": "“show room visit” should be “consultation”."
+    },
+    {
+     "id": "s4",
+     "day": "Day 1",
+     "type": "sms",
+     "who": "patient",
+     "when": "Next day, if no reply",
+     "gap": "1 day later, if they haven't replied",
+     "title": "Text 2: Checking back in",
+     "sms": "Hi [First name], just wanted to check back to see if we can get you rescheduled or if you had any questions we can help with - Hedayati Law Group, P.C."
+    },
+    {
+     "id": "s5",
+     "day": "Day 1",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The follow-up ends",
+     "body": "The lead leaves this automation. It also stops early as soon as they reply."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Should your team be alerted when someone misses a consultation?",
+     "why": "Right now nobody on your team is notified.",
+     "options": [
+      "Yes, alert the team",
+      "No alert needed"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "review",
+   "name": "Review Request When Hired",
+   "version": "1.0",
+   "sent": "Oct 8, 2026",
+   "summary": "When a lead is marked Won (hired), this stops the marketing emails, sends a review request by email and text, and reminds your team 3 days later to check whether a review came in.",
+   "glance": [
+    [
+     "Starts when",
+     "A lead is marked Won on your lead board"
+    ],
+    [
+     "Runs for",
+     "3 days"
+    ],
+    [
+     "Client receives",
+     "1 review request email, 1 review request text"
+    ],
+    [
+     "Your team receives",
+     "1 email 3 days later"
+    ],
+    [
+     "Ends",
+     "Day 3, after your team is reminded"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "A lead is marked Won",
+     "body": "Starts when a lead in the Marketing Pipeline is marked Won.",
+     "note": "All of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Any marketing follow-ups stop",
+     "body": "The client is removed from the long-term marketing emails, if they were getting them."
+    },
+    {
+     "id": "s3",
+     "day": "Day 0",
+     "type": "email",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Review request email",
+     "body": "Your standard review request email is sent, with a link to leave a Google review.",
+     "note": "This uses the review request set up in GHL's Reputation settings. We'll add the exact wording here for you to review."
+    },
+    {
+     "id": "s4",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "Immediately",
+     "gap": "At the same time",
+     "title": "Review request text",
+     "body": "Your standard review request text is sent, with a link to leave a Google review.",
+     "note": "This also uses the wording from your Reputation settings. We'll add it here for you to review."
+    },
+    {
+     "id": "s5",
+     "day": "Day 3",
+     "type": "team",
+     "who": "team",
+     "when": "3 days later",
+     "gap": "3 days later",
+     "title": "Your team is reminded to check for a review",
+     "body": "Everyone on your team gets an email: “Has [Contact name] left a review yet? If [Contact name] hasn't yet left a review, please follow up manually.”"
+    },
+    {
+     "id": "s6",
+     "day": "Day 3",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The review request ends",
+     "body": "The client leaves this automation."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "When should a client be asked for a review?",
+     "why": "Today it's sent as soon as they're marked Won, which is often the day they hire you, before any work is done. Many firms wait until the matter is resolved.",
+     "options": [
+      "When hired (as now)",
+      "When the case closes (recommended)"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Who should get the 3-day review reminder?",
+     "why": "Right now it goes to every user in your account.",
+     "options": [
+      "Everyone",
+      "One person (tell us who)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stale-leads",
+   "name": "Stale Leads Clean-Up",
+   "version": "1.0",
+   "sent": "Oct 8, 2026",
+   "summary": "Leads that sit in New Lead, Hot Lead or New Booking for 7 days without any activity are marked Abandoned, so your lead board stays current.",
+   "glance": [
+    [
+     "Starts when",
+     "A lead has no activity for 7 days"
+    ],
+    [
+     "Runs for",
+     "Instant"
+    ],
+    [
+     "Lead receives",
+     "Nothing"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "Straight away"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 7",
+     "type": "start",
+     "when": "Start",
+     "title": "A lead has had no activity for 7 days",
+     "body": "Starts when a lead has sat in New Lead, Hot Lead or New Booking for 7 days with nothing happening.",
+     "note": "All of these automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Day 7",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "The lead is marked Abandoned",
+     "body": "The lead's status changes to Abandoned on your Marketing Pipeline.",
+     "note": "This step doesn't have a pipeline stage set, and your pipeline has no Abandoned stage. We'll make sure it updates the status correctly before going live."
+    },
+    {
+     "id": "s3",
+     "day": "Day 7",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "Done",
+     "body": "Nothing is sent to the lead."
+    }
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Is 7 days the right cut-off?",
+     "why": "Family law clients often take longer to decide.",
+     "options": [
+      "7 days is fine",
+      "14 days",
+      "30 days"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Should booked leads be marked Abandoned after 7 days?",
+     "why": "Someone with a consultation booked 2 weeks out would be marked Abandoned before they meet you.",
+     "options": [
+      "No, leave booked leads alone (recommended)",
+      "Yes"
+     ]
+    }
+   ]
+  }
+ ]
+}
