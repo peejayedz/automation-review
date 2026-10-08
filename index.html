@@ -35,6 +35,10 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:16px}
 .top{background:var(--paper);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
 .topin{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;padding-block:12px}
+.brandwrap{display:flex;align-items:center;gap:14px;min-width:0}
+.logochip{flex:none;display:inline-flex;align-items:center;background:#fff;border-radius:8px;padding:5px 9px;border:1px solid var(--line)}
+.logochip img{height:34px;width:auto;display:block}
+@media (max-width:600px){.logochip img{height:26px}.brandwrap{gap:10px}}
 .brand{font-size:13px;color:var(--muted)}
 .brand b{color:var(--ink);font-size:15px;display:block}
 .autotabs{display:flex;gap:6px;flex-wrap:wrap}
@@ -218,7 +222,7 @@ body.saving .actions button,body.saving form button[type=submit],body.saving [da
 <body>
 <div id="banner" class="banner" hidden></div>
 <header class="top"><div class="wrap topin">
-  <div class="brand"><b id="clientName">Automation Review</b><span id="clientSub">Law Firm Marketing Pros</span></div>
+  <div class="brandwrap"><span class="logochip"><img src="assets/lfmp-logo.png" alt="Law Firm Marketing Pros" width="826" height="242"></span><div class="brand"><b id="clientName">Automation Review</b><span id="clientSub">Law Firm Marketing Pros</span></div></div>
   <div class="tools"><span class="upd" id="updated"></span><button class="btn small" id="refreshBtn" type="button" title="Load the latest changes from the Sheet">↻ Refresh</button><button class="btn small" id="signinBtn" type="button" data-signin>🔒 Admin login</button></div>
 </div>
 <div class="wrap" style="padding-bottom:12px"><div class="autopick"><label for="autoSelect">Automation</label><select id="autoSelect"></select><span id="autoCount" class="hint"></span></div></div>
