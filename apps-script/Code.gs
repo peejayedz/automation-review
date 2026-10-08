@@ -19,12 +19,13 @@
 
 // ---- Settings ----------------------------------------------------------
 // Client codes allowed to save. Must match the file name in data/<code>.json.
-const ALLOWED_CLIENTS = ['boca-dental-e770de', 'palm-beach-plastic-n9umxi', 'sralla-family-law-rbi2yj'];
+const ALLOWED_CLIENTS = ['boca-dental-e770de', 'palm-beach-plastic-n9umxi', 'sralla-family-law-rbi2yj', 'hedayati-law-m90omb'];
 // The Sheet tab each client's responses go to. A client not listed here gets a tab named after its code.
 const CLIENT_TABS = {
   'boca-dental-e770de': 'Boca Dental',
   'palm-beach-plastic-n9umxi': 'Palm Beach Plastic',
-  'sralla-family-law-rbi2yj': 'Sralla Family Law'
+  'sralla-family-law-rbi2yj': 'Sralla Family Law',
+  'hedayati-law-m90omb': 'Hedayati Law Group'
 };
 // Slack alerts: put a Slack incoming-webhook URL in Project Settings > Script properties as SLACK_WEBHOOK_URL.
 // Every new client response is then posted there. Leave it unset to turn Slack alerts off.
