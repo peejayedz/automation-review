@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Automation Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#EEF1F5; --paper:#FFFFFF; --ink:#16202B; --muted:#5B6775; --line:#DCE2E9; --soft:#F5F7FA;
+  --accent:#1D4E89; --accent-soft:#E6EEF8;
+  --ok:#13795B; --ok-soft:#E3F4EC; --warn:#9A5B00; --warn-soft:#FDF1DC; --bad:#B42318; --bad-soft:#FDECEA;
+  --team:#5B3E96; --team-soft:#EFEAF8;
+  --serif:"Source Serif 4", Georgia, serif;
+  --sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --bg:#0E1318; --paper:#161D25; --ink:#E5EAF0; --muted:#9AA6B3; --line:#2A3440; --soft:#1B232C;
+    --accent:#86AEE4; --accent-soft:#1B2A3D;
+    --ok:#52C79C; --ok-soft:#15302A; --warn:#E5AC55; --warn-soft:#33281A; --bad:#F08A7E; --bad-soft:#3A1E1C;
+    --team:#B79CF0; --team-soft:#2A2340;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;padding-bottom:env(safe-area-inset-bottom,0px)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px}
+.top{background:var(--paper);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topin{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;padding-block:12px}
+.brandwrap{display:flex;align-items:center;gap:14px;min-width:0}
+.logochip{flex:none;display:inline-flex;align-items:center;background:#fff;border-radius:8px;padding:5px 9px;border:1px solid var(--line)}
+.logochip img{height:34px;width:auto;display:block}
+@media (max-width:600px){.logochip img{height:26px}.brandwrap{gap:10px}}
+.brand{font-size:13px;color:var(--muted)}
+.brand b{color:var(--ink);font-size:15px;display:block}
+.autotabs{display:flex;gap:6px;flex-wrap:wrap}
+.autotabs a{font-size:14px;text-decoration:none;color:var(--muted);padding:6px 12px;border-radius:7px;border:1px solid transparent;display:inline-flex;gap:8px;align-items:center}
+.autotabs a[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block;flex:none}
+.dot.approved{background:var(--ok)} .dot.changes{background:var(--warn)} .dot.pending{background:var(--accent)}
+.banner.previewbanner{background:var(--accent);color:var(--paper);font-weight:600}
+.banner{font-size:13px;background:var(--warn-soft);color:var(--ink);padding:8px 16px;text-align:center}
+.hero{padding-block:26px 18px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.hero h1{font-family:var(--serif);font-size:34px;line-height:1.15;margin:6px 0 8px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);align-items:center}
+.lead{font-size:17px;max-width:62ch;margin:12px 0 0}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.pill.pending{background:var(--accent-soft);color:var(--accent)}
+.pill.changes{background:var(--warn-soft);color:var(--warn)}
+.pill.updated{background:var(--team-soft);color:var(--team)}
+.pill.approved{background:var(--ok-soft);color:var(--ok)}
+.pill.none{background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.progress{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px}
+.bar{height:8px;border-radius:99px;background:var(--soft);border:1px solid var(--line);overflow:hidden;margin:10px 0 8px;display:flex}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.howto{font-size:13px;color:var(--muted);margin:10px 0 0;padding:0 0 0 18px}
+.glance{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
+.glance div{background:var(--paper);padding:12px 14px;font-size:14px}
+.glanceedit{border:1px dashed var(--team);border-radius:8px;padding:8px 10px;display:grid;gap:6px}
+.glanceedit legend{font-size:12px;font-weight:700;color:var(--team);padding:0 4px}
+.overview{margin:-10px 0 22px;display:grid;gap:10px}
+.ovbtn{justify-self:start;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+.ovbtn:hover{color:var(--ink);border-color:var(--warn)}
+.ovform{max-width:720px}
+.ovhist{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0}
+.verlock{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.vbadge{font-weight:700;border:1px solid var(--line);border-radius:7px;padding:4px 10px;background:var(--paper)}
+.meta .updated{color:var(--ok);font-weight:600}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tool{font-weight:500;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer}
+.tool.live{border-color:var(--bad);color:var(--bad);animation:pulse 1.4s infinite}
+.shotlist,.shots{display:flex;flex-wrap:wrap;gap:8px}
+.shot{position:relative}
+.shot img,.shots img{width:110px;height:76px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block;background:var(--soft)}
+.shot button{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;line-height:1}
+.shots{margin-top:6px}
+.glance b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:22px;align-items:start}
+.flow{display:flex;flex-direction:column}
+.dayhead{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:18px 0 8px}
+.dayhead:first-child{margin-top:0}
+.node{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;transition:border-color .15s, box-shadow .15s}
+.node:hover{border-color:var(--accent)}
+.node[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.node.team{background:var(--team-soft);border-color:transparent}
+.node.team[aria-pressed="true"]{border-color:var(--team)}
+.node.startend{background:var(--soft)}
+.icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);color:var(--accent)}
+.node.team .icon{background:var(--paper);color:var(--team)}
+.node.startend .icon{background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.icon svg{width:20px;height:20px}
+.ntitle{font-weight:600;font-size:15px;line-height:1.3}
+.nsub{font-size:13px;color:var(--muted);margin-top:2px}
+.conn{display:flex;align-items:center;gap:10px;height:30px;margin-left:33px;padding-left:18px;border-left:2px dotted var(--line);font-size:12px;color:var(--muted)}
+.inspector{position:sticky;top:16px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;max-height:calc(100vh - 32px);overflow:auto}
+.inspector.inline{position:static;max-height:none;margin:10px 0 4px;border-color:var(--accent)}
+.ihead{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--muted)}
+.inspector h2{font-family:var(--serif);font-size:22px;line-height:1.25;margin:6px 0 8px}
+.inspector p{margin:0 0 10px}
+.sms{background:var(--soft);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:12px 14px;white-space:pre-line;font-size:14.5px}
+.email{border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14.5px}
+.email .subj{background:var(--soft);padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.email .body{padding:12px;white-space:pre-line}
+.pendingtxt{color:var(--muted);font-style:italic}
+.chip{font-size:12px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 5px;white-space:nowrap}
+.len{font-size:12px;color:var(--muted);margin-top:6px}
+.smsreq{margin-top:10px;padding:10px 12px;border:1px dashed var(--warn);border-radius:8px;background:transparent;font-size:12.5px;line-height:1.5;color:var(--ink)}
+.smsreq .smsreq-h{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;margin-bottom:3px}
+.smsreq .smsreq-h b{color:var(--warn);font-size:12.5px}
+.smsreq .smsreq-tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.smsreq ul{margin:6px 0 0;padding-left:18px}
+.smsreq li{margin:2px 0}
+.nreq{display:block;font-size:11.5px;color:var(--warn);margin-top:2px}
+.note{font-size:13px;margin-top:12px;padding:9px 12px;border-radius:8px;background:var(--warn-soft)}
+.note b{color:var(--warn)}
+.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:16px}
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:9px 12px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;justify-content:center}
+.btn:hover{border-color:var(--accent)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.warn[aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.btn.edit[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.form{display:grid;gap:8px;margin-top:12px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px}
+.form label{font-size:13px;font-weight:600}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+textarea,input[type=text],input[type=email]{width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 10px;background:var(--paper);font-size:14px}
+textarea{resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.hint{font-size:12px;color:var(--muted)}
+.hist{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+.hist h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.hitem{border-left:3px solid var(--line);padding:4px 0 8px 10px;margin-bottom:8px;font-size:13px}
+.hitem.approve{border-color:var(--ok)} .hitem.change{border-color:var(--warn)} .hitem.copy{border-color:var(--accent)}
+.hitem .who{font-weight:600}
+.hitem .when{color:var(--muted)}
+.hitem .copytxt{white-space:pre-line;background:var(--soft);border-radius:6px;padding:6px 8px;margin-top:4px}
+.reply{margin-top:8px;background:var(--team-soft);border:1px solid var(--team);border-left:4px solid var(--team);border-radius:8px;padding:8px 10px;font-size:14px;line-height:1.45;color:var(--ink,inherit)}
+.reply b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--team);margin-bottom:2px}
+body.saving .actions button,body.saving form button[type=submit],body.saving [data-q]{pointer-events:none;opacity:.55}
+.hitem .old{opacity:.7}
+.loadnote{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:14px}
+.section{margin-top:34px}
+.section h2{font-family:var(--serif);font-size:24px;margin-bottom:6px}
+.qs{display:grid;gap:10px;margin-top:12px}
+.q{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:8px}
+.q p{margin:0}
+.approveall{background:var(--paper);border:2px solid var(--accent);border-radius:14px;padding:20px;margin-top:12px;display:grid;gap:10px;max-width:720px}
+.approveall.done{border-color:var(--ok);background:var(--ok-soft)}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.check input{margin-top:4px}
+.autopick{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.autopick label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.autopick select,.adminbar select{font-size:15px;font-weight:600;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);max-width:100%}
+.autopick select{min-width:min(360px,100%)}
+.signin{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px;padding:0}
+[hidden]{display:none!important}
+.rs{font-weight:700}.rs.done{color:var(--ok)}.rs.prog{color:var(--warn)}.rs.open{color:var(--accent)}
+.hitem.isdone{border-color:var(--ok)}
+.del{background:none;border:1px solid var(--line);color:var(--bad);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;cursor:pointer}
+.del.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tools .upd{font-size:12px;color:var(--muted)}
+.btn.small{padding:5px 10px;font-size:13px}
+.adminbar{background:var(--team-soft);border-bottom:1px solid var(--line);font-size:13px}
+.adminbar .wrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-block:8px}
+.adminbar b{color:var(--team)}
+.adminbar input{width:220px;padding:5px 8px;font-size:13px}
+.adminbar{transition:background .4s}
+.adminbar.welcome{animation:welcome 3s ease-out}
+@keyframes welcome{0%{background:var(--ok);}25%{background:color-mix(in srgb,var(--ok) 35%,var(--team-soft));}100%{background:var(--team-soft);}}
+.adminbadge{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:var(--team);background:var(--paper);border:1px solid var(--team);border-radius:999px;padding:3px 11px}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 var(--ok);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 70%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.welcomemsg{font-weight:600;color:var(--ok);animation:fadein .4s ease-out}
+@keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.akmsg{font-weight:600}
+.akmsg.bad{color:var(--bad)}
+.shake{animation:shake .4s;border-color:var(--bad)!important}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.spin{display:inline-block;width:11px;height:11px;margin-right:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.adminbar.welcome,.pulse,.shake,.spin,.welcomemsg{animation:none}}
+.adm{display:inline-flex;align-items:center;gap:4px;border:1px dashed var(--team);color:var(--team);background:transparent;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer}
+.admform{border:1px dashed var(--team);background:var(--team-soft)}
+.hadmin{display:grid;grid-template-columns:1fr 1.4fr auto;gap:6px;margin-top:6px}
+.hadmin select,.hadmin input{padding:5px 8px;font-size:13px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.okbanner{display:flex;gap:10px;align-items:center;background:var(--ok-soft);color:var(--ink);border:1px solid var(--ok);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:14px}
+.okbanner svg{width:22px;height:22px;color:var(--ok);flex:none}
+.node.isok .icon{background:var(--ok-soft);color:var(--ok)}
+.node.isok{border-color:var(--ok);background:linear-gradient(90deg,var(--ok-soft),var(--paper) 55%)}
+.node.isok .pill.approved{background:var(--ok);color:var(--paper)}
+.tabok{width:14px;height:14px;color:var(--ok);flex:none}
+.edited{font-size:11px;color:var(--team);font-weight:600;margin-left:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:9px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.foot{margin:40px 0 30px;font-size:12px;color:var(--muted)}
+.empty{padding:60px 0;text-align:center;color:var(--muted)}
+@media (max-width:980px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .hero{grid-template-columns:minmax(0,1fr)}
+  #sideInspector{display:none}
+  .glance{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px){
+  .hero h1{font-size:27px}
+  .row2{grid-template-columns:1fr}
+  .node{grid-template-columns:34px minmax(0,1fr);}
+  .node .pill{grid-column:2;justify-self:start}
+  .icon{width:34px;height:34px}
+  .conn{margin-left:30px}
+}
+/* ---------- sectioned layout (clients with a pipeline section) ---------- */
+.secnav{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;background:var(--bg);padding:10px 0;margin:6px 0 4px;border-bottom:1px solid var(--line);scrollbar-width:thin}
+.secnav a{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px;font-size:13.5px;font-weight:600}
+.secnav a:hover{border-color:var(--accent)}
+.secnav a span{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:11.5px}
+.secblock{margin-top:30px;padding-top:6px}
+.sechead{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start;margin-bottom:16px;scroll-margin-top:64px}
+.secnum{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--paper);font-weight:700;font-size:17px;margin-top:2px}
+.sechead h2{font-family:var(--serif);font-size:27px;line-height:1.2;margin:0 0 4px}
+.secpurpose{margin:0;color:var(--ink);max-width:820px;font-size:15px}
+.secoutcome{margin:4px 0 0;color:var(--muted);font-size:13.5px;max-width:820px}
+.subh{font-size:16px;margin:22px 0 10px}
+.draftnote{display:flex;gap:10px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:10px 14px;font-size:14px;max-width:860px;margin-bottom:14px}
+.acards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.acard{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.acard-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.anum{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--soft);border:1px solid var(--line);font-size:12px;font-weight:700}
+.acard h3{margin:2px 0 0;font-size:16px}
+.acard p{margin:0;font-size:13.5px}
+.acard .golink{margin-top:auto;align-self:flex-start}
+.golink{background:none;border:0;padding:4px 0;color:var(--accent);font-weight:600;font-size:13.5px;cursor:pointer}
+.golink:hover{text-decoration:underline}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px}
+.chainstep{flex:1 1 150px;max-width:220px;background:var(--paper);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:3px;font-size:12.5px}
+.chainstep b{font-size:13.5px}
+.chainstep span{color:var(--muted)}
+.chainstep.event{border-top-color:var(--muted);background:var(--soft)}
+.chainstep.won{border-top-color:var(--ok)}
+.chainarrow{display:grid;place-items:center;color:var(--muted);font-size:18px}
+.chainside{margin-top:8px;font-size:13px;color:var(--muted)}
+.chainside b{color:var(--ink)}
+.tagx{display:inline-block;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.02em;border-radius:999px;padding:1px 8px;white-space:nowrap;vertical-align:1px}
+.tagx.auto{background:var(--accent-soft);color:var(--accent)}
+.tagx.man{background:var(--team-soft);color:var(--team)}
+.tagx.rec{background:transparent;color:var(--muted);border:1px dashed var(--muted)}
+.tagx.ok{background:var(--ok-soft);color:var(--ok)}
+.tagx.warn{background:var(--warn-soft);color:var(--warn)}
+.tagx.draft{background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.tagx.won{background:var(--ok-soft);color:var(--ok)}
+.tagx.lost{background:var(--bad-soft);color:var(--bad)}
+.pipemeta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.pipemeta div{background:var(--paper);padding:10px 14px;font-size:14px}
+.pipemeta b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.pipecard{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}
+.pipescroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pipesvg{display:block;width:100%;min-width:980px;height:auto}
+.scrollhint{display:none;font-size:12px;color:var(--muted);margin:6px 0 0}
+.plegend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--muted);margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.plegend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;height:14px;border-radius:4px;border:2px solid var(--accent);background:var(--paper)}
+.sw.m{border:2px dashed var(--team);background:var(--team-soft)}
+.sw.d{width:13px;height:13px;border:2px solid var(--warn);background:var(--warn-soft);transform:rotate(45deg);border-radius:2px}
+.sw.w{border-color:var(--ok);background:var(--ok-soft)}
+.sw.l{border-color:var(--bad);background:var(--bad-soft)}
+.sw.p{border:2px dashed var(--muted);background:transparent}
+.pipesvg text{font-family:var(--sans);fill:var(--ink)}
+.pipesvg .t-s{font-size:10.5px;fill:var(--muted);font-weight:700;letter-spacing:.05em}
+.pipesvg .t-n{font-size:14.5px;font-weight:700}
+.pipesvg .t-x{font-size:11.5px;fill:var(--muted)}
+.pipesvg .t-b{font-size:11.5px}
+.pipesvg .t-bold{font-weight:700}
+.pipesvg .t-lbl{font-size:11px;fill:var(--muted)}
+.pipesvg .t-prop{font-size:9.5px;font-weight:700;fill:var(--muted);letter-spacing:.04em}
+.pipesvg .t-won{fill:var(--ok)} .pipesvg .t-lost{fill:var(--bad)}
+.pipesvg .bx-a{fill:var(--paper);stroke:var(--accent);stroke-width:2}
+.pipesvg .bx-m{fill:var(--team-soft);stroke:var(--team);stroke-width:2;stroke-dasharray:6 4}
+.pipesvg .bx-e{fill:var(--soft);stroke:var(--line)}
+.pipesvg .bx-d{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.pipesvg .bx-r{fill:var(--soft);stroke:var(--line)}
+.pipesvg .bx-p{fill:none;stroke:var(--muted);stroke-dasharray:4 3}
+.pipesvg .bx-won{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2}
+.pipesvg .bx-lost{fill:var(--bad-soft);stroke:var(--bad);stroke-width:2}
+.pipesvg .bx-s{fill:var(--paper);stroke:var(--accent);stroke-width:1.5}
+.pipesvg [class^="ln-"]{fill:none;stroke-width:2}
+.pipesvg .ln-a{stroke:var(--accent)} .pipesvg .ln-m{stroke:var(--team);stroke-dasharray:5 4} .pipesvg .ln-w{stroke:var(--warn)} .pipesvg .ln-l{stroke:var(--bad)} .pipesvg .dash{stroke-dasharray:5 4}
+.pipesvg .fa{fill:var(--accent)} .pipesvg .fm{fill:var(--team)} .pipesvg .fw{fill:var(--warn)} .pipesvg .fl{fill:var(--bad)}
+.stcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.stcard{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;padding:13px 14px}
+.stcard.m{border-top-color:var(--team)}
+.stcard.won{border-top-color:var(--ok)} .stcard.lost{border-top-color:var(--bad)}
+.stnum{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.stcard h3{margin:3px 0 8px;font-size:16.5px}
+.stcard dl{margin:0;font-size:13.5px}
+.stcard dt{color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;margin-top:8px}
+.stcard dt:first-child{margin-top:0}
+.stcard dd{margin:1px 0 0}
+.strec .tagx{white-space:normal;margin-bottom:4px}
+.reviewwrap .node{scroll-margin-top:72px}
+.stflag{margin:10px 0 0;font-size:13px;background:var(--warn-soft);border-radius:8px;padding:7px 10px}
+.strec{margin:10px 0 0;font-size:13px;border:1px dashed var(--line);border-radius:8px;padding:7px 10px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.splitcol{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px}
+.splitcol.m{border-left-color:var(--team)}
+.splitcol h4{margin:0 0 6px}
+.splitcol ul{margin:0;padding-left:18px;font-size:14px}
+.splitcol li{margin:4px 0}
+.extbl{width:100%;border-collapse:collapse;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px;margin-bottom:6px}
+.extbl th{text-align:left;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--soft);padding:9px 12px;border-bottom:1px solid var(--line)}
+.extbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.extbl tr:last-child td{border-bottom:0}
+.wfpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:16px 0 4px}
+.wfbtn{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;font-weight:600}
+.wfbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.reviewwrap{border-top:1px solid var(--line);margin-top:10px;padding-top:6px}
+.cpgroup{margin-bottom:6px}
+.cpitem{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;max-width:860px}
+.cphead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap}
+.cpfoot{margin-top:6px}
+.apgrid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.apcol{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.aplist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.aplist li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px}
+.aplist li > span:first-child{flex:1 1 200px}
+.apbig{font-size:34px;font-weight:700;margin:0;line-height:1.1}
+.apbig span{font-size:15px;color:var(--muted);font-weight:500}
+.todo{margin:0;padding-left:20px;font-size:14px;max-width:860px}
+.todo li{margin:4px 0}
+@media (max-width:1000px){.scrollhint{display:block}}
+@media (max-width:760px){
+  .pipemeta,.split,.apgrid{grid-template-columns:1fr}
+  .sechead h2{font-size:23px}
+  .secnum{width:32px;height:32px;font-size:15px}
+  .extbl thead{display:none}
+  .extbl,.extbl tbody,.extbl tr,.extbl td{display:block;width:100%}
+  .extbl tr{border-bottom:1px solid var(--line);padding:6px 0}
+  .extbl td{border:0;padding:3px 12px}
+  .extbl td[data-l]::before{content:attr(data-l);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  .chainarrow{transform:rotate(90deg);width:100%}
+  .chainstep{max-width:none;flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script>document.write('<script src="config.js?t=' + Date.now() + '"><\/script>');</script>
+</head>
+<body>
+<div id="banner" class="banner" hidden></div>
+<header class="top"><div class="wrap topin">
+  <div class="brandwrap"><span class="logochip"><img src="assets/lfmp-logo.png" alt="Law Firm Marketing Pros" width="826" height="242"></span><div class="brand"><b id="clientName">Automation Review</b><span id="clientSub">Law Firm Marketing Pros</span></div></div>
+  <div class="tools"><span class="upd" id="updated"></span><button class="btn small" id="refreshBtn" type="button" title="Load the latest changes from the Sheet">↻ Refresh</button><button class="btn small" id="signinBtn" type="button" data-signin>🔒 Admin login</button></div>
+</div>
+<div class="wrap" style="padding-bottom:12px"><div class="autopick"><label for="autoSelect">Automation</label><select id="autoSelect"></select><span id="autoCount" class="hint"></span></div></div>
+</header>
+<div class="adminbar" id="adminbar" hidden><div class="wrap" id="adminbarIn"></div></div>
+
+<main class="wrap" id="app">
+  <div class="empty">Loading your review…</div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+const CFG = window.REVIEW_CONFIG || {};
+const SAVE_URL = (CFG.saveUrl || "").trim();
+const params = new URLSearchParams(location.search);
+const clientKey = (params.get("c") || "").replace(/[^a-z0-9-]/gi, "");
+let autoId = params.get("a") || "";
+
+let baseData = null, data = null, auto = null, responses = [], content = [], selected = null, openForm = null, chipChoice = {}, lastLoaded = null;
+let wantAdmin = params.has("admin"); let adminClients = [];
+let adminKey = ""; try { adminKey = localStorage.getItem("ar_admin_key") || ""; } catch(e){}
+let justSignedIn = false;
+let isAdmin = false, adminForm = null, rendered = false, loaded = false, loadFailed = false;
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const chips = (s) => esc(s).replace(/\[([^\]]+)\]/g, '<span class="chip">$1</span>');
+const fmt = (iso) => { try { return new Date(iso).toLocaleString("en-US", {timeZone:"America/New_York", month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) + " ET"; } catch(e) { return ""; } };
+
+/* ---------- reviewer identity (per browser) ---------- */
+function getReviewer(){ try { return JSON.parse(localStorage.getItem("ar_reviewer") || "{}"); } catch(e){ return {}; } }
+function setReviewer(r){ try { localStorage.setItem("ar_reviewer", JSON.stringify(r)); } catch(e){} }
+
+/* ---------- storage: Google Sheet via Apps Script, or demo (this browser) ---------- */
+const demoKey = "ar_demo_" + clientKey;
+async function loadAll(){
+  if (!SAVE_URL){
+    let rows = [], cont = [];
+    try { rows = JSON.parse(localStorage.getItem(demoKey) || "[]"); cont = JSON.parse(localStorage.getItem(demoKey + "_content") || "[]"); } catch(e){}
+    return {rows, content: cont};
+  }
+  const res = await fetch(SAVE_URL + "?client=" + encodeURIComponent(clientKey) + "&t=" + Date.now(), {cache:"no-store"});
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || "Could not load responses");
+  return {rows: j.rows || [], content: j.content || []};
+}
+async function loadResponses(){ return (await loadAll()).rows; }
+async function postJSON(obj){
+  const res = await fetch(SAVE_URL, { method:"POST", body: JSON.stringify(obj) });
+  return res.json();
+}
+/* ---------- admin: content edits and request status ---------- */
+async function adminEdit(automation, field, value){
+  const who = getReviewer().name || "Admin";
+  if (!SAVE_URL){
+    const row = {timestamp:new Date().toISOString(), client:clientKey, automation, field, value, edited_by:who};
+    const all = (await loadAll()).content; all.push(row);
+    try { localStorage.setItem(demoKey + "_content", JSON.stringify(all)); } catch(e){}
+    content.push(row); return row;
+  }
+  const j = await postJSON({action:"admin_edit", key:adminKey, client:clientKey, automation, field, value, name:who});
+  if (!j.ok) throw new Error(j.error || "Could not save");
+  content.push(j.content); return j.content;
+}
+async function adminStatus(id, status, reply){
+  if (!SAVE_URL){
+    const r = responses.find(x => x.id === id); if (r){ r.status = status; r.lfmp_reply = reply; }
+    try { localStorage.setItem(demoKey, JSON.stringify(responses)); } catch(e){}
+    return;
+  }
+  const j = await postJSON({action:"admin_status", key:adminKey, client:clientKey, id, status, lfmp_reply:reply});
+  if (!j.ok) throw new Error(j.error || "Could not save");
+  const i = responses.findIndex(x => x.id === id); if (i > -1) responses[i] = j.row;
+}
+// Rebuild the automations from the data file plus any admin edits (newest edit wins).
+function applyContent(){
+  data = JSON.parse(JSON.stringify(baseData));
+  content.slice().sort((a,b) => String(a.timestamp).localeCompare(String(b.timestamp))).forEach(c => {
+    const a = data.automations.find(x => x.id === c.automation); if (!a) return;
+    const f = String(c.field || ""), v = c.value == null ? "" : String(c.value);
+    if (f !== "version"){ a._edits = (a._edits || 0) + 1; if (!a._lastEdit || String(c.timestamp) > a._lastEdit) a._lastEdit = String(c.timestamp); }
+    else { a._edits = 0; a._lastEdit = null; a._roundStart = String(c.timestamp); }
+    if (["name","summary","version"].includes(f)){ a[f] = v; a._edited = true; return; }
+    const g = f.match(/^glance:(\d+):(label|value)$/);
+    if (g){ a.glance = a.glance || []; const i = +g[1]; a.glance[i] = a.glance[i] || ["", ""]; a.glance[i][g[2] === "label" ? 0 : 1] = v; return; }
+    const q = f.match(/^q:([^:]+):(text|why|options)$/);
+    if (q){ const qq = (a.questions || []).find(x => x.id === q[1]); if (!qq) return; qq[q[2]] = q[2] === "options" ? v.split("\n").map(x => x.trim()).filter(Boolean) : v; qq._edited = true; return; }
+    const m = f.match(/^step:([^:]+):(sms|title|body|when|gap|note|email\.subject|email\.body)$/); if (!m) return;
+    const st = a.steps.find(x => x.id === m[1]); if (!st) return;
+    if (m[2].startsWith("email.")){ st.email = st.email || {subject:"", body:""}; st.email[m[2].slice(6)] = v; }
+    else st[m[2]] = v;
+    st._edited = true;
+  });
+  const id = auto ? auto.id : autoId;
+  auto = data.automations.find(a => a.id === id) || data.automations[0];
+}
+async function saveResponse(rec){
+  if (!SAVE_URL){
+    const all = await loadResponses(); rec.id = "demo-" + Date.now(); rec.timestamp = new Date().toISOString(); rec.status = "Open";
+    all.push(rec); try { localStorage.setItem(demoKey, JSON.stringify(all)); } catch(e){}
+    return rec;
+  }
+  const res = await fetch(SAVE_URL, { method:"POST", body: JSON.stringify(rec) }); // text/plain: no CORS preflight
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || "Could not save");
+  return j.row;
+}
+
+/* ---------- derived state ---------- */
+// Google Sheets can turn "1.0" into the number 1, so compare versions both as text and as numbers.
+const sameV = (a, b) => String(a) === String(b) || (a !== "" && b !== "" && Number(a) === Number(b));
+const mine = () => responses.filter(r => r.automation === auto.id);
+const cur = () => mine().filter(r => sameV(r.version, auto.version));
+// A request is still open if it isn't Done and the client hasn't marked the step "Looks good" after it.
+// A later "Looks good" means the client is happy with the step as it is, so it replaces earlier requests.
+function isReplaced(r, rs){
+  const t = Date.parse(r.timestamp) || 0;
+  return rs.some(x => x.step === r.step && x.action === "approve" && (Date.parse(x.timestamp) || 0) > t);
+}
+function isOpenReq(r, rs){ return (r.action === "change" || r.action === "copy") && r.status !== "Done" && !isReplaced(r, rs); }
+function stepState(stepId){
+  if (!loaded) return "loading";
+  const rs = cur().filter(r => r.step === stepId && ["approve","change","copy"].includes(r.action));
+  if (!rs.length) return "pending";
+  const last = rs[rs.length - 1];
+  if (rs.some(r => isOpenReq(r, rs))) return "changes";
+  if (last.action === "approve") return "approved";
+  return "updated"; // requests done by LFMP, client hasn't re-approved
+}
+const stateLabel = {loading:"Loading…", pending:"Needs your review", changes:"Changes requested", updated:"✓ Updated · please re-check", approved:"✓ Looks good"};
+function autoState(a){
+  if (!loaded) return "loading";
+  const rs = responses.filter(r => r.automation === a.id && sameV(r.version, a.version));
+  if (rs.some(r => r.action === "approve_all")) return "approved";
+  if (rs.some(r => isOpenReq(r, rs))) return "changes";
+  return "pending";
+}
+const reviewable = () => auto.steps.filter(s => s.type !== "start");
+
+/* ---------- icons ---------- */
+const ICON = {
+  sms:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+  email:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+  call:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
+  vm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6.5" cy="12" r="3.5"/><circle cx="17.5" cy="12" r="3.5"/><path d="M6.5 15.5h11"/></svg>',
+  team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.6"/></svg>',
+  start:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16l12-8z"/></svg>',
+  end:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>'
+};
+const TYPE = {sms:"Text message", email:"Email", call:"Phone call", vm:"Voicemail", team:"Team action", start:"Start", end:"End"};
+
+/* ---------- render ---------- */
+function render(){
+  $("#clientName").textContent = data.client.name + " · Automation Review";
+  $("#clientSub").textContent = "Powered by Law Firm Marketing Pros";
+  document.title = auto.name + " · " + data.client.name;
+  const mark = {loading:"Loading…", approved:"✓ Approved", changes:"● Changes requested", pending:"○ Needs review"};
+  $("#autoSelect").innerHTML = data.automations.map((a, i) => `<option value="${esc(a.id)}" ${a.id===auto.id?"selected":""}>${i+1}. ${esc(a.name)} · ${mark[autoState(a)]}</option>`).join("");
+  const nApproved = data.automations.filter(a => autoState(a) === "approved").length;
+  $("#autoCount").textContent = nApproved + " of " + data.automations.length + " approved";
+
+  const steps = reviewable();
+  const counts = {loading:0, approved:0, changes:0, updated:0, pending:0};
+  steps.forEach(s => counts[stepState(s.id)]++);
+  const pct = (n) => (100 * n / steps.length) + "%";
+  const as = autoState(auto);
+  const asPill = as === "approved" ? '<span class="pill approved">✓ Approved</span>' : as === "changes" ? '<span class="pill changes">Changes requested</span>' : as === "loading" ? '<span class="pill none">Loading saved responses…</span>' : '<span class="pill pending">Needs your review</span>';
+
+  let html = `<section class="hero">
+    <div>
+      <div class="eyebrow">Automation ${data.automations.indexOf(auto)+1} of ${data.automations.length}</div>
+      <h1>${esc(auto.name)}</h1>
+      <div class="meta">${asPill}<span>Version ${esc(auto.version)}</span><span>Sent ${esc(auto.sent)}</span>${auto._lastEdit ? `<span class="updated">Updated ${fmt(auto._lastEdit)}${isAdmin ? ` · ${auto._edits} edit${auto._edits===1?"":"s"} this round` : ""}</span>` : ""}${isAdmin?`<button class="adm" type="button" data-admin="details">✎ Edit name, summary, boxes</button>`:""}</div>
+      ${isAdmin && adminForm === "details" ? detailsFormHTML() : `<p class="lead">${esc(auto.summary)}</p>`}
+      ${approvedBanner()}
+    </div>
+    <div class="progress">
+      <b>${counts.approved + counts.changes} of ${steps.length} steps reviewed</b>
+      <div class="bar" aria-hidden="true"><span style="width:${pct(counts.approved)};background:var(--ok)"></span><span style="width:${pct(counts.changes)};background:var(--warn)"></span><span style="width:${pct(counts.updated)};background:var(--team)"></span></div>
+      <div class="legend"><span><i class="dot approved"></i>${counts.approved} looks good</span><span><i class="dot changes"></i>${counts.changes} changes</span>${counts.updated?`<span><i class="dot" style="background:var(--team)"></i>${counts.updated} updated</span>`:""}<span><i class="dot"></i>${counts.pending} to review</span></div>
+      <ol class="howto"><li>Click a step to see exactly what's sent.</li><li>Mark it <b>Looks good</b>, <b>Request a change</b> or <b>Edit the wording</b>.</li><li>Approve the automation at the bottom.</li></ol>
+    </div>
+  </section>
+  <div class="glance">${auto.glance.map(g => `<div><b>${esc(g[0])}</b>${chips(g[1])}</div>`).join("")}</div>
+  ${overviewHTML()}
+  <div class="main">
+    <div class="flow" id="flow">${flowHTML()}</div>
+    <aside id="sideInspector" aria-live="polite">${selected && !matchMedia("(max-width:980px)").matches ? `<div class="inspector">${inspectorHTML()}</div>` : ""}</aside>
+  </div>
+  ${questionsHTML()}
+  ${approveHTML()}
+  <p class="foot">Your responses are saved as soon as you click, and the LFMP team sees them right away. You can come back to this page any time to see where each change stands.${isAdmin ? "" : ` <button class="signin" type="button" data-signin>Team sign-in</button>`}</p>`;
+  $("#app").innerHTML = sectioned() ? sectionsHTML(html) : html;
+  renderAdminBar();
+  $("#signinBtn").hidden = isAdmin;
+  $("#updated").textContent = lastLoaded ? "Updated " + lastLoaded.toLocaleTimeString("en-US", {timeZone:"America/New_York", hour:"numeric", minute:"2-digit"}) + " ET" : "";
+}
+
+function flowHTML(){
+  const narrow = matchMedia("(max-width:980px)").matches;
+  let h = "", lastDay = "";
+  auto.steps.forEach((s) => {
+    if (s.day !== lastDay){ h += `<div class="dayhead">${esc(s.day)}</div>`; lastDay = s.day; }
+    else if (s.gap){ h += `<div class="conn">${esc(s.gap)}</div>`; }
+    let st = stepState(s.id); if (s.type === "start" && (st === "pending" || st === "loading")) st = null;
+    const cls = (s.type === "team" || s.type === "call") ? "team" : (s.type === "start" || s.type === "end") ? "startend" : "";
+    const who = s.who === "patient" ? " · " + (data.audience || "Patient") + " receives" : s.who === "team" ? " · Your team" : "";
+    h += `<button class="node ${cls} ${st==="approved"?"isok":""}" data-step="${esc(s.id)}" aria-pressed="${selected===s.id}">
+      <span class="icon">${st==="approved" ? CHECK : (ICON[s.type]||"")}</span>
+      <span><span class="ntitle">${chips(s.title)}</span><span class="nsub" style="display:block">${(s.type==="start"||s.type==="end") ? TYPE[s.type] : esc(s.when) + " · " + TYPE[s.type] + who}</span>${s.type === "sms" ? `<span class="nreq">⚠️ Needs a phone number + A2P/10DLC approval</span>` : ""}</span>
+      ${st ? `<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>` : ""}
+    </button>`;
+    if (narrow && selected === s.id) h += `<div class="inspector inline">${inspectorHTML()}</div>`;
+  });
+  return h;
+}
+
+/* ---------- voice dictation + screenshots ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let shots = [];          // screenshots waiting to be sent with the open form: [{name, type, data(base64), url}]
+let speech = null, recTarget = null;
+function inputTools(target){
+  const mic = SR ? `<button type="button" class="tool" data-mic="${target}">${recTarget === target ? "■ Stop recording" : "🎤 Speak instead of typing"}</button>` : "";
+  return `<div class="tools">${mic}
+    <label class="tool">📎 Attach screenshot<input type="file" accept="image/*" multiple data-shot hidden></label>
+    <span class="hint">You can also paste a screenshot (Ctrl/Cmd+V). Up to 3 images.</span></div>
+    <div class="shotlist">${shots.map((x, i) => `<span class="shot"><img src="${x.url}" alt="Screenshot ${i+1}"><button type="button" data-unshot="${i}" aria-label="Remove screenshot ${i+1}">×</button></span>`).join("")}</div>`;
+}
+function shotsHTML(v){
+  const urls = String(v || "").split(/\s+/).filter(u => /^(https?:|data:image)/.test(u));
+  if (!urls.length) return "";
+  return `<div class="shots">${urls.map((u, i) => {
+    const m = u.match(/\/d\/([\w-]+)/); const thumb = m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w400" : u;
+    return `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(thumb)}" alt="Attached screenshot ${i+1}" loading="lazy"></a>`; }).join("")}</div>`;
+}
+function startMic(target){
+  if (speech){ speech.stop(); return; }
+  const el = document.getElementById(target); if (!el || !SR) return;
+  speech = new SR(); speech.lang = "en-US"; speech.continuous = true; speech.interimResults = true;
+  const base = el.value ? el.value.replace(/\s*$/, " ") : "";
+  let finalText = "";
+  speech.onresult = (ev) => {
+    let interim = "";
+    for (let i = ev.resultIndex; i < ev.results.length; i++){
+      const t = ev.results[i][0].transcript;
+      if (ev.results[i].isFinal) finalText += t; else interim += t;
+    }
+    const box = document.getElementById(target); if (box) box.value = base + finalText + interim;
+  };
+  speech.onerror = (ev) => { toast(ev.error === "not-allowed" ? "Allow microphone access to use voice" : "Voice stopped: " + ev.error); };
+  speech.onend = () => { speech = null; recTarget = null; refreshTools(); };
+  recTarget = target; speech.start(); refreshTools(); toast("Listening… speak now");
+}
+function refreshTools(){
+  document.querySelectorAll("[data-mic]").forEach(b => { b.textContent = recTarget === b.dataset.mic ? "■ Stop recording" : "🎤 Speak instead of typing"; b.classList.toggle("live", recTarget === b.dataset.mic); });
+  document.querySelectorAll(".shotlist").forEach(l => { l.innerHTML = shots.map((x, i) => `<span class="shot"><img src="${x.url}" alt="Screenshot ${i+1}"><button type="button" data-unshot="${i}" aria-label="Remove screenshot ${i+1}">×</button></span>`).join(""); });
+}
+async function addShot(file){
+  if (!file || !/^image\//.test(file.type)) return;
+  if (shots.length >= 3){ toast("Up to 3 screenshots per request"); return; }
+  const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = URL.createObjectURL(file); });
+  const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const url = c.toDataURL("image/jpeg", 0.85);
+  shots.push({ name: (file.name || "screenshot").replace(/\.[^.]+$/, "") + ".jpg", type: "image/jpeg", data: url.split(",")[1], url });
+  refreshTools();
+}
+function resetInputs(){ if (speech) speech.stop(); shots = []; }
+document.addEventListener("paste", (e) => {
+  if (!document.querySelector("[data-shot]")) return;
+  const items = [...(e.clipboardData && e.clipboardData.items || [])].filter(i => i.type.startsWith("image/"));
+  if (!items.length) return;
+  e.preventDefault(); items.forEach(i => addShot(i.getAsFile()));
+});
+function nextVersion(v){
+  const m = String(v || "1.0").match(/^(\d+)\.(\d+)$/);
+  return m ? m[1] + "." + (Number(m[2]) + 1) : (Number(v) ? (Number(v) + 0.1).toFixed(1) : String(v || "1") + ".1");
+}
+function histItemsHTML(list){
+  return list.map(r => `
+     <div class="hitem ${r.action} ${r.status==="Done"?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
+       <span class="who">${esc(r.name||"Someone")}</span> <span class="when">· ${fmt(r.timestamp)}${!sameV(r.version, auto.version)?" · v"+esc(r.version):""}</span>
+       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · ${r.status!=="Done" && isReplaced(r, cur()) ? '<span class="rs done">Replaced by Looks good</span>' : statusTag(r.status)}`:""}</div>
+       ${r.details?`<div>${esc(r.details)}</div>`:""}
+       ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
+       ${shotsHTML(r.attachments)}
+       ${r.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>`:""}
+       ${isAdmin && (r.action==="change"||r.action==="copy") ? `<form class="hadmin" data-form="status" data-id="${esc(r.id)}">
+         <select aria-label="Status" name="status">${["Open","In progress","Done"].map(o=>`<option ${String(r.status||"Open")===o?"selected":""}>${o}</option>`).join("")}</select>
+         <input type="text" name="reply" aria-label="Reply to client" placeholder="Reply shown to the client" value="${esc(r.lfmp_reply||"")}">
+         <button class="btn small" type="submit">Save</button></form>` : ""}
+       ${isAdmin ? `<div style="margin-top:6px">${delBtn(r.id)}</div>` : ""}
+     </div>`).join("");
+}
+let ovOpen = false, ovKind = null;
+function overviewHTML(){
+  const list = mine().filter(r => r.step === "overview" && r.action === "change").slice().reverse();
+  const locked = autoState(auto) === "approved";
+  const parts = ["The description", ...(auto.glance || []).map(g => g[0]), "Automation name", "Something else"];
+  const pick = ovKind && parts.includes(ovKind) ? ovKind : parts[0];
+  let h = "";
+  if (loaded && !locked){
+    h += ovOpen ? `<form class="form ovform" data-form="ovchange">
+      <label>What needs correcting?</label>
+      <div class="chips" role="group" aria-label="Part of the overview">${parts.map(k => `<button type="button" data-ovkind="${esc(k)}" aria-pressed="${k===pick}">${esc(k)}</button>`).join("")}</div>
+      <label for="ov-details">What should it say instead?</label>
+      <textarea id="ov-details" rows="3" required placeholder="e.g. It runs for 3 days, not 1"></textarea>
+      ${inputTools("ov-details")}
+      ${whoFields("ov")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Send correction</button><button class="btn" type="button" data-ov-cancel>Cancel</button></div>
+    </form>` : `<button class="ovbtn" type="button" data-act="ovchange">✎ Something not right in this overview? Request a correction</button>`;
+  }
+  if (list.length) h += `<div class="hist ovhist"><h3>Corrections requested for this overview</h3>${histItemsHTML(list)}</div>`;
+  return h ? `<div class="overview">${h}</div>` : "";
+}
+/* ---------- SMS setup requirement (informational only, never part of the message) ---------- */
+function smsCompliance(s){
+  // A step can override the extra lines with "smsCompliance": ["..."] in the data file ([] hides them).
+  if (Array.isArray(s.smsCompliance)) return s.smsCompliance;
+  const id = (auto.id || "").toLowerCase();
+  const text = ((s.sms || "") + " " + (s.body || "") + " " + (s.title || "")).toLowerCase();
+  const out = [];
+  const marketing = /reactivation|review|nurture|newsletter|promo/.test(id) || /promotion|offer|gift card|discount|review/.test(text);
+  if (/appointment|consultation|no-show|noshow|reminder/.test(id)) {
+    out.push("Appointment texts are registered as a customer-care / reminder use case. The contact still needs to have agreed to receive texts, e.g. a consent checkbox on the booking form.");
+  } else if (/new-lead|new-patient|enquiry|inquiry|lead/.test(id)) {
+    out.push("Texting new leads: the website form needs an SMS consent checkbox and disclosure, and the first text should include opt-out wording such as “Reply STOP to opt out.”");
+  }
+  if (marketing) out.push("This text is promotional (an offer, review request or re-engagement). The A2P campaign must be registered for marketing use, the contact must have opted in to marketing texts, and the message should include opt-out wording.");
+  if ((data.client && data.client.smsHealthcare) || data.smsHealthcare) out.push("Healthcare: keep texts free of treatment or health details (HIPAA).");
+  return out;
+}
+function smsReqHTML(s){
+  const extra = smsCompliance(s);
+  return `<div class="smsreq" role="note">
+    <div class="smsreq-h"><b>⚠️ SMS Requirement</b><span class="smsreq-tag">Setup note · not part of the text</span></div>
+    Sending SMS through GoHighLevel requires a purchased phone number and an approved A2P/10DLC registration. Business/EIN information may be required for registration, and approval must be in place before any text can be sent.
+    ${extra.length ? `<ul>${extra.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+  </div>`;
+}
+function inspectorHTML(){
+  const s = auto.steps.find(x => x.id === selected); if (!s) return "";
+  let st = stepState(s.id); if (s.type === "start" && (st === "pending" || st === "loading")) st = null;
+  let content = "";
+  if (s.body) content += `<p>${chips(s.body)}</p>`;
+  if (s.sms){
+    const len = s.sms.replace(/\[[^\]]+\]/g, "Maria").length;
+    content += `<div class="sms">${chips(s.sms)}</div><div class="len">About ${Math.round(len/10)*10} characters with names filled in${len>160?` · sends as ${Math.ceil(len/153)} text segments`:""}</div>`;
+  }
+  if (s.type === "sms") content += smsReqHTML(s);
+  if (s.email){
+    content += `<div class="email"><div class="subj"><b>Subject:</b> ${chips(s.email.subject)}</div><div class="body">${s.email.body ? chips(s.email.body) : `<span class="pendingtxt">${esc(s.email.pending||"")}</span>`}</div></div>`;
+  }
+  if (s._edited && isAdmin) content += `<div class="edited">Edited on this page</div>`;
+  if (s.note) content += `<div class="note"><b>Our note:</b> ${chips(s.note)}</div>`;
+  if (isAdmin && (s.sms || s.email)){
+    content += adminForm === "copy:" + s.id ? copyAdminFormHTML(s) : `<div style="margin-top:10px"><button class="adm" type="button" data-admin="copy:${esc(s.id)}">✎ Edit this ${s.sms ? "text" : "email"} (admin)</button></div>`;
+  }
+  if (isAdmin){
+    content += adminForm === "step:" + s.id ? stepAdminFormHTML(s) : `<div style="margin-top:8px"><button class="adm" type="button" data-admin="step:${esc(s.id)}">✎ Edit step title, timing, description, note (admin)</button></div>`;
+  }
+
+  const hasCopy = !!(s.sms || (s.email && s.email.body));
+  const locked = autoState(auto) === "approved";
+  let actions = "";
+  if (!loaded && s.type !== "start"){
+    actions = `<div class="loadnote">${loadFailed ? "Couldn't load saved responses and comments. Click ↻ Refresh at the top to try again." : "Loading saved responses and comments… this can take up to 30 seconds."}</div>`;
+  } else if (s.type === "start" && !locked){
+    actions = `<div class="actions"><button class="btn ok" data-act="approve">✓ Looks good</button><button class="btn warn" data-act="change" aria-pressed="${openForm==="change"}">Request a change</button></div>
+      <p class="hint" style="font-size:13px;margin:6px 0 0">This is what starts the automation. Request a change if it should start differently, or if the description isn't right.</p>${formHTML(s)}`;
+  } else if (s.type !== "start" && !locked){
+    actions = `<div class="actions">
+      <button class="btn ok" data-act="approve">✓ Looks good</button>
+      <button class="btn warn" data-act="change" aria-pressed="${openForm==="change"}">Request a change</button>
+      ${hasCopy ? `<button class="btn edit" data-act="copy" aria-pressed="${openForm==="copy"}">Edit the wording</button>` : ""}
+    </div>${formHTML(s)}`;
+  }
+  const hist = mine().filter(r => r.step === s.id && ["approve","change","copy"].includes(r.action)).slice().reverse();
+  const histHTML = hist.length ? `<div class="hist"><h3>Responses on this step</h3>${histItemsHTML(hist)}</div>` : "";
+  return `<div class="ihead">${ICON[s.type]?`<span class="icon" style="width:28px;height:28px">${ICON[s.type]}</span>`:""}<span>${esc(s.day)} · ${esc(s.when)} · ${TYPE[s.type]}</span>${st?`<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>`:""}</div>
+    <h2>${chips(s.title)}</h2>${content}${actions}${histHTML}`;
+}
+
+function approvedBanner(){
+  const rs = cur().filter(r => r.action === "approve_all"); if (!rs.length) return "";
+  const a = rs[rs.length-1];
+  return `<div class="okbanner">${CHECK}<span><b>Approved</b> by ${esc(a.name)} on ${fmt(a.timestamp)} · version ${esc(auto.version)}</span></div>`;
+}
+function detailsFormHTML(){
+  return `<form class="form admform" data-form="details">
+    <label for="ad-name">Automation name</label><input type="text" id="ad-name" value="${esc(auto.name)}">
+    <label for="ad-summary">Summary</label><textarea id="ad-summary" rows="3">${esc(auto.summary)}</textarea>
+    <label>Version</label>
+    <div class="verlock"><span class="vbadge">🔒 v${esc(auto.version)}</span><span class="hint">${auto._lastEdit ? `Last updated ${fmt(auto._lastEdit)} · ${auto._edits} edit${auto._edits===1?"":"s"} this round` : "No edits yet this round"}</span>
+      <button class="del ${armed==="newround"?"armed":""}" type="button" data-newround>${armed==="newround" ? `Click again to start v${esc(nextVersion(auto.version))}` : `Start new review round (v${esc(nextVersion(auto.version))})`}</button></div>
+    <fieldset class="glanceedit"><legend>Summary boxes</legend>${(auto.glance || []).map((g, i) => `<div class="row2"><div><label for="ag-l${i}">Box ${i+1} label</label><input type="text" id="ag-l${i}" value="${esc(g[0])}"></div><div><label for="ag-v${i}">Box ${i+1} text</label><textarea id="ag-v${i}" rows="2">${esc(g[1])}</textarea></div></div>`).join("")}</fieldset>
+    <span class="hint">The version is locked. Saving edits updates the "Updated" date without resetting the client's reviews. When you're ready for the client to re-review everything, start a new review round: all steps go back to "Needs review" and earlier responses stay in each step's history.</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save changes</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div>
+  </form>`;
+}
+function stepAdminFormHTML(s){
+  const timing = s.type === "start" ? "" : `<div class="row2"><div><label for="as-when">When (shown under the title)</label><input type="text" id="as-when" value="${esc(s.when||"")}"></div><div><label for="as-gap">Line between steps</label><input type="text" id="as-gap" value="${esc(s.gap||"")}"></div></div>`;
+  return `<form class="form admform" data-form="stepadmin">
+    <label for="as-title">Step title</label><input type="text" id="as-title" value="${esc(s.title||"")}">
+    ${timing}
+    <label for="as-body">Description</label><textarea id="as-body" rows="3">${esc(s.body||"")}</textarea>
+    <label for="as-note">Our note (leave empty to hide it)</label><textarea id="as-note" rows="3">${esc(s.note||"")}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save step</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
+}
+function questionAdminFormHTML(q){
+  return `<form class="form admform" data-form="qadmin" data-qid="${esc(q.id)}">
+    <label for="aq-text">Question</label><input type="text" id="aq-text" value="${esc(q.text||"")}">
+    <label for="aq-why">Why we're asking</label><textarea id="aq-why" rows="2">${esc(q.why||"")}</textarea>
+    <label for="aq-opts">Answer buttons (one per line)</label><textarea id="aq-opts" rows="4">${esc((q.options||[]).join("\n"))}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save question</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
+}
+function copyAdminFormHTML(s){
+  if (s.sms) return `<form class="form admform" data-form="copyadmin">
+    <label for="ac-sms">Text message</label><textarea id="ac-sms" rows="${Math.min(14, s.sms.split("\n").length + 4)}">${esc(s.sms)}</textarea>
+    <span class="hint">Write names as [First name], [Team member's first name], [Office phone].</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save text</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
+  const e = s.email || {};
+  return `<form class="form admform" data-form="copyadmin">
+    <label for="ac-subj">Subject</label><input type="text" id="ac-subj" value="${esc(e.subject||"")}">
+    <label for="ac-body">Email body</label><textarea id="ac-body" rows="10" placeholder="Paste the email wording from GHL">${esc(e.body||"")}</textarea>
+    <span class="hint">Write names as [First name], [Team member's signature], [Office text number].</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save email</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
+}
+let armed = null; // two-click confirm for deletes
+function statusTag(st){ st = st || "Open"; return st === "Done" ? '<span class="rs done">✓ Done</span>' : st === "In progress" ? '<span class="rs prog">In progress</span>' : '<span class="rs open">Open</span>'; }
+function delBtn(id, label){ const on = armed === id; return `<button class="del ${on?"armed":""}" type="button" data-del="${esc(id)}">${on ? "Click again to delete" : (label || "Delete")}</button>`; }
+async function adminDelete(ids){
+  if (!SAVE_URL){ responses = responses.filter(r => !ids.includes(r.id)); try { localStorage.setItem(demoKey, JSON.stringify(responses)); } catch(e){} return; }
+  const j = await postJSON({action:"admin_delete", key:adminKey, client:clientKey, ids});
+  if (!j.ok) throw new Error(j.error || "Could not delete");
+  responses = responses.filter(r => !ids.includes(r.id));
+}
+function prettyClient(k){ return String(k).replace(/-[0-9a-f]{6}$/i, "").split("-").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" "); }
+async function ping(k){
+  if (!SAVE_URL) return {ok:true, clients:[clientKey]};
+  for (let i = 0; i < 2; i++){ // retry once: the first call after the script sits idle can fail
+    try { const j = await postJSON({action:"admin_ping", key:k, client:clientKey}); return j; } catch(e){}
+  }
+  return {ok:false};
+}
+function renderAdminBar(){
+  const bar = $("#adminbar"); if (!wantAdmin){ bar.hidden = true; return; }
+  bar.hidden = false;
+  bar.classList.toggle("welcome", isAdmin && justSignedIn);
+  $("#adminbarIn").innerHTML = isAdmin
+    ? `<span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Admin mode on</span>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminClients.length ? `<label for="clientSelect" class="hint">Client</label><select id="clientSelect">${adminClients.map(k => `<option value="${esc(k)}" ${k===clientKey?"selected":""}>${esc(prettyClient(k))}</option>`).join("")}</select>` : ""}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button><button class="btn small" type="button" data-admin-exit>Sign out</button>`
+    : `<b>Team sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Password</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Sign in</button><button class="btn small" type="button" data-admin-close>Cancel</button><span id="akmsg" class="akmsg" role="status" aria-live="polite"></span></form>`;
+}
+function whoFields(p){
+  p = p || "rv"; const r = getReviewer();
+  return `<div class="row2"><div><label for="${p}-name">Your name</label><input type="text" id="${p}-name" data-who="name" autocomplete="name" value="${esc(r.name||"")}"></div>
+   <div><label for="${p}-email">Email <span class="hint">(optional)</span></label><input type="email" id="${p}-email" data-who="email" autocomplete="email" value="${esc(r.email||"")}"></div></div>`;
+}
+function formHTML(s){
+  if (openForm === "who"){
+    return `<form class="form" data-form="who"><span class="hint" style="font-size:13px">So we know who reviewed it. We'll remember you on this device.</span>${whoFields()}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ok" type="submit">✓ Mark as looks good</button><button class="btn" type="button" data-cancel>Cancel</button></div></form>`;
+  }
+  if (openForm === "change"){
+    const kinds = s.type === "start" ? ["Change what starts it","Correct the description","Something else"] : ["Change timing","Remove this step","Add a step after this","Notify someone here","Something else"];
+    const pick = chipChoice[s.id] || kinds[0];
+    return `<form class="form" data-form="change">
+      <label>What would you like changed?</label>
+      <div class="chips" role="group" aria-label="Type of change">${kinds.map(k=>`<button type="button" data-kind="${esc(k)}" aria-pressed="${k===pick}">${k}</button>`).join("")}</div>
+      <label for="f-details">Details</label>
+      <textarea id="f-details" rows="3" required placeholder="e.g. Send this 3 days after instead of the next day"></textarea>
+      ${inputTools("f-details")}
+      ${whoFields()}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Send request</button><button class="btn" type="button" data-cancel>Cancel</button></div>
+    </form>`;
+  }
+  if (openForm === "copy"){
+    const orig = s.sms || (s.email && s.email.body) || "";
+    return `<form class="form" data-form="copy">
+      <label for="f-copy">Your wording</label>
+      <textarea id="f-copy" rows="${Math.min(12, orig.split("\n").length + 4)}" required>${esc(orig)}</textarea>
+      <span class="hint">Edit the text directly. Keep words in [brackets] where you want names filled in.</span>
+      ${inputTools("f-copy")}
+      <label for="f-details">Anything else? <span class="hint">(optional)</span></label>
+      <input type="text" id="f-details" placeholder="e.g. Please sign it from Dr. Lee">
+      ${whoFields()}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save new wording</button><button class="btn" type="button" data-cancel>Cancel</button></div>
+    </form>`;
+  }
+  return "";
+}
+
+function questionsHTML(){
+  if (!auto.questions || !auto.questions.length) return "";
+  const ans = (qid) => { const rs = cur().filter(r => r.action === "answer" && r.step === qid); return rs.length ? rs[rs.length-1] : null; };
+  return `<section class="section"><h2>${auto.questions.length} question${auto.questions.length>1?"s":""} for you</h2>
+    <p class="hint" style="font-size:14px;margin:0">We found these while documenting the automation. Your answers decide whether we change anything before it goes live.</p>
+    ${getReviewer().name ? "" : `<div class="form" id="q-who" style="max-width:560px">${whoFields("q")}</div>`}
+    <div class="qs">${auto.questions.map((q,i) => { const a = ans(q.id); if (isAdmin && adminForm === "q:" + q.id) return `<div class="q">${questionAdminFormHTML(q)}</div>`; return `<div class="q">
+      <p><b>${i+1}. ${esc(q.text)}</b></p><p class="hint">${esc(q.why)}</p>${isAdmin ? `<div><button class="adm" type="button" data-admin="q:${esc(q.id)}">✎ Edit question (admin)</button></div>` : ""}
+      <div class="chips" role="group" aria-label="Answer ${i+1}">${q.options.map(o => `<button type="button" data-q="${esc(q.id)}" data-a="${esc(o)}" aria-pressed="${a&&a.details===o}">${esc(o)}</button>`).join("")}</div>
+      ${a?`<span class="hint">Saved · ${esc(a.name||"")} · ${fmt(a.timestamp)}</span>${a.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(a.lfmp_reply)}</div>`:""}${isAdmin ? `<div>${delBtn(a.id, "Delete answer")}</div>` : ""}`:""}
+    </div>`; }).join("")}</div></section>`;
+}
+
+function approveHTML(){
+  const rs = cur().filter(r => r.action === "approve_all");
+  if (rs.length){
+    const a = rs[rs.length-1];
+    return `<section class="section"><h2>Approval</h2><div class="approveall done"><b>Approved by ${esc(a.name)} on ${fmt(a.timestamp)}</b><span>Version ${esc(auto.version)} of ${esc(auto.name)} is approved exactly as shown on this page. We'll turn it on and let you know when it's live.</span>${isAdmin ? `<div>${delBtn(a.id, "Delete this approval")}</div>` : ""}</div></section>`;
+  }
+  if (!loaded) return `<section class="section"><h2>Approve this automation</h2><div class="loadnote">${loadFailed ? "Couldn't load saved responses. Click ↻ Refresh at the top to try again." : "Loading saved responses…"}</div></section>`;
+  const open = cur().filter(r => isOpenReq(r, cur())).length;
+  const pending = reviewable().filter(s => stepState(s.id) === "pending").length;
+  return `<section class="section"><h2>Approve this automation</h2>
+    <form class="approveall" data-form="approve_all">
+      <span>Approving tells us version ${esc(auto.version)} can go live exactly as shown on this page.</span>
+      ${open ? `<span class="pill changes" style="justify-self:start">${open} change request${open>1?"s":""} still open</span><span class="hint" style="font-size:14px">Approving unlocks once LFMP has finished these changes. We'll update the automation and let you know when the new version is ready to approve. You don't need to do anything else right now.</span>` : ""}
+      ${!open && pending ? `<span class="hint" style="font-size:14px">${pending} step${pending>1?"s":""} not reviewed yet. You can still approve if you're happy with everything.</span>` : ""}
+      ${whoFields("ap")}
+      <label class="check"><input type="checkbox" id="ap-check" ${open?"disabled":""}> I approve ${esc(auto.name)}, version ${esc(auto.version)}.</label>
+      <button class="btn primary" type="submit" ${open?"disabled":""} style="justify-self:start">Approve automation</button>
+    </form></section>`;
+}
+
+/* ---------- actions ---------- */
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove("show"), 2600); }
+function readWho(scope){
+  const nEl = scope && scope.querySelector('[data-who="name"]'); const eEl = scope && scope.querySelector('[data-who="email"]');
+  const r = {name:((nEl&&nEl.value)||getReviewer().name||"").trim(), email:((eEl&&eEl.value)||getReviewer().email||"").trim()};
+  if (r.name) setReviewer(r);
+  return {r, nEl};
+}
+// One save at a time: stops double clicks while Google takes a few seconds to answer.
+let busy = false;
+function lockUI(scope){
+  busy = true; document.body.classList.add("saving");
+  const b = (scope && scope.querySelector && scope.querySelector("button[type=submit]")) || document.querySelector('[data-act="approve"]');
+  if (b){ lockUI.btn = b; lockUI.label = b.textContent; b.textContent = "Saving…"; }
+  toast("Saving…");
+}
+function unlockUI(){
+  busy = false; document.body.classList.remove("saving");
+  if (lockUI.btn && document.body.contains(lockUI.btn)) lockUI.btn.textContent = lockUI.label;
+  lockUI.btn = null;
+}
+async function guarded(scope, fn){
+  if (busy){ toast("Still saving, one moment…"); return; }
+  lockUI(scope); try { return await fn(); } finally { unlockUI(); }
+}
+async function submit(rec, okMsg, scope, forAuto){
+  if (busy){ toast("Still saving, one moment…"); return false; }
+  const {r:who, nEl} = readWho(scope);
+  if (!who.name){ if (nEl){ nEl.focus(); nEl.setAttribute("aria-invalid","true"); } toast("Please add your name first"); return false; }
+  const A = forAuto || auto; Object.assign(rec, {client:clientKey, automation:A.id, version:A.version, name:who.name, email:who.email});
+  if (shots.length && (rec.action === "change" || rec.action === "copy")){
+    rec.attachments = SAVE_URL ? shots.map(x => ({ name: x.name, type: x.type, data: x.data })) : shots.map(x => x.url).join(" ");
+  }
+  lockUI(scope);
+  try {
+    const saved = await saveResponse(rec);
+    responses.push(saved);
+    unlockUI(); resetInputs(); toast(okMsg);
+    return true;
+  } catch(e){
+    unlockUI(); toast("Couldn't save. Check your connection and try again.");
+    return false;
+  }
+}
+
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("button, a"); if (!t) return;
+  if (t.id === "refreshBtn"){ await refresh(true); return; }
+  if (t.dataset.mic){ startMic(t.dataset.mic); return; }
+  if (t.dataset.unshot != null){ shots.splice(+t.dataset.unshot, 1); refreshTools(); return; }
+  if (t.hasAttribute("data-cancel") || t.hasAttribute("data-ov-cancel") || t.dataset.step || t.dataset.act === "change" || t.dataset.act === "copy" || t.dataset.act === "ovchange" || t.dataset.act === "pipechange") resetInputs();
+  if (t.dataset.del){
+    const id = t.dataset.del;
+    if (armed !== id){ armed = id; render(); setTimeout(() => { if (armed === id){ armed = null; render(); } }, 4000); return; }
+    armed = null; if (busy){ toast("Still saving, one moment…"); return; }
+    busy = true; toast("Deleting…");
+    try { await adminDelete([id]); toast("Deleted"); } catch(err){ toast("Couldn't delete: " + err.message); } finally { busy = false; }
+    render(); return;
+  }
+  if (t.hasAttribute("data-newround")){
+    if (armed !== "newround"){ armed = "newround"; render(); setTimeout(() => { if (armed === "newround"){ armed = null; render(); } }, 5000); return; }
+    armed = null; const nv = nextVersion(auto.version);
+    await guarded(null, async () => { try { await adminEdit(auto.id, "version", nv); applyContent(); adminForm = null; unlockUI(); toast("New review round started · v" + nv); render(); } catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
+  if (t.hasAttribute("data-clear")){
+    if (armed !== "clear"){ armed = "clear"; render(); setTimeout(() => { if (armed === "clear"){ armed = null; render(); } }, 5000); return; }
+    armed = null;
+    const ids = responses.filter(r => r.automation === auto.id).map(r => r.id);
+    if (!ids.length){ toast("Nothing to clear"); render(); return; }
+    try { await adminDelete(ids); toast("Cleared " + ids.length + " response" + (ids.length > 1 ? "s" : "")); } catch(err){ toast("Couldn't clear: " + err.message); }
+    render(); return;
+  }
+  if (t.dataset.admin){ adminForm = adminForm === t.dataset.admin ? null : t.dataset.admin; render(); return; }
+  if (t.hasAttribute("data-admin-cancel")){ adminForm = null; render(); return; }
+  if (t.hasAttribute("data-admin-exit")){ try { localStorage.removeItem("ar_admin_key"); } catch(e){} adminKey = ""; isAdmin = false; adminForm = null; const u = new URL(location.href); u.searchParams.delete("admin"); location.href = u.toString(); return; }
+  if (t.hasAttribute("data-signin")){ wantAdmin = true; renderAdminBar(); window.scrollTo(0, 0); const f = $("#ak"); if (f) f.focus(); return; }
+  if (t.hasAttribute("data-admin-close")){ wantAdmin = false; renderAdminBar(); return; }
+  if (t.dataset.auto){ e.preventDefault(); adminForm = null; autoId = t.dataset.auto; auto = data.automations.find(a=>a.id===autoId); selected = null; openForm = null; history.replaceState(null,"",t.getAttribute("href")); render(); scrollAfterPick(); return; }
+  if (t.dataset.step){ selected = selected === t.dataset.step && matchMedia("(max-width:980px)").matches ? null : t.dataset.step; openForm = null; render(); return; }
+  if (t.dataset.act === "approve"){
+    if (!getReviewer().name){ openForm = "who"; render(); const f = $("#rv-name"); if (f) f.focus(); return; }
+    await approveStep(null); return;
+  }
+  if (t.dataset.act === "change" || t.dataset.act === "copy"){ openForm = openForm === t.dataset.act ? null : t.dataset.act; render(); const f = document.getElementById(openForm==="copy"?"f-copy":"f-details"); if (f) f.focus(); return; }
+  if (t.hasAttribute("data-cancel")){ openForm = null; render(); return; }
+  if (t.dataset.act === "ovchange"){ ovOpen = true; render(); const f = $("#ov-details"); if (f) f.focus(); return; }
+  if (t.hasAttribute("data-ov-cancel")){ ovOpen = false; render(); return; }
+  if (t.dataset.ovkind){ ovKind = t.dataset.ovkind; t.parentElement.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }
+  if (t.dataset.kind){ chipChoice[selected] = t.dataset.kind; t.parentElement.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }
+  if (t.dataset.goto){ goTo(t.dataset.goto, t.dataset.gostep); return; }
+  if (t.dataset.qx){
+    const A = t.dataset.qauto === "pipeline" ? pipeAuto() : data.automations.find(a => a.id === t.dataset.qauto); if (!A) return;
+    const q = (A.questions || []).find(x => x.id === t.dataset.qx); if (!q) return;
+    const ok = await submit({step:q.id, step_title:q.text, action:"answer", type:"Question", details:t.dataset.a, new_copy:""}, "Answer saved", $("#s6-who"), A);
+    if (ok) render(); return;
+  }
+  if (t.dataset.act === "pipechange"){ pcOpen = true; render(); const f = $("#pc-details"); if (f) f.focus(); return; }
+  if (t.hasAttribute("data-pc-cancel")){ pcOpen = false; render(); return; }
+  if (t.dataset.pckind){ t.parentElement.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }
+  if (t.dataset.q){
+    const q = auto.questions.find(x=>x.id===t.dataset.q);
+    const ok = await submit({step:q.id, step_title:q.text, action:"answer", type:"Question", details:t.dataset.a, new_copy:""}, "Answer saved", $("#q-who"));
+    if (ok) render(); return;
+  }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.matches && e.target.matches("[data-shot]")){ [...e.target.files].forEach(addShot); e.target.value = ""; return; }
+  if (e.target.id === "autoSelect"){
+    adminForm = null; openForm = null; autoId = e.target.value; auto = data.automations.find(a => a.id === autoId);
+    selected = matchMedia("(max-width:980px)").matches ? null : (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
+    const u = new URL(location.href); u.searchParams.set("a", autoId); history.replaceState(null, "", u.toString());
+    render(); scrollAfterPick();
+  }
+  if (e.target.id === "clientSelect" && e.target.value && e.target.value !== clientKey){
+    const u = new URL(location.href); u.search = "?c=" + encodeURIComponent(e.target.value); location.href = u.toString();
+  }
+});
+document.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target; const kind = f.dataset.form;
+  const s = auto.steps.find(x=>x.id===selected);
+  if (kind === "who"){ await approveStep(f); return; }
+  if (kind === "adminkey"){
+    const inp = $("#ak"); const k = inp.value.trim();
+    if (!k){ inp.focus(); return; }
+    const btn = f.querySelector("button[type=submit]"); const msg = $("#akmsg");
+    btn.disabled = true; inp.disabled = true; btn.innerHTML = '<span class="spin" aria-hidden="true"></span>Checking…';
+    if (msg){ msg.className = "akmsg"; msg.textContent = ""; }
+    const j = await ping(k);
+    if (!j.ok){
+      btn.disabled = false; inp.disabled = false; btn.textContent = "Sign in";
+      inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake");
+      inp.setAttribute("aria-invalid", "true"); inp.select(); inp.focus();
+      if (msg){ msg.className = "akmsg bad"; msg.textContent = "✕ That password didn't work. Check it and try again."; }
+      return;
+    }
+    adminClients = j.clients || [];
+    adminKey = k; isAdmin = true; justSignedIn = true; try { localStorage.setItem("ar_admin_key", k); } catch(e){}
+    toast("✓ Signed in. Admin mode is on"); render();
+    setTimeout(() => { justSignedIn = false; renderAdminBar(); }, 4000);
+    return;
+  }
+  if (kind === "details"){
+    const changes = [["name", $("#ad-name").value.trim()], ["summary", $("#ad-summary").value.trim()]]
+      .filter(([k, v]) => v && v !== String(auto[k]));
+    (auto.glance || []).forEach((g, i) => {
+      const l = $("#ag-l" + i).value.trim(), v = $("#ag-v" + i).value.trim();
+      if (l !== String(g[0])) changes.push(["glance:" + i + ":label", l]);
+      if (v !== String(g[1])) changes.push(["glance:" + i + ":value", v]);
+    });
+    if (!changes.length){ adminForm = null; render(); return; }
+    await guarded(f, async () => { try { for (const [k, v] of changes) await adminEdit(auto.id, k, v); applyContent(); adminForm = null; unlockUI(); toast("Saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
+  if (kind === "stepadmin"){
+    const val = (id) => { const el = $(id); return el ? el.value.trim() : null; };
+    const edits = [["title", val("#as-title")], ["when", val("#as-when")], ["gap", val("#as-gap")], ["body", val("#as-body")], ["note", val("#as-note")]]
+      .filter(([k, v]) => v !== null && v !== String(s[k] || ""));
+    if (!edits.length){ adminForm = null; render(); return; }
+    await guarded(f, async () => { try { for (const [k, v] of edits) await adminEdit(auto.id, "step:" + s.id + ":" + k, v); applyContent(); adminForm = null; unlockUI(); toast("Step saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
+  if (kind === "qadmin"){
+    const q = auto.questions.find(x => x.id === f.dataset.qid); if (!q) return;
+    const opts = $("#aq-opts").value.split("\n").map(x => x.trim()).filter(Boolean);
+    const edits = [["text", $("#aq-text").value.trim()], ["why", $("#aq-why").value.trim()], ["options", opts.join("\n")]]
+      .filter(([k, v]) => v !== (k === "options" ? (q.options || []).join("\n") : String(q[k] || "")));
+    if (!opts.length){ toast("Add at least one answer button"); return; }
+    if (!edits.length){ adminForm = null; render(); return; }
+    await guarded(f, async () => { try { for (const [k, v] of edits) await adminEdit(auto.id, "q:" + q.id + ":" + k, v); applyContent(); adminForm = null; unlockUI(); toast("Question saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
+  if (kind === "copyadmin"){
+    const edits = s.sms ? [["sms", $("#ac-sms").value.trim()]] : [["email.subject", $("#ac-subj").value.trim()], ["email.body", $("#ac-body").value.trim()]];
+    const cur0 = { "sms": s.sms, "email.subject": s.email && s.email.subject, "email.body": s.email && s.email.body };
+    const changes = edits.filter(([k, v]) => v !== String(cur0[k] || ""));
+    await guarded(f, async () => { try { for (const [k, v] of changes) await adminEdit(auto.id, "step:" + s.id + ":" + k, v); applyContent(); adminForm = null; unlockUI(); toast(changes.length ? "Copy saved" : "No changes"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
+  if (kind === "status"){
+    await guarded(f, async () => { try { await adminStatus(f.dataset.id, f.elements.status.value, f.elements.reply.value.trim()); unlockUI(); toast("Status saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); } });
+    return;
+  }
+  if (kind === "pipechange"){
+    const d = $("#pc-details").value.trim(); if (!d){ $("#pc-details").focus(); return; }
+    const pressed = f.querySelector('[data-pckind][aria-pressed="true"]'); const part = pressed ? pressed.dataset.pckind : "Pipeline";
+    if (await submit({step:"pipeline", step_title:"Pipeline: " + part, action:"change", type:"Pipeline: " + part, details:d, new_copy:""}, "Request sent", f, pipeAuto())){ pcOpen = false; render(); }
+    return;
+  }
+  if (kind === "ovchange"){
+    const d = $("#ov-details").value.trim(); if (!d){ $("#ov-details").focus(); return; }
+    const pressed = f.querySelector('[data-ovkind][aria-pressed="true"]'); const part = pressed ? pressed.dataset.ovkind : "The description";
+    if (await submit({step:"overview", step_title:"Overview: " + part, action:"change", type:"Correction: " + part, details:d, new_copy:""}, "Correction sent", f)){ ovOpen = false; ovKind = null; render(); }
+    return;
+  }
+  if (kind === "change"){
+    const d = $("#f-details").value.trim(); if (!d){ $("#f-details").focus(); return; }
+    const type = chipChoice[s.id] || (s.type === "start" ? "Change what starts it" : "Change timing");
+    if (await submit({step:s.id, step_title:s.title, action:"change", type, details:d, new_copy:""}, "Change request sent", f)){ openForm = null; render(); }
+  }
+  if (kind === "copy"){
+    const c = $("#f-copy").value.trim(); const orig = (s.sms || (s.email&&s.email.body) || "").trim();
+    if (!c || c === orig){ toast("Edit the wording first, then save"); $("#f-copy").focus(); return; }
+    if (await submit({step:s.id, step_title:s.title, action:"copy", type:"New wording", details:$("#f-details").value.trim(), new_copy:c}, "New wording saved", f)){ openForm = null; render(); }
+  }
+  if (kind === "approve_all"){
+    if (!$("#ap-check").checked){ toast("Tick the box to confirm your approval"); return; }
+    if (await submit({step:"all", step_title:auto.name, action:"approve_all", type:"Approval", details:"Approved version " + auto.version, new_copy:""}, "Approved. Thank you!", f)){ render(); window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"}); }
+  }
+});
+async function approveStep(scope){
+  const s = auto.steps.find(x=>x.id===selected);
+  if (stepState(s.id) === "approved"){ toast("Already marked as looks good"); return; }
+  const ok = await submit({step:s.id, step_title:s.title, action:"approve", type:"", details:"", new_copy:""}, "Saved: looks good", scope);
+  if (!ok) return;
+  const i = reviewable().findIndex(x=>x.id===s.id); const next = reviewable().slice(i+1).find(x=>stepState(x.id)==="pending");
+  if (next) selected = next.id;
+  openForm = null; render();
+}
+let wasNarrow = matchMedia("(max-width:980px)").matches;
+matchMedia("(max-width:980px)").addEventListener("change", (m) => { if (m.matches !== wasNarrow){ wasNarrow = m.matches; if (data) render(); } });
+
+/* ---------- sectioned layout + pipeline (only for clients whose data file has "pipeline") ---------- */
+const sectioned = () => !!(data && data.pipeline);
+let pcOpen = false;
+function withAuto(a, fn){ const prev = auto; auto = a; try { return fn(); } finally { auto = prev; } }
+const pipeAuto = () => ({ id: "pipeline", name: (data.pipeline.name || "Pipeline"), version: data.pipeline.version || "1.0", questions: data.pipeline.questions || [], steps: [] });
+function answerFor(a, qid){
+  const rs = responses.filter(r => r.automation === a.id && sameV(r.version, a.version) && r.action === "answer" && r.step === qid);
+  return rs.length ? rs[rs.length - 1] : null;
+}
+function secHead(n, id, title, purpose, outcome){
+  return `<div class="sechead" id="${id}"><span class="secnum">${n}</span><div><h2>${esc(title)}</h2><p class="secpurpose">${esc(purpose)}</p>${outcome ? `<p class="secoutcome"><b>Outcome:</b> ${esc(outcome)}</p>` : ""}</div></div>`;
+}
+function gotoBtn(a, s, label){ return `<button type="button" class="golink" data-goto="${esc(a.id)}" data-gostep="${esc(s ? s.id : "")}">${esc(label || "Review this step")} ›</button>`; }
+function stepPill(a, s){
+  const st = withAuto(a, () => stepState(s.id));
+  const cls = st === "approved" ? "approved" : st === "changes" ? "changes" : st === "updated" ? "updated" : st === "loading" ? "none" : "pending";
+  return `<span class="pill ${cls}">${stateLabel[st] || ""}</span>`;
+}
+
+/* 1. Automation overview */
+function overviewSecHTML(){
+  const P = data.pipeline;
+  const mark = { loading: ["none", "Loading…"], approved: ["approved", "✓ Approved"], changes: ["changes", "Changes requested"], pending: ["pending", "Needs your review"] };
+  const cards = data.automations.map((a, i) => {
+    const st = mark[autoState(a)];
+    const starts = (a.glance || []).find(g => /starts/i.test(g[0]));
+    return `<div class="acard"><div class="acard-top"><span class="anum">${i + 1}</span><span class="pill ${st[0]}">${st[1]}</span></div>
+      <h3>${esc(a.name)}</h3><p>${esc(a.summary)}</p>
+      ${starts ? `<p class="hint"><b>Starts when:</b> ${chips(starts[1])}</p>` : ""}
+      ${gotoBtn(a, null, "Review this automation")}</div>`;
+  }).join("");
+  const chain = (P.chain || []).map(c => `<div class="chainstep ${c.kind || ""}"><b>${esc(c.title)}</b><span>${esc(c.text || "")}</span>${c.flag ? `<em class="tagx ${c.flagKind || "warn"}">${esc(c.flag)}</em>` : ""}</div>`).join(`<div class="chainarrow" aria-hidden="true">→</div>`);
+  const side = (P.chainSide || []).map(c => `<div class="chainside"><b>${esc(c.title)}</b> ${esc(c.text || "")}</div>`).join("");
+  return `<section class="secblock">${secHead(1, "s-overview", "Automation Overview", P.sectionText?.overview || "What each automation does and where it stands.", P.sectionOutcome?.overview)}
+    ${P.draftNote ? `<div class="draftnote"><span aria-hidden="true">⚠️</span><span>${esc(P.draftNote)}</span></div>` : ""}
+    <div class="acards">${cards}</div>
+    ${chain ? `<h3 class="subh">How the automations connect</h3><div class="chain">${chain}</div>${side}` : ""}
+  </section>`;
+}
+
+/* 2. GHL pipeline setup */
+function pipelineSVG(){
+  const P = data.pipeline, main = P.stages.filter(s => !s.row), top = P.stages.filter(s => s.row === "top");
+  const W = 140, H = 72, X0 = 170, GAP = 44, Y = 150, col = (i) => X0 + i * (W + GAP);
+  const idx = (id) => main.findIndex(s => s.id === id);
+  const nW = 1240, nH = P.stale ? 560 : 480;
+  const T = (x, y, cls, txt, extra) => `<text class="${cls}" x="${x}" y="${y}"${extra || ""}>${esc(txt)}</text>`;
+  const box = (x, y, s) => {
+    const man = s.move === "team";
+    return `<rect x="${x}" y="${y}" width="${W}" height="${H}" rx="10" class="${man ? "bx-m" : "bx-a"}"/>` +
+      T(x + 12, y + 20, "t-s", "STAGE " + s.num) + T(x + 12, y + 40, "t-n", s.name) + T(x + 12, y + 59, "t-x", s.short || "");
+  };
+  const arrow = (d, kind) => `<path d="${d}" class="ln-${kind}" marker-end="url(#m-${kind})"/>`;
+  let g = "";
+  // entries
+  if (P.entry) { g += `<rect x="8" y="${Y + 16}" width="132" height="40" rx="20" class="bx-e"/>` + T(74, Y + 40, "t-b", P.entry, ' text-anchor="middle"') + arrow(`M140 ${Y + 36} H${X0 - 4}`, "a"); }
+  top.forEach(s => {
+    const ty = 18;
+    if (s.entryPill) g += `<rect x="8" y="${ty + 16}" width="132" height="40" rx="20" class="bx-e"/>` + T(74, ty + 40, "t-b", s.entryPill, ' text-anchor="middle"') + arrow(`M140 ${ty + 36} H${X0 - 4}`, "m");
+    g += box(X0, ty, s);
+    const j = idx(s.joins);
+    if (j >= 0) { const jx = col(j) + W / 2; g += arrow(`M${X0 + W} ${ty + 36} H${jx} V${Y - 4}`, "m") + T((X0 + W + jx) / 2, ty + 28, "t-lbl", s.joinLabel || "", ' text-anchor="middle"'); }
+  });
+  main.forEach((s, i) => {
+    const x = col(i); g += box(x, Y, s);
+    if (i < main.length - 1) g += arrow(`M${x + W} ${Y + 36} H${col(i + 1) - 4}`, main[i + 1].move === "team" ? "m" : "a");
+    const d = s.decision;
+    if (d) {
+      const cx = x + W / 2;
+      g += arrow(`M${cx} ${Y + H} V${Y + H + 40}`, "w") + `<polygon points="${cx},${Y + 114} ${cx + 64},${Y + 148} ${cx},${Y + 182} ${cx - 64},${Y + 148}" class="bx-d"/>`;
+      (d.q || []).forEach((l, k) => g += T(cx, Y + 145 + k * 14 - ((d.q.length - 1) * 7) + 4, "t-b t-bold", l, ' text-anchor="middle"'));
+      g += arrow(`M${cx} ${Y + 182} V${Y + 216}`, "w") + (d.noLabel ? T(cx + 8, Y + 202, "t-lbl", d.noLabel) : "");
+      g += `<rect x="${cx - 80}" y="${Y + 220}" width="160" height="96" rx="8" class="bx-r"/>`;
+      (d.no || []).forEach((l, k) => g += T(cx - 70, Y + 240 + k * 15, "t-b", l));
+      if (d.foot) g += T(cx - 70, Y + 305, "t-x", d.foot);
+      if (d.proposed) g += `<rect x="${cx - 74}" y="${Y + 280}" width="148" height="28" rx="6" class="bx-p"/>` + T(cx, Y + 298, "t-prop", d.proposed, ' text-anchor="middle"');
+      if (d.toLost) g += `<path d="M${cx + 80} ${Y + 230} H${col(main.length - 1) - 18}" class="ln-l dash" marker-end="url(#m-l)"/>`;
+    }
+  });
+  const won = P.outcomes.find(o => o.kind === "won"), lost = P.outcomes.find(o => o.kind === "lost");
+  if (won) {
+    const wi = Math.max(0, idx(won.from)), wx = col(wi), cx = wx + W / 2;
+    g += arrow(`M${cx} ${Y + H} V${Y + H + 40}`, "m") + T(cx + 8, Y + 98, "t-lbl", won.label || "");
+    g += `<rect x="${cx - 76}" y="${Y + 116}" width="152" height="96" rx="10" class="bx-won"/>` + T(cx - 64, Y + 136, "t-s t-won", "CLOSED WON");
+    (won.lines || []).forEach((l, k) => g += T(cx - 64, Y + 155 + k * 15, "t-b", l));
+  }
+  if (lost) {
+    const lx = col(main.length - 1) - 14;
+    g += `<rect x="${lx}" y="${Y + 150}" width="156" height="102" rx="10" class="bx-lost"/>` + T(lx + 12, Y + 170, "t-s t-lost", "CLOSED LOST");
+    (lost.lines || []).forEach((l, k) => g += T(lx + 12, Y + 190 + k * 17, k === lost.lines.length - 1 && lost.mutedLast ? "t-x" : "t-b", l));
+    if (P.stale) {
+      const sx = X0 - 10, sw = col(2) + W + 10 - sx, sy = Y + 340;
+      g += `<rect x="${sx}" y="${sy}" width="${sw}" height="50" rx="8" class="bx-s"/>` + T(sx + 14, sy + 21, "t-b t-bold", P.stale.title) + T(sx + 14, sy + 38, "t-x", P.stale.text);
+      g += `<path d="M${sx + sw} ${sy + 25} H${lx + 78} V${Y + 256}" class="ln-l" marker-end="url(#m-l)"/>`;
+    }
+  }
+  const mk = (id, cls) => `<marker id="m-${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="${cls}"/></marker>`;
+  return `<svg class="pipesvg" viewBox="0 0 ${nW} ${nH}" role="img" aria-labelledby="pgT pgD"><title id="pgT">${esc(P.name)} flow</title><desc id="pgD">${esc(P.diagramDesc || "")}</desc>
+    <defs>${mk("a", "fa")}${mk("m", "fm")}${mk("w", "fw")}${mk("l", "fl")}</defs>${g}</svg>`;
+}
+function pipelineSecHTML(){
+  const P = data.pipeline;
+  const tag = (s) => s.move === "team" ? `<span class="tagx man">Your team moves it</span>` : `<span class="tagx auto">Automatic</span>`;
+  const row = (k, v) => v ? `<dt>${esc(k)}</dt><dd>${chips(v)}</dd>` : "";
+  const stageCard = (s, label) => `<div class="stcard ${s.move === "team" ? "m" : ""} ${s.kind || ""}"><div class="stnum">${esc(label)} · ${s.kind ? (s.moveTag || tag(s)) : tag(s)}</div><h3>${esc(s.name)}</h3><dl>
+      ${row("What it means", s.purpose)}${row("Gets here when", s.entry)}${row("What happens next", s.next)}${row("Automations", s.automation)}${row("Who acts", s.who)}</dl>
+      ${s.flag ? `<p class="stflag">${chips(s.flag)}</p>` : ""}${s.recommend ? `<p class="strec"><span class="tagx rec">Recommended · needs your confirmation</span> ${chips(s.recommend)}</p>` : ""}</div>`;
+  const cards = P.stages.slice().sort((a, b) => a.num - b.num).map(s => stageCard(s, "Stage " + s.num)).join("") +
+    P.outcomes.map(o => stageCard(o, "Outcome")).join("");
+  const list = (arr) => `<ul>${(arr || []).map(x => `<li>${chips(x)}</li>`).join("")}</ul>`;
+  const ex = (P.exceptions || []).map(e => `<tr><td data-l="Situation"><b>${esc(e.when)}</b></td><td data-l="What happens">${chips(e.today)}</td><td data-l="Status">${e.recommend ? `<span class="tagx rec">Recommended</span> ${chips(e.recommend)}` : `<span class="tagx ok">Covered</span>`}</td></tr>`).join("");
+  const pa = pipeAuto();
+  const reqs = responses.filter(r => r.automation === "pipeline" && (r.action === "change" || r.action === "copy"));
+  const stageNames = P.stages.slice().sort((a, b) => a.num - b.num).map(s => s.name).concat(P.outcomes.map(o => o.name), ["Something else"]);
+  const form = !loaded ? "" : pcOpen ? `<form class="form" data-form="pipechange" style="max-width:680px">
+      <label>Which part?</label>
+      <div class="chips" role="group" aria-label="Part of the pipeline">${stageNames.map((k, i) => `<button type="button" data-pckind="${esc(k)}" aria-pressed="${i === 0}">${esc(k)}</button>`).join("")}</div>
+      <label for="pc-details">What should change?</label>
+      <textarea id="pc-details" rows="3" required placeholder="e.g. Phone callers should go straight to Hot Lead"></textarea>
+      ${inputTools("pc-details")}${whoFields("pc")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Send request</button><button class="btn" type="button" data-pc-cancel>Cancel</button></div></form>`
+    : `<button class="ovbtn" type="button" data-act="pipechange">✎ Something not right about this pipeline? Request a change</button>`;
+  return `<section class="secblock">${secHead(2, "s-pipeline", "GHL Pipeline Setup", P.sectionText?.pipeline || "", P.sectionOutcome?.pipeline)}
+    <div class="pipemeta"><div><b>Pipeline name</b>${esc(P.name)}</div><div><b>Stages</b>${P.stages.length} stages, plus Won and Lost</div><div><b>Status</b>${esc(P.statusShort || "")}</div></div>
+    ${P.status ? `<p class="hint" style="font-size:13.5px;margin:0 0 12px">${esc(P.status)}</p>` : ""}
+    <div class="pipecard">
+      <h3 class="subh" style="margin-top:0">Pipeline at a glance</h3>
+      <p class="hint" style="font-size:13px;margin:0 0 10px">Leads move left to right. Diamonds are decision points: "yes" follows the main row, and the box underneath shows what happens otherwise.</p>
+      <div class="pipescroll">${pipelineSVG()}</div>
+      <p class="scrollhint">Scroll sideways to see the whole pipeline, or read the stage cards below.</p>
+      <div class="plegend"><span><i class="sw"></i>Moves automatically</span><span><i class="sw m"></i>Your team moves the lead</span><span><i class="sw d"></i>Decision point</span><span><i class="sw w"></i>Closed Won</span><span><i class="sw l"></i>Closed Lost</span><span><i class="sw p"></i>Recommended, not set up</span></div>
+    </div>
+    <h3 class="subh">Stage by stage</h3>
+    <div class="stcards">${cards}</div>
+    <h3 class="subh">Who does what</h3>
+    <div class="split"><div class="splitcol"><h4><span class="tagx auto">GHL does this automatically</span></h4>${list(P.ghlDoes)}</div><div class="splitcol m"><h4><span class="tagx man">Your team does this</span></h4>${list(P.teamDoes)}${P.teamNote ? `<p class="hint">${esc(P.teamNote)}</p>` : ""}</div></div>
+    ${ex ? `<h3 class="subh">When things don't go to plan</h3><table class="extbl"><thead><tr><th>Situation</th><th>What happens</th><th>Status</th></tr></thead><tbody>${ex}</tbody></table>` : ""}
+    <div class="overview" style="margin:16px 0 0">${form}${reqs.length ? `<div class="hist ovhist"><h3>Changes requested for this pipeline</h3>${withAuto(pa, () => histItemsHTML(reqs))}</div>` : ""}</div>
+  </section>`;
+}
+
+/* 3. Workflow and trigger explanation (wraps the existing review UI) */
+function workflowSecHTML(reviewHTML){
+  const P = data.pipeline;
+  const rows = (P.triggers || []).map(t => { const a = data.automations.find(x => x.id === t.auto);
+    return `<tr><td data-l="Automation"><b>${esc(a ? a.name : t.name || t.auto)}</b></td><td data-l="Starts when">${chips(t.when)}</td><td data-l="What it does">${chips(t.does)}</td><td data-l="Pipeline">${chips(t.moves || "")}</td><td data-l="Status">${t.status ? `<span class="tagx ${t.statusKind || "draft"}">${esc(t.status)}</span>` : ""}${t.flag ? ` <span class="tagx warn">${esc(t.flag)}</span>` : ""}</td></tr>`; }).join("");
+  return `<section class="secblock">${secHead(3, "s-workflows", "Workflow and Trigger Explanation", P.sectionText?.workflows || "", P.sectionOutcome?.workflows)}
+    ${rows ? `<table class="extbl trig"><thead><tr><th>Automation</th><th>Starts when</th><th>What it does</th><th>Pipeline</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>` : ""}
+    <div class="wfpick"><span class="hint" style="font-size:13px">Reviewing:</span> ${data.automations.map((a, i) => `<button type="button" class="wfbtn" data-goto="${esc(a.id)}" data-gostep="" aria-pressed="${a.id === auto.id}">${i + 1}. ${esc(a.name)}</button>`).join("")}</div>
+    <div class="reviewwrap">${reviewHTML}</div>
+  </section>`;
+}
+
+/* 4 & 5. Email and SMS copy roll-ups */
+function copySecHTML(kind){
+  const P = data.pipeline;
+  const groups = data.automations.map(a => {
+    const steps = a.steps.filter(s => s.type === kind);
+    if (!steps.length) return "";
+    return `<div class="cpgroup"><h3 class="subh">${esc(a.name)}</h3>${steps.map(s => {
+      let body = "";
+      if (kind === "email") body = s.email ? `<div class="email"><div class="subj"><b>Subject:</b> ${chips(s.email.subject)}</div><div class="body">${s.email.body ? chips(s.email.body) : `<span class="pendingtxt">${esc(s.email.pending || "")}</span>`}</div></div>` : `<p class="pendingtxt">${chips(s.body || "")}</p>`;
+      else body = (s.sms ? `<div class="sms">${chips(s.sms)}</div>` : `<p class="pendingtxt">${chips(s.body || "")}</p>`) + withAuto(a, () => smsReqHTML(s));
+      return `<div class="cpitem"><div class="cphead"><div><b>${chips(s.title)}</b><span class="hint"> · ${esc(s.day ? s.day + " · " : "")}${esc(s.when || "")}</span></div>${stepPill(a, s)}</div>${body}<div class="cpfoot">${gotoBtn(a, s, kind === "email" ? "Review or change this email" : "Review or change this text")}</div></div>`;
+    }).join("")}</div>`;
+  }).join("");
+  return kind === "email"
+    ? `<section class="secblock">${secHead(4, "s-email", "Email Copy", P.sectionText?.email || "", P.sectionOutcome?.email)}${groups}</section>`
+    : `<section class="secblock">${secHead(5, "s-sms", "SMS Copy", P.sectionText?.sms || "", P.sectionOutcome?.sms)}${groups}</section>`;
+}
+
+/* 6. Items requiring client approval */
+function approvalSecHTML(){
+  const P = data.pipeline, pa = pipeAuto();
+  const mark = { loading: ["none", "Loading…"], approved: ["approved", "✓ Approved"], changes: ["changes", "Changes requested"], pending: ["pending", "Not approved yet"] };
+  const appr = data.automations.map((a, i) => { const st = mark[autoState(a)]; return `<li><span>${i + 1}. ${esc(a.name)}</span><span class="pill ${st[0]}">${st[1]}</span>${gotoBtn(a, null, "Open")}</li>`; }).join("");
+  const qBlock = (a, qs, label) => qs.map((q, i) => { const ans = answerFor(a, q.id);
+    return `<div class="q"><p class="hint" style="margin:0">${esc(label)}</p><p><b>${esc(q.text)}</b>${q.recommended ? ` <span class="tagx rec">Recommended · needs your confirmation</span>` : ""}</p><p class="hint">${esc(q.why || "")}</p>
+      <div class="chips" role="group" aria-label="${esc(q.text)}">${q.options.map(o => `<button type="button" data-qx="${esc(q.id)}" data-qauto="${esc(a.id)}" data-a="${esc(o)}" aria-pressed="${!!(ans && ans.details === o)}">${esc(o)}</button>`).join("")}</div>
+      ${ans ? `<span class="hint">Saved · ${esc(ans.name || "")} · ${fmt(ans.timestamp)}</span>${ans.lfmp_reply ? `<div class="reply"><b>Reply from LFMP</b>${esc(ans.lfmp_reply)}</div>` : ""}` : `<span class="hint">Not answered yet</span>`}</div>`; }).join("");
+  const pq = qBlock(pa, pa.questions, "GHL Pipeline Setup");
+  const aq = data.automations.map(a => qBlock(a, a.questions || [], a.name)).join("");
+  const nP = pa.questions.length, nA = data.automations.reduce((n, a) => n + (a.questions || []).length, 0);
+  const answered = pa.questions.filter(q => answerFor(pa, q.id)).length + data.automations.reduce((n, a) => n + (a.questions || []).filter(q => answerFor(a, q.id)).length, 0);
+  return `<section class="secblock">${secHead(6, "s-approval", "Items Requiring Client Approval", P.sectionText?.approval || "", P.sectionOutcome?.approval)}
+    <div class="apgrid"><div class="apcol"><h3 class="subh" style="margin-top:0">Approve each automation</h3><ul class="aplist">${appr}</ul><p class="hint">Approving happens at the bottom of each automation in section 3.</p></div>
+      <div class="apcol"><h3 class="subh" style="margin-top:0">Questions answered</h3><p class="apbig">${answered} <span>of ${nP + nA}</span></p><p class="hint">Your answers save as soon as you click, and you can change them at any time.</p></div></div>
+    ${getReviewer().name ? "" : `<div class="form" id="s6-who" style="max-width:560px;margin-top:14px">${whoFields("s6")}</div>`}
+    ${nP ? `<h3 class="subh">Pipeline decisions <span class="hint" style="font-weight:400">(${nP})</span></h3><div class="qs">${pq}</div>` : ""}
+    ${nA ? `<h3 class="subh">Automation questions <span class="hint" style="font-weight:400">(${nA})</span></h3><div class="qs">${aq}</div>` : ""}
+    ${(P.lfmpTodo || []).length ? `<h3 class="subh">What LFMP will set up before going live</h3><ul class="todo">${P.lfmpTodo.map(x => `<li>${chips(x)}</li>`).join("")}</ul>` : ""}
+  </section>`;
+}
+function sectionsHTML(reviewHTML){
+  const nav = [["s-overview", "Overview"], ["s-pipeline", "Pipeline"], ["s-workflows", "Workflows"], ["s-email", "Emails"], ["s-sms", "Texts"], ["s-approval", "Approval items"]];
+  return `<nav class="secnav" aria-label="Sections">${nav.map((n, i) => `<a href="#${n[0]}"><span>${i + 1}</span>${n[1]}</a>`).join("")}</nav>` +
+    overviewSecHTML() + pipelineSecHTML() + workflowSecHTML(reviewHTML) + copySecHTML("email") + copySecHTML("sms") + approvalSecHTML() +
+    "";
+}
+function goTo(aId, stepId){
+  adminForm = null; openForm = null; autoId = aId; auto = data.automations.find(a => a.id === aId) || auto;
+  selected = stepId || (matchMedia("(max-width:980px)").matches ? null : (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id);
+  const u = new URL(location.href); u.searchParams.set("a", auto.id); history.replaceState(null, "", u.toString());
+  render();
+  const target = (stepId && document.querySelector(`.node[data-step="${CSS.escape(stepId)}"]`)) || document.getElementById("s-workflows");
+  if (stepId && !matchMedia("(max-width:980px)").matches) document.getElementById("s-workflows").scrollIntoView({ block: "start" });
+  else if (target) target.scrollIntoView({ block: "start" });
+}
+function scrollAfterPick(){ if (sectioned()) { const el = document.getElementById("s-workflows"); if (el) el.scrollIntoView({ block: "start" }); } else window.scrollTo(0, 0); }
+
+/* ---------- boot ---------- */
+async function boot(){
+  if (!SAVE_URL){ const b = $("#banner"); b.hidden = false; b.textContent = "Demo mode: responses are saved only in this browser until the Google Sheet connection is set up."; }
+  if (CFG.preview){ const b = $("#banner"); b.hidden = false; b.className = "banner previewbanner"; b.textContent = CFG.previewText || "Preview of proposed changes. This is not the live page, and nothing you click here is saved to the Sheet.";
+    const m = document.createElement("meta"); m.name = "robots"; m.content = "noindex,nofollow"; document.head.appendChild(m); }
+  if (!clientKey){ $("#app").innerHTML = '<div class="empty">This review link is missing its client code. Please use the link LFMP sent you.</div>'; return; }
+  const ok = await refresh(false);
+  if (!ok) return;
+  if (adminKey){ // signed in before on this device
+    const j = await ping(adminKey);
+    if (j.ok){ isAdmin = true; wantAdmin = true; adminClients = j.clients || []; }
+  }
+  if (!matchMedia("(max-width:980px)").matches) selected = (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
+  render();
+}
+// Reload the data file and everything saved in the Sheet. Used on load and by the Refresh button.
+async function refresh(manual){
+  const btn = $("#refreshBtn"); if (btn){ btn.disabled = true; btn.textContent = "↻ Refreshing…"; }
+  try {
+    try {
+      const r = await fetch("data/" + clientKey + ".json?t=" + Date.now(), {cache:"no-store"});
+      if (!r.ok) throw new Error("not found");
+      baseData = await r.json();
+    } catch(e){
+      if (!baseData){ $("#app").innerHTML = '<div class="empty">We couldn\'t find this review. Please check the link LFMP sent you.</div>'; return false; }
+    }
+    // Show the automation straight away, then fill in saved responses when the Sheet answers.
+    applyContent();
+    if (!rendered){
+      if (!matchMedia("(max-width:980px)").matches) selected = (reviewable()[0] || auto.steps[0]).id;
+      render(); rendered = true;
+      $("#updated").textContent = SAVE_URL ? "Loading saved responses…" : "";
+    } else if (manual){ $("#updated").textContent = "Refreshing…"; }
+    try { const all = await loadAll(); responses = all.rows; content = all.content; lastLoaded = new Date(); loaded = true; loadFailed = false; }
+    catch(e){ loadFailed = !loaded; toast("Couldn't load saved responses. Try Refresh again in a moment."); }
+    applyContent();
+    if (selected && !auto.steps.some(x => x.id === selected)) selected = null;
+    render(); if (manual) toast("Up to date");
+    return true;
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = "↻ Refresh"; }
+  }
+}
+boot();
+})();
+</script>
+</body>
+</html>
