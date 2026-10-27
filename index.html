@@ -1125,7 +1125,7 @@ document.addEventListener("submit", async (e) => {
   }
   if (kind === "clientname"){
     const v = $("#cnameIn").value.trim(); if (!v){ $("#cnameIn").focus(); return; }
-    if (v === data.client.name){ adminForm = null; render(); return; }
+    if (v === data.client.name && (clientNames[clientKey] || v) === v){ adminForm = null; render(); toast("No changes"); return; }
     await guarded(f, async () => { try { await adminEdit("", "client:name", v); applyContent(); clientNames[clientKey] = v; adminForm = null; unlockUI(); toast("Client name saved"); render(); }
     catch(err){ toast("Couldn't save: " + err.message); } });
     return;
