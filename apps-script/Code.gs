@@ -366,7 +366,7 @@ function onEdit(e) {
     if ((col === sCol || col === rCol) && rowNum > 1 && e.range.getNumRows() === 1) {
       const r = toObj_(HEADERS, sh.getRange(rowNum, 1, 1, HEADERS.length).getValues()[0]);
       if (r.action === 'change' || r.action === 'copy') {
-        const now = new Date().toISOString(), by = (Session.getActiveUser().getEmail() || 'Sheet edit');
+        const now = new Date().toISOString(), by = 'Sheet edit'; // (no Session lookup: keeps the same Google permissions as v6)
         sh.getRange(rowNum, HEADERS.indexOf('updated_at') + 1).setValue(now);
         sh.getRange(rowNum, HEADERS.indexOf('updated_by') + 1).setValue(by);
         log_({ client: r.client, automation: r.automation, version: r.version, request_id: r.id, step: r.step, event: 'status',
