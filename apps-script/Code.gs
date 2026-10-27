@@ -1,5 +1,16 @@
 /**
- * LFMP Automation Review: response + content storage (v6)
+ * LFMP Automation Review: response + content storage (v8)
+ *
+ * v8: admin "Submissions" view on the dashboard (admin_all returns every client's requests, answers and approvals
+ *     with the full Revision Log), and an email to NOTIFY_EMAIL for every new client submission and every approval.
+ *     The email address can be changed without editing this file: Script properties > NOTIFY_EMAIL.
+ *
+ * v7: revision tracking. Change requests use four statuses:
+ *   Changes Requested -> In Progress -> Updated — Ready for Review -> Approved (set only by the client's approval).
+ *   Old values (Open / In progress / Done) are still accepted and read as the new ones.
+ *   Every status change, reply and wording edit is also written to the "Revision Log" tab, so nothing is overwritten:
+ *   earlier replies, the previous wording and the revised wording are all kept with who and when.
+ *   Each request row also gets updated_at / updated_by (the last team or client action on it).
  *
  * Screenshots: clients can attach up to 3 images to a change request. They're saved to Google Drive in
  * "Automation Review Attachments/<client tab>" (viewable by anyone with the link) and linked in the attachments column.
@@ -9,7 +20,7 @@
  *
  * One tab per client (named in CLIENT_TABS below): every response from that client
  * (looks good / change request / new wording / answer / approval).
- *   Team columns: status (Open -> In progress -> Done) and lfmp_reply, shown to the client on the page.
+ *   Team columns: status (see above) and lfmp_reply, shown to the client on the page.
  * "Content" tab: admin edits made on the page (automation name, summary, version, SMS/email copy).
  *   The page applies these on top of the data file, newest edit wins.
  *
@@ -32,25 +43,72 @@ const CLIENT_TABS = {
 // Every new client response is then posted there. Leave it unset to turn Slack alerts off.
 // Add a new client WITHOUT editing this file or redeploying: Project Settings > Script properties >
 // CLIENTS = comma-separated entries, each "code=Tab name", e.g. "acme-law-x1y2z3=Acme Law, other-firm-a1b2c3=Other Firm".
-// Who gets an email for each new client response. Leave '' to turn emails off.
-const NOTIFY_EMAIL = '';
+// Who gets an email for each new client submission. Override in Script properties > NOTIFY_EMAIL
+// (comma-separate several addresses, or set it to "off" to stop emails).
+const NOTIFY_EMAIL_DEFAULT = 'peejay@lawfirmmarketingpros.com';
+function notifyEmail_() {
+  const p = (PropertiesService.getScriptProperties().getProperty('NOTIFY_EMAIL') || '').trim();
+  if (p.toLowerCase() === 'off') return '';
+  return p || NOTIFY_EMAIL_DEFAULT;
+}
 // Link used in the notification email.
 const REVIEW_BASE_URL = 'https://peejayedz.github.io/automation-review/';
 // -----------------------------------------------------------------------
 
 const LEGACY_SHEET = 'Responses'; // the old single tab. Its rows all belonged to Boca Dental.
 const HEADERS = ['id', 'timestamp', 'client', 'automation', 'version', 'step', 'step_title', 'action',
-                 'type', 'details', 'new_copy', 'name', 'email', 'status', 'lfmp_reply', 'attachments'];
+                 'type', 'details', 'new_copy', 'name', 'email', 'status', 'lfmp_reply', 'attachments', 'updated_at', 'updated_by'];
 const CONTENT_SHEET = 'Content';
 const CONTENT_HEADERS = ['timestamp', 'client', 'automation', 'field', 'value', 'edited_by'];
 const ACTIONS = ['approve', 'change', 'copy', 'answer', 'approve_all'];
-const STATUSES = ['Open', 'In progress', 'Done'];
+const ST = { REQ: 'Changes Requested', PROG: 'In Progress', UPD: 'Updated — Ready for Review', OK: 'Approved' };
+const STATUSES = [ST.REQ, ST.PROG, ST.UPD, ST.OK];
+const TEAM_STATUSES = [ST.REQ, ST.PROG, ST.UPD]; // Approved is only ever set by the client's own approval
+const LEGACY_STATUS = { 'open': ST.REQ, 'in progress': ST.PROG, 'done': ST.UPD };
+function normStatus_(s) {
+  s = String(s == null ? '' : s).trim(); if (!s) return '';
+  const k = s.toLowerCase();
+  if (LEGACY_STATUS[k]) return LEGACY_STATUS[k];
+  const m = STATUSES.find(x => x.toLowerCase() === k); if (m) return m;
+  if (/^updated/i.test(s)) return ST.UPD;
+  return s;
+}
+const LOG_SHEET = 'Revision Log';
+const LOG_HEADERS = ['timestamp', 'client', 'automation', 'version', 'request_id', 'step', 'event', 'status', 'note', 'previous', 'revised', 'by'];
+function logSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(LOG_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(LOG_SHEET);
+    sh.appendRow(LOG_HEADERS);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, LOG_HEADERS.length).setFontWeight('bold');
+    sh.getRange(2, 1, sh.getMaxRows() - 1, LOG_HEADERS.length).setNumberFormat('@');
+  }
+  return sh;
+}
+/** Appends one event to the Revision Log. Never edits or removes earlier entries. */
+function log_(o) {
+  const row = Object.assign({ timestamp: new Date().toISOString() }, o);
+  logSheet_().appendRow(LOG_HEADERS.map(h => safe_(clip_(row[h], 8000))));
+  return row;
+}
 
 function extraClients_() {
   // Script property CLIENTS: "code=Tab name, code2=Tab name 2" (the "=Tab name" part is optional).
   return (PropertiesService.getScriptProperties().getProperty('CLIENTS') || '')
     .split(',').map(s => s.trim()).filter(Boolean)
     .map(s => { const i = s.indexOf('='); return i === -1 ? { code: s, tab: '' } : { code: s.slice(0, i).trim(), tab: s.slice(i + 1).trim() }; });
+}
+/** Display names: the newest "client:name" edit from the dashboard (Rename client), otherwise the tab name. */
+function displayNames_() {
+  const names = {};
+  clients_().forEach(c => { names[c] = tabName_(c); });
+  contentSheet_().getDataRange().getValues().slice(1)
+    .filter(r => r[3] === 'client:name' && String(r[4] || '').trim() && names[r[1]] !== undefined)
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+    .forEach(r => { names[r[1]] = String(r[4]).trim(); });
+  return names;
 }
 function tabName_(client) {
   if (CLIENT_TABS[client]) return CLIENT_TABS[client];
@@ -79,7 +137,7 @@ function sheet_(client) {
     sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold');
   }
   const props = PropertiesService.getScriptProperties();
-  const flag = 'FORMATTED_' + name;
+  const flag = 'FORMATTED7_' + name; // v7: re-apply the status dropdown with the new labels
   if (!props.getProperty(flag)) {
     // One-time per tab: keep the version column as text (so "1.0" stays "1.0") and add the status dropdown.
     sh.getRange(2, HEADERS.indexOf('version') + 1, sh.getMaxRows() - 1, 1).setNumberFormat('@');
@@ -127,10 +185,13 @@ function doGet(e) {
   const client = (e.parameter.client || '').trim();
   if (clients_().indexOf(client) === -1) return json_({ ok: false, error: 'Unknown client' });
   const rows = sheet_(client).getDataRange().getValues().slice(1)
-    .filter(r => r[2] === client).map(r => toObj_(HEADERS, r));
+    .filter(r => r[2] === client).map(r => toObj_(HEADERS, r))
+    .map(r => { if (r.action === 'change' || r.action === 'copy') r.status = normStatus_(r.status) || ST.REQ; return r; });
   const content = contentSheet_().getDataRange().getValues().slice(1)
     .filter(r => r[1] === client).map(r => toObj_(CONTENT_HEADERS, r));
-  return json_({ ok: true, rows: rows, content: content, serverTime: new Date().toISOString() });
+  const log = logSheet_().getDataRange().getValues().slice(1)
+    .filter(r => r[1] === client).map(r => toObj_(LOG_HEADERS, r));
+  return json_({ ok: true, rows: rows, content: content, log: log, serverTime: new Date().toISOString() });
 }
 
 /** POST (JSON body as text/plain) */
@@ -145,7 +206,23 @@ function doPost(e) {
     // ---- Admin actions ----
     if (d.action === 'admin_ping') {
       // A correct password also returns the client list for the client switcher.
-      return isAdmin_(d.key) ? json_({ ok: true, clients: clients_() }) : json_({ ok: false });
+      if (!isAdmin_(d.key)) return json_({ ok: false });
+      return json_({ ok: true, clients: clients_(), names: displayNames_() });
+    }
+    if (d.action === 'admin_all') {
+      // v8: everything every client has submitted, for the admin Submissions view on the dashboard.
+      if (!isAdmin_(d.key)) return json_({ ok: false, error: 'Not authorized' });
+      const ss = SpreadsheetApp.getActiveSpreadsheet(), names = displayNames_(), rows = [];
+      clients_().forEach(c => {
+        const sh = ss.getSheetByName(tabName_(c)); if (!sh || sh.getLastRow() < 2) return;
+        sh.getDataRange().getValues().slice(1).filter(r => r[2] === c).forEach(r => {
+          const o = toObj_(HEADERS, r);
+          if (o.action === 'change' || o.action === 'copy') o.status = normStatus_(o.status) || ST.REQ;
+          rows.push(o);
+        });
+      });
+      const log = logSheet_().getDataRange().getValues().slice(1).map(r => toObj_(LOG_HEADERS, r));
+      return json_({ ok: true, rows: rows, log: log, clients: names, serverTime: new Date().toISOString() });
     }
     if (d.action === 'admin_edit') {
       if (!isAdmin_(d.key)) return json_({ ok: false, error: 'Not authorized' });
@@ -155,6 +232,12 @@ function doPost(e) {
         value: clip_(d.value, 8000), edited_by: clip_(d.name || 'Admin', 120)
       };
       contentSheet_().appendRow(CONTENT_HEADERS.map(h => safe_(row[h])));
+      // v7: keep the wording before and after, linked to the request(s) it answers.
+      const m = String(d.field || '').match(/^step:([^:]+):/);
+      const ids = (Array.isArray(d.request_ids) ? d.request_ids : []).map(String).filter(Boolean);
+      (ids.length ? ids : ['']).forEach(id => log_({ client: d.client, automation: row.automation, version: clip_(d.version, 20),
+        request_id: id, step: m ? m[1] : '', event: 'content', status: '', note: row.field,
+        previous: clip_(d.previous, 8000), revised: row.value, by: row.edited_by }));
       return json_({ ok: true, content: row });
     }
     if (d.action === 'admin_delete') {
@@ -181,9 +264,24 @@ function doPost(e) {
       const i = ids.indexOf(d.id);
       if (i === -1) return json_({ ok: false, error: 'Response not found' });
       const rowNum = i + 2;
-      if (d.status && STATUSES.indexOf(d.status) !== -1) sh.getRange(rowNum, HEADERS.indexOf('status') + 1).setValue(d.status);
-      if (d.lfmp_reply != null) sh.getRange(rowNum, HEADERS.indexOf('lfmp_reply') + 1).setValue(safe_(clip_(d.lfmp_reply, 2000)));
+      const before = toObj_(HEADERS, sh.getRange(rowNum, 1, 1, HEADERS.length).getValues()[0]);
+      const status = normStatus_(d.status);
+      if (status === ST.OK) return json_({ ok: false, error: 'Only the client can approve a change' });
+      if (d.status && TEAM_STATUSES.indexOf(status) === -1) return json_({ ok: false, error: 'Unknown status' });
+      const reply = d.lfmp_reply == null ? null : clip_(d.lfmp_reply, 2000);
+      const by = clip_(d.name || 'LFMP team', 120), now = new Date().toISOString();
+      const statusChanged = status && status !== normStatus_(before.status);
+      const replyChanged = reply != null && reply !== String(before.lfmp_reply || '');
+      if (statusChanged) sh.getRange(rowNum, HEADERS.indexOf('status') + 1).setValue(status);
+      if (replyChanged) sh.getRange(rowNum, HEADERS.indexOf('lfmp_reply') + 1).setValue(safe_(reply));
+      if (statusChanged || replyChanged) {
+        sh.getRange(rowNum, HEADERS.indexOf('updated_at') + 1).setValue(now);
+        sh.getRange(rowNum, HEADERS.indexOf('updated_by') + 1).setValue(safe_(by));
+        log_({ client: d.client, automation: before.automation, version: before.version, request_id: before.id, step: before.step,
+          event: 'status', status: status || normStatus_(before.status), note: replyChanged ? reply : '', previous: normStatus_(before.status), revised: '', by: by });
+      }
       const updated = toObj_(HEADERS, sh.getRange(rowNum, 1, 1, HEADERS.length).getValues()[0]);
+      updated.status = normStatus_(updated.status);
       try { buildTodo(); } catch (err) {}
       return json_({ ok: true, row: updated });
     }
@@ -205,16 +303,42 @@ function doPost(e) {
       new_copy: clip_(d.new_copy, 5000),
       name: clip_(d.name, 120),
       email: clip_(d.email, 200),
-      status: (d.action === 'change' || d.action === 'copy') ? 'Open' : '',
+      status: (d.action === 'change' || d.action === 'copy') ? ST.REQ : '',
       lfmp_reply: '',
-      attachments: ''
+      attachments: '',
+      updated_at: '',
+      updated_by: ''
     };
     if ((d.action === 'change' || d.action === 'copy') && Array.isArray(d.attachments) && d.attachments.length) {
       row.attachments = saveAttachments_(d.client, row.id, d.attachments).join('\n');
     }
     sheet_(d.client).appendRow(HEADERS.map(h => safe_(row[h])));
+    if (row.action === 'change' || row.action === 'copy') {
+      log_({ client: row.client, automation: row.automation, version: row.version, request_id: row.id, step: row.step,
+        event: 'requested', status: ST.REQ, note: row.details || row.type, previous: '', revised: row.new_copy, by: row.name });
+    }
+    // v7: the client marking a step "Looks good" approves any earlier request on that step
+    // (an updated revision, or an open request they no longer need). Their approval is the only way a request becomes Approved.
+    const approvedRevisions = [];
+    if (row.action === 'approve') {
+      const sh = sheet_(d.client), vals = sh.getDataRange().getValues();
+      for (let i = 1; i < vals.length; i++) {
+        const r = toObj_(HEADERS, vals[i]);
+        if (r.client !== row.client || r.automation !== row.automation || r.step !== row.step) continue;
+        if (String(r.version) !== String(row.version) && Number(r.version) !== Number(row.version)) continue;
+        if (r.action !== 'change' && r.action !== 'copy') continue;
+        const st = normStatus_(r.status) || ST.REQ;
+        if (st === ST.OK) continue;
+        sh.getRange(i + 1, HEADERS.indexOf('status') + 1).setValue(ST.OK);
+        if (st === ST.UPD) approvedRevisions.push(r);
+        sh.getRange(i + 1, HEADERS.indexOf('updated_at') + 1).setValue(row.timestamp);
+        sh.getRange(i + 1, HEADERS.indexOf('updated_by') + 1).setValue(safe_(row.name));
+        log_({ client: row.client, automation: row.automation, version: row.version, request_id: r.id, step: r.step,
+          event: 'approved', status: ST.OK, note: st === ST.UPD ? 'Client approved the updated version' : 'Client approved the step as it is', previous: st, revised: '', by: row.name });
+      }
+    }
     try { buildTodo(); } catch (err) { console.warn('To-do rebuild failed: ' + err); }
-    try { notify_(row); } catch (err) { console.warn('Email alert failed: ' + err); }
+    try { notify_(row, approvedRevisions); } catch (err) { console.warn('Email alert failed: ' + err); }
     try { slack_(row); } catch (err) { console.warn('Slack alert failed: ' + err); }
     return json_({ ok: true, row: row });
   } finally {
@@ -236,9 +360,20 @@ function onOpen() {
 function onEdit(e) {
   try {
     const sh = e.range.getSheet();
-    if (sh.getName() === TODO_SHEET || sh.getName() === CONTENT_SHEET) return;
-    const col = e.range.getColumn();
-    if (col === HEADERS.indexOf('status') + 1 || col === HEADERS.indexOf('lfmp_reply') + 1) buildTodo();
+    if (sh.getName() === TODO_SHEET || sh.getName() === CONTENT_SHEET || sh.getName() === LOG_SHEET) return;
+    const col = e.range.getColumn(), rowNum = e.range.getRow();
+    const sCol = HEADERS.indexOf('status') + 1, rCol = HEADERS.indexOf('lfmp_reply') + 1;
+    if ((col === sCol || col === rCol) && rowNum > 1 && e.range.getNumRows() === 1) {
+      const r = toObj_(HEADERS, sh.getRange(rowNum, 1, 1, HEADERS.length).getValues()[0]);
+      if (r.action === 'change' || r.action === 'copy') {
+        const now = new Date().toISOString(), by = (Session.getActiveUser().getEmail() || 'Sheet edit');
+        sh.getRange(rowNum, HEADERS.indexOf('updated_at') + 1).setValue(now);
+        sh.getRange(rowNum, HEADERS.indexOf('updated_by') + 1).setValue(by);
+        log_({ client: r.client, automation: r.automation, version: r.version, request_id: r.id, step: r.step, event: 'status',
+          status: normStatus_(r.status), note: col === rCol ? String(e.value || '') : '', previous: col === sCol ? normStatus_(e.oldValue) : '', revised: '', by: by });
+      }
+    }
+    if (col === sCol || col === rCol) buildTodo();
   } catch (err) {}
 }
 
@@ -260,9 +395,12 @@ function buildTodo() {
   // A request is replaced when the client later marked that same step "Looks good".
   const replaced = r => all.some(x => x.client === r.client && x.automation === r.automation && x.step === r.step &&
                                       x.action === 'approve' && String(x.timestamp) > String(r.timestamp));
-  const open = all.filter(r => isReq(r) && r.status !== 'Done' && !replaced(r)).sort(byTime);
+  all.forEach(r => { if (isReq(r)) r.status = normStatus_(r.status) || ST.REQ; });
+  const laterReq = r => all.some(x => isReq(x) && x.client === r.client && x.automation === r.automation && x.step === r.step && String(x.timestamp) > String(r.timestamp));
+  const open = all.filter(r => isReq(r) && (r.status === ST.REQ || r.status === ST.PROG) && !replaced(r)).sort(byTime);
+  const waiting = all.filter(r => isReq(r) && r.status === ST.UPD && !replaced(r) && !laterReq(r)).sort(byTime);
   const cutoff = new Date(Date.now() - 14 * 864e5).toISOString();
-  const done = all.filter(r => isReq(r) && r.status === 'Done' && String(r.timestamp) >= cutoff).sort(byTime).reverse();
+  const done = all.filter(r => isReq(r) && r.status === ST.OK && String(r.updated_at || r.timestamp) >= cutoff).sort(byTime).reverse();
   // Latest answer per question.
   const ansMap = {};
   all.filter(r => r.action === 'answer').sort(byTime).forEach(r => { ansMap[r.client + '|' + r.automation + '|' + r.step] = r; });
@@ -281,14 +419,16 @@ function buildTodo() {
   rows.push(COLS); fmts.push([2, 'header']);
   section('TO DO · ' + open.length + ' open request' + (open.length === 1 ? '' : 's'));
   if (!open.length) rows.push(['Nothing open 🎉'].concat(Array(COLS.length - 1).fill('')));
-  open.forEach(r => rows.push([r.status || 'Open', r._tab, r.automation, r.step_title || r.step, r.type || (r.action === 'copy' ? 'New wording' : 'Change'),
+  open.forEach(r => rows.push([r.status, r._tab, r.automation, r.step_title || r.step, r.type || (r.action === 'copy' ? 'New wording' : 'Change'),
     what(r), r.name + (r.email ? ' <' + r.email + '>' : ''), when(r.timestamp), 'v' + r.version, r.lfmp_reply, link(r)]));
+  section('WAITING FOR CLIENT REVIEW · ' + waiting.length + ' updated, not yet approved');
+  waiting.forEach(r => rows.push([r.status, r._tab, r.automation, r.step_title || r.step, r.type || 'Change', what(r), r.name, when(r.updated_at || r.timestamp), 'v' + r.version, r.lfmp_reply, link(r)]));
   section('CLIENT ANSWERS TO QUESTIONS · ' + answers.length);
   answers.forEach(r => rows.push(['Answered', r._tab, r.automation, r.step_title, 'Answer', r.details, r.name, when(r.timestamp), 'v' + r.version, r.lfmp_reply, link(r)]));
   section('APPROVED AUTOMATIONS · ' + approvals.length);
   approvals.forEach(r => rows.push(['Approved', r._tab, r.automation, r.step_title, 'Approved', r.details, r.name, when(r.timestamp), 'v' + r.version, '', link(r)]));
-  section('DONE IN THE LAST 14 DAYS · ' + done.length);
-  done.forEach(r => rows.push(['Done', r._tab, r.automation, r.step_title || r.step, r.type || 'Change', what(r), r.name, when(r.timestamp), 'v' + r.version, r.lfmp_reply, link(r)]));
+  section('APPROVED BY THE CLIENT IN THE LAST 14 DAYS · ' + done.length);
+  done.forEach(r => rows.push([ST.OK, r._tab, r.automation, r.step_title || r.step, r.type || 'Change', what(r), r.name, when(r.timestamp), 'v' + r.version, r.lfmp_reply, link(r)]));
 
   sh.getRange(1, 1, rows.length, COLS.length).setValues(rows.map(r => r.map(v => safe_(v == null ? '' : v))));
   sh.setFrozenRows(2);
@@ -302,8 +442,8 @@ function buildTodo() {
   });
   const statusCol = sh.getRange(3, 1, Math.max(rows.length - 2, 1), 1);
   const rule = (text, bg, fg) => SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(text).setBackground(bg).setFontColor(fg).setRanges([statusCol]).build();
-  sh.setConditionalFormatRules([rule('Open', '#E8F0FE', '#1A4FA0'), rule('In progress', '#FDF1DC', '#9A5B00'),
-    rule('Done', '#E3F4EC', '#13795B'), rule('Approved', '#E3F4EC', '#13795B'), rule('Answered', '#F5F7FA', '#5B6775')]);
+  sh.setConditionalFormatRules([rule(ST.REQ, '#FDF1DC', '#9A5B00'), rule(ST.PROG, '#E8F0FE', '#1A4FA0'),
+    rule(ST.UPD, '#EFEAF8', '#5B3E96'), rule(ST.OK, '#E3F4EC', '#13795B'), rule('Approved', '#E3F4EC', '#13795B'), rule('Answered', '#F5F7FA', '#5B6775')]);
   return open.length;
 }
 
@@ -375,20 +515,37 @@ function testSlack() {
            action: 'change', type: 'Test', details: 'If you can read this, Slack alerts are working.', new_copy: '', name: 'LFMP test' });
 }
 
-function notify_(row) {
-  if (!NOTIFY_EMAIL || row.action === 'approve') return;
-  const label = LABELS[row.action];
-  const link = reviewLink_(row);
+function fmtET_(iso) {
+  return Utilities.formatDate(new Date(iso), 'America/New_York', 'MMM d, yyyy h:mm a') + ' ET';
+}
+/** Emails NOTIFY_EMAIL about a client submission. Plain "looks good" clicks only email when they approve one of your revisions. */
+function notify_(row, approvedRevisions) {
+  const to = notifyEmail_(); if (!to) return;
+  approvedRevisions = approvedRevisions || [];
+  if (row.action === 'approve' && !approvedRevisions.length) return;
+  const client = displayNames_()[row.client] || tabName_(row.client);
+  const what = row.action === 'approve' ? 'approved your revision' : LABELS[row.action];
+  const subs = REVIEW_BASE_URL + '?c=' + encodeURIComponent(row.client) + '&view=submissions';
   const body = [
-    row.name + ' ' + label + '.', ' ',
-    'Client: ' + row.client,
+    row.name + ' (' + client + ') ' + what + '.', '',
+    'Client: ' + client,
     'Automation: ' + row.automation + ' (v' + row.version + ')',
-    'Step: ' + row.step_title,
+    row.step_title ? 'Step: ' + row.step_title : '',
     row.type ? 'Type: ' + row.type : '',
     row.details ? 'Details: ' + row.details : '',
-    row.new_copy ? 'New wording:\n' + row.new_copy : '', ' ',
-    'Review page: ' + link,
-    'Responses sheet: ' + SpreadsheetApp.getActiveSpreadsheet().getUrl()
-  ].filter(Boolean).join('\n');
-  MailApp.sendEmail(NOTIFY_EMAIL, '[Automation Review] ' + row.name + ' ' + label + ' · ' + row.automation, body);
+    row.new_copy ? 'New wording:\n' + row.new_copy : '',
+    approvedRevisions.length ? 'Approved request: ' + approvedRevisions.map(r => r.details || r.type || r.step_title).join(' | ') : '',
+    row.attachments ? 'Screenshots:\n' + row.attachments : '',
+    'Submitted: ' + fmtET_(row.timestamp), '',
+    'All submissions (sign in as admin): ' + subs,
+    'This step on the dashboard: ' + reviewLink_(row)
+  ].filter(x => x !== null && x !== undefined && x !== false).filter((x, i, a) => x !== '' || (a[i - 1] !== '')).join('\n');
+  MailApp.sendEmail(to, '[Automation Review] ' + client + ': ' + row.name + ' ' + what + (row.step_title ? ' · ' + clip_(row.step_title, 60) : ''), body);
+}
+
+/** One-off test: run this from the Apps Script editor to check the email alert works (and to authorize sending mail). */
+function testEmail() {
+  notify_({ client: 'palm-beach-plastic-n9umxi', automation: 'new-inquiry', version: '2.0', step: 's3', step_title: 'Test alert',
+            action: 'change', type: 'Test', details: 'If you can read this, email alerts are working.', new_copy: '', name: 'LFMP test',
+            timestamp: new Date().toISOString(), attachments: '' }, []);
 }
