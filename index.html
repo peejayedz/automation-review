@@ -169,6 +169,44 @@ body.saving .actions button,body.saving form button[type=submit],body.saving [da
 [hidden]{display:none!important}
 .rs{font-weight:700}.rs.done{color:var(--ok)}.rs.prog{color:var(--warn)}.rs.open{color:var(--accent)}
 .hitem.isdone{border-color:var(--ok)}
+.rs.upd{color:var(--team)}
+.pill.progress{background:var(--warn-soft);color:var(--warn)} .pill.updated{background:var(--team-soft);color:var(--team)}
+.hitem .stamps{font-size:12px;color:var(--muted);margin-top:4px}
+.tline{list-style:none;margin:6px 0 0;padding:0 0 0 10px;border-left:2px dotted var(--line);font-size:12.5px}
+.tline li{margin:3px 0}.tline .tl-when{color:var(--muted);margin-right:6px}
+.subsbtn{font-weight:700}
+.subsbtn .cnt{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:999px;background:var(--warn);color:#fff;font-size:12px;line-height:18px;text-align:center}
+.subs h1{font-family:var(--serif);font-size:30px;margin:6px 0 4px}
+.subs .sumrow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.subs .sumrow button{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;color:var(--ink);text-align:left}
+.subs .sumrow button b{display:block;font-size:20px}
+.subs .sumrow button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.subs .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.subs .filters select,.subs .filters input{font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.subs .filters input{min-width:220px}
+.scard{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:grid;gap:6px;font-size:14px}
+.scard.st-req{border-left-color:var(--warn)} .scard.st-prog{border-left-color:var(--warn)} .scard.st-upd{border-left-color:var(--team)} .scard.st-ok{border-left-color:var(--ok)} .scard.k-answer{border-left-color:var(--accent)} .scard.k-approve_all{border-left-color:var(--ok)}
+.scard .shead{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.scard .where{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.scard .where b{color:var(--ink)}
+.scard .stitle{font-weight:700;font-size:15px}
+.scard .copytxt{white-space:pre-line;background:var(--soft);border-radius:6px;padding:6px 8px}
+.scard .hadmin{margin-top:4px}
+.scard a.golink{font-size:13px}
+.cpick{position:relative;display:inline-block}
+.cpick>button{font-size:15px;font-weight:600;padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);cursor:pointer;max-width:100%}
+.cpick>button .lbl{font-weight:400;color:var(--muted);font-size:12px;margin-right:4px}
+.cpanel{position:absolute;z-index:50;top:calc(100% + 6px);left:0;width:min(360px,calc(100vw - 32px));background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:8px}
+.cpanel input{width:100%;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.cpanel .clist{max-height:min(340px,60vh);overflow:auto;margin-top:6px;display:grid;gap:2px}
+.cpanel .clist button{display:flex;align-items:center;gap:8px;justify-content:space-between;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:8px 10px;border-radius:8px;font-size:14px;cursor:pointer}
+.cpanel .clist button:hover,.cpanel .clist button:focus-visible,.cpanel .clist button.cur{background:var(--soft)}
+.cpanel .clist .cn{font-weight:600}.cpanel .clist .cc{font-size:11px;color:var(--muted);display:block;font-weight:400}
+.cpanel .clist .cnt{min-width:20px;padding:0 6px;border-radius:999px;background:var(--warn);color:#fff;font-size:12px;line-height:18px;text-align:center}
+.cpanel .cfoot{font-size:12px;color:var(--muted);padding:6px 4px 2px}
+.cren{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cren input{font-size:15px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);min-width:min(280px,70vw)}
+.subs .none{padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
 .del{background:none;border:1px solid var(--line);color:var(--bad);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;cursor:pointer}
 .del.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -251,7 +289,7 @@ const clientKey = (params.get("c") || "").replace(/[^a-z0-9-]/gi, "");
 let autoId = params.get("a") || "";
 
 let baseData = null, data = null, auto = null, responses = [], content = [], selected = null, openForm = null, chipChoice = {}, lastLoaded = null;
-let wantAdmin = params.has("admin"); let adminClients = [];
+let wantAdmin = params.has("admin"); let adminClients = []; let clientNames = {}; let pickOpen = false;
 let adminKey = ""; try { adminKey = localStorage.getItem("ar_admin_key") || ""; } catch(e){}
 let justSignedIn = false;
 let isAdmin = false, adminForm = null, rendered = false, loaded = false, loadFailed = false;
@@ -259,6 +297,19 @@ const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const chips = (s) => esc(s).replace(/\[([^\]]+)\]/g, '<span class="chip">$1</span>');
+// Request statuses. Older rows (Open / In progress / Done) are read as the new ones.
+const ST = { REQ: "Changes Requested", PROG: "In Progress", UPD: "Updated — Ready for Review", OK: "Approved" };
+const TEAM_ST = [ST.REQ, ST.PROG, ST.UPD];
+const isReq = (r) => r && (r.action === "change" || r.action === "copy");
+function normStatus(s){
+  s = String(s == null ? "" : s).trim(); if (!s) return "";
+  const k = s.toLowerCase(), L = { "open": ST.REQ, "in progress": ST.PROG, "done": ST.UPD };
+  if (L[k]) return L[k];
+  const m = Object.values(ST).find(x => x.toLowerCase() === k); if (m) return m;
+  return /^updated/i.test(s) ? ST.UPD : s;
+}
+function normRows(rows){ (rows || []).forEach(r => { if (isReq(r)) r.status = normStatus(r.status) || ST.REQ; }); return rows || []; }
+let revlog = [];
 const fmt = (iso) => { try { return new Date(iso).toLocaleString("en-US", {timeZone:"America/New_York", month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) + " ET"; } catch(e) { return ""; } };
 
 /* ---------- reviewer identity (per browser) ---------- */
@@ -276,7 +327,7 @@ async function loadAll(){
   const res = await fetch(SAVE_URL + "?client=" + encodeURIComponent(clientKey) + "&t=" + Date.now(), {cache:"no-store"});
   const j = await res.json();
   if (!j.ok) throw new Error(j.error || "Could not load responses");
-  return {rows: j.rows || [], content: j.content || []};
+  return {rows: j.rows || [], content: j.content || [], log: j.log || []};
 }
 async function loadResponses(){ return (await loadAll()).rows; }
 async function postJSON(obj){
@@ -296,20 +347,35 @@ async function adminEdit(automation, field, value){
   if (!j.ok) throw new Error(j.error || "Could not save");
   content.push(j.content); return j.content;
 }
-async function adminStatus(id, status, reply){
+async function adminStatus(id, status, reply, client){
+  client = client || clientKey;
+  const who = getReviewer().name || "LFMP team", now = new Date().toISOString();
   if (!SAVE_URL){
-    const r = responses.find(x => x.id === id); if (r){ r.status = status; r.lfmp_reply = reply; }
-    try { localStorage.setItem(demoKey, JSON.stringify(responses)); } catch(e){}
-    return;
+    const key = "ar_demo_" + client; let rows = [];
+    try { rows = JSON.parse(localStorage.getItem(key) || "[]"); } catch(e){}
+    const r = rows.find(x => x.id === id); if (!r) return null;
+    const before = normStatus(r.status) || ST.REQ;
+    if (status !== before || reply !== String(r.lfmp_reply || "")){
+      r.status = status; r.lfmp_reply = reply; r.updated_at = now; r.updated_by = who;
+      let log = []; try { log = JSON.parse(localStorage.getItem(key + "_log") || "[]"); } catch(e){}
+      log.push({timestamp:now, client, automation:r.automation, version:r.version, request_id:id, step:r.step, event:"status", status, note:reply !== String(r.lfmp_reply||"") ? reply : reply, previous:before, revised:"", by:who});
+      try { localStorage.setItem(key + "_log", JSON.stringify(log)); } catch(e){}
+      if (client === clientKey) revlog = log;
+    }
+    try { localStorage.setItem(key, JSON.stringify(rows)); } catch(e){}
+    if (client === clientKey){ const i = responses.findIndex(x => x.id === id); if (i > -1) responses[i] = r; }
+    return r;
   }
-  const j = await postJSON({action:"admin_status", key:adminKey, client:clientKey, id, status, lfmp_reply:reply});
+  const j = await postJSON({action:"admin_status", key:adminKey, client, id, status, lfmp_reply:reply, name:who});
   if (!j.ok) throw new Error(j.error || "Could not save");
-  const i = responses.findIndex(x => x.id === id); if (i > -1) responses[i] = j.row;
+  if (client === clientKey){ const i = responses.findIndex(x => x.id === id); if (i > -1) responses[i] = j.row; }
+  return j.row;
 }
 // Rebuild the automations from the data file plus any admin edits (newest edit wins).
 function applyContent(){
   data = JSON.parse(JSON.stringify(baseData));
   content.slice().sort((a,b) => String(a.timestamp).localeCompare(String(b.timestamp))).forEach(c => {
+    if (String(c.field) === "client:name"){ if (String(c.value || "").trim()){ data.client.name = String(c.value).trim(); clientNames[clientKey] = data.client.name; } return; }
     const a = data.automations.find(x => x.id === c.automation); if (!a) return;
     const f = String(c.field || ""), v = c.value == null ? "" : String(c.value);
     if (f !== "version"){ a._edits = (a._edits || 0) + 1; if (!a._lastEdit || String(c.timestamp) > a._lastEdit) a._lastEdit = String(c.timestamp); }
@@ -330,7 +396,8 @@ function applyContent(){
 }
 async function saveResponse(rec){
   if (!SAVE_URL){
-    const all = await loadResponses(); rec.id = "demo-" + Date.now(); rec.timestamp = new Date().toISOString(); rec.status = "Open";
+    const all = await loadResponses(); rec.id = "demo-" + Date.now(); rec.timestamp = new Date().toISOString(); rec.status = isReq(rec) ? ST.REQ : "";
+    if (rec.action === "approve") all.forEach(r => { if (isReq(r) && r.automation === rec.automation && r.step === rec.step && sameV(r.version, rec.version) && normStatus(r.status) !== ST.OK){ r.status = ST.OK; r.updated_at = rec.timestamp; r.updated_by = rec.name; } });
     all.push(rec); try { localStorage.setItem(demoKey, JSON.stringify(all)); } catch(e){}
     return rec;
   }
@@ -351,22 +418,28 @@ function isReplaced(r, rs){
   const t = Date.parse(r.timestamp) || 0;
   return rs.some(x => x.step === r.step && x.action === "approve" && (Date.parse(x.timestamp) || 0) > t);
 }
-function isOpenReq(r, rs){ return (r.action === "change" || r.action === "copy") && r.status !== "Done" && !isReplaced(r, rs); }
+// Open = still with LFMP (requested or in progress) and not replaced by a later "Looks good".
+function isOpenReq(r, rs){ const st = normStatus(r.status) || ST.REQ; return isReq(r) && (st === ST.REQ || st === ST.PROG) && !isReplaced(r, rs); }
+// Awaiting = LFMP has updated it and the client hasn't reviewed it since.
+function isAwaiting(r, rs){ return isReq(r) && normStatus(r.status) === ST.UPD && !isReplaced(r, rs); }
 function stepState(stepId){
   if (!loaded) return "loading";
   const rs = cur().filter(r => r.step === stepId && ["approve","change","copy"].includes(r.action));
   if (!rs.length) return "pending";
   const last = rs[rs.length - 1];
-  if (rs.some(r => isOpenReq(r, rs))) return "changes";
+  const open = rs.filter(r => isOpenReq(r, rs));
+  if (open.length) return open.every(r => normStatus(r.status) === ST.PROG) ? "progress" : "changes";
   if (last.action === "approve") return "approved";
-  return "updated"; // requests done by LFMP, client hasn't re-approved
+  return "updated"; // LFMP has updated it; the client hasn't reviewed it again yet
 }
-const stateLabel = {loading:"Loading…", pending:"Needs your review", changes:"Changes requested", updated:"✓ Updated · please re-check", approved:"✓ Looks good"};
+const stateLabel = {loading:"Loading…", pending:"Needs your review", changes:"Changes requested", progress:"In progress with LFMP", updated:"Updated · please review", approved:"✓ Looks good"};
+const pillCls = (st) => ({approved:"approved", changes:"changes", progress:"progress", updated:"updated"})[st] || "none";
 function autoState(a){
   if (!loaded) return "loading";
   const rs = responses.filter(r => r.automation === a.id && sameV(r.version, a.version));
   if (rs.some(r => r.action === "approve_all")) return "approved";
   if (rs.some(r => isOpenReq(r, rs))) return "changes";
+  if (rs.some(r => isAwaiting(r, rs))) return "updated";
   return "pending";
 }
 const reviewable = () => auto.steps.filter(s => s.type !== "start");
@@ -383,22 +456,131 @@ const ICON = {
 };
 const TYPE = {sms:"Text message", email:"Email", call:"Phone call", vm:"Voicemail", team:"Team action", start:"Start", end:"End"};
 
+/* ---------- admin: all submissions (every client) ---------- */
+let view = params.get("view") === "submissions" ? "subs" : "review";
+let subs = null, subsLoading = false, subsF = { client: "all", status: "open", q: "" };
+const clientData = {}; // code -> data file (for automation names)
+async function loadSubs(){
+  subsLoading = true; render();
+  try {
+    if (!SAVE_URL){
+      const rows = [], log = [], clients = {};
+      for (let i = 0; i < localStorage.length; i++){
+        const k = localStorage.key(i); const m = k && k.match(/^ar_demo_([a-z0-9-]+)$/i); if (!m) continue;
+        let rs = []; try { rs = JSON.parse(localStorage.getItem(k) || "[]"); } catch(e){}
+        let lg = []; try { lg = JSON.parse(localStorage.getItem(k + "_log") || "[]"); } catch(e){}
+        rs.forEach(r => { r.client = r.client || m[1]; rows.push(r); }); log.push(...lg); clients[m[1]] = m[1] === clientKey ? data.client.name : prettyClient(m[1]);
+      }
+      subs = { rows: normRows(rows), log, clients };
+    } else {
+      const j = await postJSON({action:"admin_all", key:adminKey, client:clientKey});
+      if (!j.ok) throw new Error(j.error || "Could not load");
+      subs = { rows: normRows(j.rows), log: j.log || [], clients: j.clients || {} }; Object.assign(clientNames, j.clients || {});
+    }
+    clientData[clientKey] = data;
+    const codes = [...new Set(subs.rows.map(r => r.client))].filter(c => !clientData[c]);
+    await Promise.all(codes.map(async c => { try { const r = await fetch("data/" + c + ".json?t=" + Date.now(), {cache:"no-store"}); if (r.ok) clientData[c] = await r.json(); } catch(e){} }));
+  } catch(e){ toast("Couldn't load submissions: " + e.message); }
+  subsLoading = false; render();
+}
+async function loadSubsQuiet(){
+  if (!isAdmin) return;
+  try {
+    if (!SAVE_URL){ const v = view; await loadSubs(); view = v; }
+    else { const j = await postJSON({action:"admin_all", key:adminKey, client:clientKey}); if (j.ok){ subs = { rows: normRows(j.rows), log: j.log || [], clients: j.clients || {} }; Object.assign(clientNames, j.clients || {}); } }
+  } catch(e){}
+  const q = $("#cpickQ") ? $("#cpickQ").value : ""; const hadFocus = document.activeElement && document.activeElement.id === "cpickQ";
+  renderAdminBar();
+  const i = $("#cpickQ"); if (i){ i.value = q; const l = $("#cpickList"); if (l) l.innerHTML = clientListHTML(q); if (hadFocus) i.focus(); }
+}
+const subKind = (r) => isReq(r) ? "req" : r.action;
+function subStatusKey(r, all){
+  if (!isReq(r)) return r.action;
+  const st = normStatus(r.status) || ST.REQ;
+  if ((st === ST.REQ || st === ST.PROG) && isReplaced(r, all.filter(x => x.client === r.client && x.automation === r.automation && sameV(x.version, r.version)))) return "ok";
+  return st === ST.OK ? "ok" : st === ST.UPD ? "upd" : st === ST.PROG ? "prog" : "req";
+}
+function autoName(c, a){ const d = clientData[c]; const x = d && d.automations && d.automations.find(y => y.id === a); return x ? x.name : a; }
+function clientName(c){ return clientNames[c] || (subs && subs.clients[c]) || (clientData[c] && clientData[c].client && clientData[c].client.name) || prettyClient(c); }
+function subsCounts(){
+  const all = subs.rows, n = { open:0, req:0, prog:0, upd:0, ok:0, answer:0, approve_all:0 };
+  all.filter(r => subsF.client === "all" || r.client === subsF.client).forEach(r => {
+    const k = subStatusKey(r, all); if (k in n) n[k]++; if (k === "req" || k === "prog") n.open++;
+  });
+  return n;
+}
+function subsHTML(){
+  if (!subs) return `<section class="subs"><div class="none">${subsLoading ? "Loading every client's submissions…" : "No submissions loaded yet."}</div></section>`;
+  const all = subs.rows, n = subsCounts(), q = subsF.q.toLowerCase();
+  const want = (r) => {
+    if (subsF.client !== "all" && r.client !== subsF.client) return false;
+    const k = subStatusKey(r, all);
+    if (subsF.status === "open" && !(k === "req" || k === "prog")) return false;
+    if (["req","prog","upd","ok","answer","approve_all"].includes(subsF.status) && k !== subsF.status) return false;
+    if (subsF.status === "requests" && !isReq(r)) return false;
+    if (subsF.status === "everything" && r.action === "approve") return false;
+    if (q && ![r.details, r.new_copy, r.step_title, r.name, r.type, r.lfmp_reply, autoName(r.client, r.automation), clientName(r.client)].join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  };
+  const list = all.filter(want).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+  const btn = (k, label, num) => `<button type="button" data-subs-status="${k}" aria-pressed="${subsF.status === k}"><b>${num}</b>${label}</button>`;
+  const clients = (Object.keys(subs.clients).length ? Object.keys(subs.clients) : [...new Set(all.map(r => r.client))]).sort((a, b) => clientName(a).localeCompare(clientName(b)));
+  const label = { req:"Changes requested", prog:"In progress", upd:"Updated · waiting for the client", ok:"Approved" };
+  const cards = list.map(r => {
+    const k = subStatusKey(r, all);
+    const kindTxt = r.action === "answer" ? "Answered a question" : r.action === "approve_all" ? "Approved the whole automation" : r.action === "copy" ? "Sent new wording" : (r.type || "Requested a change");
+    return `<article class="scard ${isReq(r) ? "st-" + k : "k-" + r.action}">
+      <div class="shead"><span class="where"><b>${esc(clientName(r.client))}</b> · ${esc(autoName(r.client, r.automation))}${r.version ? " · v" + esc(r.version) : ""}</span>${isReq(r) ? `<span class="pill ${k === "ok" ? "approved" : k === "upd" ? "updated" : k === "prog" ? "progress" : "changes"}">${label[k]}</span>` : ""}</div>
+      <div class="stitle">${esc(r.step_title || r.step || "")}</div>
+      <div>${esc(kindTxt)}${r.action === "answer" ? `: <b>${esc(r.details)}</b>` : ""}</div>
+      ${r.action !== "answer" && r.details ? `<div>${esc(r.details)}</div>` : ""}
+      ${r.new_copy ? `<div class="copytxt">${esc(r.new_copy)}</div>` : ""}
+      ${shotsHTML(r.attachments)}
+      ${r.lfmp_reply ? `<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>` : ""}
+      ${stampsHTML(r)}
+      ${isReq(r) ? timelineHTML(r, subs.log) : ""}
+      ${statusFormHTML(r, r.client)}
+      <a class="golink" href="?c=${encodeURIComponent(r.client)}&a=${encodeURIComponent(r.automation)}&admin">Open this on the client's dashboard →</a>
+    </article>`;
+  }).join("");
+  return `<section class="subs">
+    <button class="btn small" type="button" data-subs-close>← Back to the review page</button>
+    <h1>Client submissions</h1>
+    <p class="hint" style="font-size:14px">Every change request, new wording, answer and approval from your clients, newest first. Update the status and reply here, and the client sees it on their dashboard straight away. Statuses: Changes Requested → In Progress → Updated (ready for the client) → Approved (only when the client approves).</p>
+    <div class="sumrow">${btn("open", "Open (needs work)", n.open)}${btn("upd", "Waiting for the client", n.upd)}${btn("ok", "Approved", n.ok)}${btn("answer", "Answers", n.answer)}${btn("approve_all", "Automations approved", n.approve_all)}${btn("everything", "Everything", all.filter(r => r.action !== "approve" && (subsF.client === "all" || r.client === subsF.client)).length)}</div>
+    <div class="filters"><label class="hint" for="subsClient">Client</label><select id="subsClient"><option value="all">All clients</option>${clients.map(c => `<option value="${esc(c)}" ${subsF.client === c ? "selected" : ""}>${esc(clientName(c))}</option>`).join("")}</select>
+      <input type="search" id="subsQ" placeholder="Search requests, names, steps…" value="${esc(subsF.q)}">
+      <button class="btn small" type="button" data-subs-reload>↻ Reload</button></div>
+    ${cards || `<div class="none">Nothing here${subsF.status === "open" ? ": no open requests" : ""}.</div>`}
+  </section>`;
+}
+
 /* ---------- render ---------- */
 function render(){
+  { const ap = document.querySelector(".autopick"); if (ap) ap.hidden = false; }
+  if (view === "subs" && isAdmin){
+    $("#clientName").textContent = "All clients · Submissions";
+    $("#clientSub").textContent = "Admin only · Powered by Law Firm Marketing Pros";
+    document.title = "Submissions · Automation Review";
+    const ap = document.querySelector(".autopick"); if (ap) ap.hidden = true;
+    $("#app").innerHTML = subsHTML();
+    renderAdminBar(); $("#signinBtn").hidden = true;
+    return;
+  }
   $("#clientName").textContent = data.client.name + " · Automation Review";
   $("#clientSub").textContent = "Powered by Law Firm Marketing Pros";
   document.title = auto.name + " · " + data.client.name;
-  const mark = {loading:"Loading…", approved:"✓ Approved", changes:"● Changes requested", pending:"○ Needs review"};
+  const mark = {loading:"Loading…", approved:"✓ Approved", changes:"● Changes requested", updated:"◐ Updated · please review", pending:"○ Needs review"};
   $("#autoSelect").innerHTML = data.automations.map((a, i) => `<option value="${esc(a.id)}" ${a.id===auto.id?"selected":""}>${i+1}. ${esc(a.name)} · ${mark[autoState(a)]}</option>`).join("");
   const nApproved = data.automations.filter(a => autoState(a) === "approved").length;
   $("#autoCount").textContent = nApproved + " of " + data.automations.length + " approved";
 
   const steps = reviewable();
   const counts = {loading:0, approved:0, changes:0, updated:0, pending:0};
-  steps.forEach(s => counts[stepState(s.id)]++);
+  steps.forEach(s => { const k = stepState(s.id); counts[k === "progress" ? "changes" : k]++; });
   const pct = (n) => (100 * n / steps.length) + "%";
   const as = autoState(auto);
-  const asPill = as === "approved" ? '<span class="pill approved">✓ Approved</span>' : as === "changes" ? '<span class="pill changes">Changes requested</span>' : as === "loading" ? '<span class="pill none">Loading saved responses…</span>' : '<span class="pill pending">Needs your review</span>';
+  const asPill = as === "approved" ? '<span class="pill approved">✓ Approved</span>' : as === "changes" ? '<span class="pill changes">Changes requested</span>' : as === "updated" ? '<span class="pill updated">Updated · please review</span>' : as === "loading" ? '<span class="pill none">Loading saved responses…</span>' : '<span class="pill pending">Needs your review</span>';
 
   let html = `<section class="hero">
     <div>
@@ -442,7 +624,7 @@ function flowHTML(){
     h += `<button class="node ${cls} ${st==="approved"?"isok":""}" data-step="${esc(s.id)}" aria-pressed="${selected===s.id}">
       <span class="icon">${st==="approved" ? CHECK : (ICON[s.type]||"")}</span>
       <span><span class="ntitle">${chips(s.title)}</span><span class="nsub" style="display:block">${(s.type==="start"||s.type==="end") ? TYPE[s.type] : esc(s.when) + " · " + TYPE[s.type] + who}</span>${s.type === "sms" ? `<span class="nreq">⚠️ Needs a phone number + A2P/10DLC approval</span>` : ""}</span>
-      ${st ? `<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>` : ""}
+      ${st ? `<span class="pill ${pillCls(st)}">${stateLabel[st]}</span>` : ""}
     </button>`;
     if (narrow && selected === s.id) h += `<div class="inspector inline">${inspectorHTML()}</div>`;
   });
@@ -513,17 +695,15 @@ function nextVersion(v){
 }
 function histItemsHTML(list){
   return list.map(r => `
-     <div class="hitem ${r.action} ${r.status==="Done"?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
+     <div class="hitem ${r.action} ${[ST.UPD, ST.OK].includes(normStatus(r.status))?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
        <span class="who">${esc(r.name||"Someone")}</span> <span class="when">· ${fmt(r.timestamp)}${!sameV(r.version, auto.version)?" · v"+esc(r.version):""}</span>
-       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${r.action!=="approve"?` · ${r.status!=="Done" && isReplaced(r, cur()) ? '<span class="rs done">Replaced by Looks good</span>' : statusTag(r.status)}`:""}</div>
+       <div>${r.action==="approve"?"Marked this step as looks good":r.action==="copy"?"Suggested new wording":esc(r.type||"Requested a change")}${isReq(r)?` · ${isOpenReq(r, []) && isReplaced(r, cur()) ? '<span class="rs done">Replaced by Looks good</span>' : statusTag(r.status)}`:""}</div>
        ${r.details?`<div>${esc(r.details)}</div>`:""}
        ${r.new_copy?`<div class="copytxt">${esc(r.new_copy)}</div>`:""}
        ${shotsHTML(r.attachments)}
        ${r.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>`:""}
-       ${isAdmin && (r.action==="change"||r.action==="copy") ? `<form class="hadmin" data-form="status" data-id="${esc(r.id)}">
-         <select aria-label="Status" name="status">${["Open","In progress","Done"].map(o=>`<option ${String(r.status||"Open")===o?"selected":""}>${o}</option>`).join("")}</select>
-         <input type="text" name="reply" aria-label="Reply to client" placeholder="Reply shown to the client" value="${esc(r.lfmp_reply||"")}">
-         <button class="btn small" type="submit">Save</button></form>` : ""}
+       ${isReq(r) ? stampsHTML(r) + timelineHTML(r, revlog) : ""}
+       ${isAdmin ? statusFormHTML(r) : ""}
        ${isAdmin ? `<div style="margin-top:6px">${delBtn(r.id)}</div>` : ""}
      </div>`).join("");
 }
@@ -612,7 +792,7 @@ function inspectorHTML(){
   }
   const hist = mine().filter(r => r.step === s.id && ["approve","change","copy"].includes(r.action)).slice().reverse();
   const histHTML = hist.length ? `<div class="hist"><h3>Responses on this step</h3>${histItemsHTML(hist)}</div>` : "";
-  return `<div class="ihead">${ICON[s.type]?`<span class="icon" style="width:28px;height:28px">${ICON[s.type]}</span>`:""}<span>${esc(s.day)} · ${esc(s.when)} · ${TYPE[s.type]}</span>${st?`<span class="pill ${st==="approved"?"approved":st==="changes"?"changes":st==="updated"?"updated":"none"}">${stateLabel[st]}</span>`:""}</div>
+  return `<div class="ihead">${ICON[s.type]?`<span class="icon" style="width:28px;height:28px">${ICON[s.type]}</span>`:""}<span>${esc(s.day)} · ${esc(s.when)} · ${TYPE[s.type]}</span>${st?`<span class="pill ${pillCls(st)}">${stateLabel[st]}</span>`:""}</div>
     <h2>${chips(s.title)}</h2>${content}${actions}${histHTML}`;
 }
 
@@ -662,7 +842,25 @@ function copyAdminFormHTML(s){
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save email</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
 }
 let armed = null; // two-click confirm for deletes
-function statusTag(st){ st = st || "Open"; return st === "Done" ? '<span class="rs done">✓ Done</span>' : st === "In progress" ? '<span class="rs prog">In progress</span>' : '<span class="rs open">Open</span>'; }
+function statusTag(st){ st = normStatus(st) || ST.REQ;
+  return st === ST.OK ? '<span class="rs done">✓ Approved</span>' : st === ST.UPD ? '<span class="rs upd">Updated · ready for review</span>' : st === ST.PROG ? '<span class="rs prog">In progress</span>' : '<span class="rs open">Changes requested</span>'; }
+function stampsHTML(r){
+  return `<div class="stamps">Submitted ${fmt(r.timestamp)}${r.name ? " by " + esc(r.name) : ""}${r.updated_at ? ` · Last updated ${fmt(r.updated_at)}${r.updated_by ? " by " + esc(r.updated_by) : ""}` : ""}</div>`;
+}
+function timelineHTML(r, log){
+  const ev = (log || []).filter(l => l.request_id === r.id && l.event !== "requested" && l.event !== "content").sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+  if (!ev.length) return "";
+  return `<ol class="tline">${ev.map(l => `<li><span class="tl-when">${fmt(l.timestamp)}${l.by ? " · " + esc(l.by) : ""}</span>${l.event === "approved" ? esc(l.note || "Approved") : statusTag(l.status)}${l.event !== "approved" && l.note ? ` · “${esc(l.note)}”` : ""}</li>`).join("")}</ol>`;
+}
+function statusFormHTML(r, client){
+  if (!isReq(r)) return "";
+  const st = normStatus(r.status) || ST.REQ;
+  if (st === ST.OK) return `<div class="hint" style="margin-top:4px">✓ Approved by the client. Nothing more to do.</div>`;
+  return `<form class="hadmin" data-form="status" data-id="${esc(r.id)}"${client ? ` data-client="${esc(client)}"` : ""}>
+     <select aria-label="Status" name="status">${TEAM_ST.map(o => `<option value="${esc(o)}" ${st === o ? "selected" : ""}>${o === ST.UPD ? "Updated — ready for client review" : o}</option>`).join("")}</select>
+     <input type="text" name="reply" aria-label="Reply to client" placeholder="Reply shown to the client (what you changed)" value="${esc(r.lfmp_reply||"")}">
+     <button class="btn small" type="submit">Save</button></form>`;
+}
 function delBtn(id, label){ const on = armed === id; return `<button class="del ${on?"armed":""}" type="button" data-del="${esc(id)}">${on ? "Click again to delete" : (label || "Delete")}</button>`; }
 async function adminDelete(ids){
   if (!SAVE_URL){ responses = responses.filter(r => !ids.includes(r.id)); try { localStorage.setItem(demoKey, JSON.stringify(responses)); } catch(e){} return; }
@@ -670,20 +868,36 @@ async function adminDelete(ids){
   if (!j.ok) throw new Error(j.error || "Could not delete");
   responses = responses.filter(r => !ids.includes(r.id));
 }
-function prettyClient(k){ return String(k).replace(/-[0-9a-f]{6}$/i, "").split("-").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" "); }
+function prettyClient(k){ if (clientNames[k]) return clientNames[k]; if (k === clientKey && data && data.client) return data.client.name; return String(k).replace(/-(?=[a-z0-9]*\d)[a-z0-9]{6}$/i, "").split("-").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" "); }
 async function ping(k){
-  if (!SAVE_URL) return {ok:true, clients:[clientKey]};
+  if (!SAVE_URL) return {ok:true, clients:(window.__PREVIEW_CLIENTS ? Object.keys(window.__PREVIEW_CLIENTS) : [clientKey]), names:(window.__PREVIEW_CLIENTS || {})};
   for (let i = 0; i < 2; i++){ // retry once: the first call after the script sits idle can fail
     try { const j = await postJSON({action:"admin_ping", key:k, client:clientKey}); return j; } catch(e){}
   }
   return {ok:false};
 }
+/* client picker: type to filter, scales to any number of clients */
+function openCount(c){ if (!subs) return 0; return subs.rows.filter(r => r.client === c && ["req","prog"].includes(subStatusKey(r, subs.rows))).length; }
+function clientListHTML(q){
+  q = String(q || "").trim().toLowerCase();
+  const list = adminClients.map(c => ({ c, n: prettyClient(c) })).sort((a, b) => a.n.localeCompare(b.n))
+    .filter(x => !q || x.n.toLowerCase().includes(q) || x.c.toLowerCase().includes(q));
+  if (!list.length) return `<div class="cfoot">No client matches “${esc(q)}”.</div>`;
+  return list.map(x => { const k = openCount(x.c); return `<button type="button" data-cgo="${esc(x.c)}" class="${x.c === clientKey ? "cur" : ""}"><span><span class="cn">${x.c === clientKey ? "✓ " : ""}${esc(x.n)}</span><span class="cc">${esc(x.c)}</span></span>${k ? `<span class="cnt" title="${k} open request${k > 1 ? "s" : ""}">${k}</span>` : ""}</button>`; }).join("");
+}
+function clientPickHTML(){
+  return `<div class="cpick"><button type="button" id="cpickBtn" data-cpick aria-haspopup="listbox" aria-expanded="${pickOpen}"><span class="lbl">Client</span>${esc(prettyClient(clientKey))} ▾</button>${pickOpen ? `<div class="cpanel" role="dialog" aria-label="Choose a client">
+    <input type="search" id="cpickQ" placeholder="Search ${adminClients.length} clients…" autocomplete="off" aria-label="Search clients">
+    <div class="clist" id="cpickList">${clientListHTML("")}</div>
+    <div class="cfoot">${subs ? "Orange numbers = open change requests." : "Loading open request counts…"}</div></div>` : ""}</div>`;
+}
+function goClient(c){ if (!c || c === clientKey){ pickOpen = false; renderAdminBar(); return; } const u = new URL(location.href); u.search = "?c=" + encodeURIComponent(c) + (view === "subs" ? "&view=submissions" : ""); location.href = u.toString(); }
 function renderAdminBar(){
   const bar = $("#adminbar"); if (!wantAdmin){ bar.hidden = true; return; }
   bar.hidden = false;
   bar.classList.toggle("welcome", isAdmin && justSignedIn);
   $("#adminbarIn").innerHTML = isAdmin
-    ? `<span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Admin mode on</span>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminClients.length ? `<label for="clientSelect" class="hint">Client</label><select id="clientSelect">${adminClients.map(k => `<option value="${esc(k)}" ${k===clientKey?"selected":""}>${esc(prettyClient(k))}</option>`).join("")}</select>` : ""}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button><button class="btn small" type="button" data-admin-exit>Sign out</button>`
+    ? `<span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Admin mode on</span><button class="btn small subsbtn" type="button" data-subs-open>📥 Submissions${subs ? (() => { const c = subs.rows.filter(r => ["req","prog"].includes(subStatusKey(r, subs.rows))).length; return c ? `<span class="cnt">${c}</span>` : ""; })() : ""}</button>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminForm === "clientname" ? `<form class="cren" data-form="clientname"><label for="cnameIn" class="hint">Client name</label><input type="text" id="cnameIn" value="${esc(data.client.name)}" maxlength="120" required><button class="btn small primary" type="submit">Save name</button><button class="btn small" type="button" data-admin-cancel>Cancel</button></form>` : `${adminClients.length ? clientPickHTML() : ""}<button class="adm" type="button" data-admin="clientname" title="Change how this client's name appears on their dashboard">✎ Rename client</button>`}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button><button class="btn small" type="button" data-admin-exit>Sign out</button>`
     : `<b>Team sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Password</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Sign in</button><button class="btn small" type="button" data-admin-close>Cancel</button><span id="akmsg" class="akmsg" role="status" aria-live="polite"></span></form>`;
 }
 function whoFields(p){
@@ -803,9 +1017,26 @@ async function submit(rec, okMsg, scope){
   }
 }
 
+document.addEventListener("change", (e) => { if (e.target.id === "subsClient"){ subsF.client = e.target.value; render(); } });
+document.addEventListener("input", (e) => { if (e.target.id === "cpickQ"){ const l = $("#cpickList"); if (l) l.innerHTML = clientListHTML(e.target.value); } });
+document.addEventListener("input", (e) => { if (e.target.id === "subsQ"){ subsF.q = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#subsQ"); if (i){ i.focus(); i.setSelectionRange(pos, pos); } } });
+document.addEventListener("click", (e) => { if (pickOpen && !e.target.closest(".cpick")){ pickOpen = false; renderAdminBar(); } }, true);
+document.addEventListener("keydown", (e) => {
+  if (!pickOpen) return;
+  if (e.key === "Escape"){ pickOpen = false; renderAdminBar(); const b = $("#cpickBtn"); if (b) b.focus(); }
+  if (e.key === "Enter" && e.target.id === "cpickQ"){ e.preventDefault(); const f = document.querySelector("#cpickList [data-cgo]"); if (f) goClient(f.dataset.cgo); }
+  if (e.key === "ArrowDown" && (e.target.id === "cpickQ" || e.target.closest("#cpickList"))){ e.preventDefault(); const all = [...document.querySelectorAll("#cpickList [data-cgo]")]; const i = all.indexOf(document.activeElement); (all[i + 1] || all[0]) && (all[i + 1] || all[0]).focus(); }
+  if (e.key === "ArrowUp" && e.target.closest("#cpickList")){ e.preventDefault(); const all = [...document.querySelectorAll("#cpickList [data-cgo]")]; const i = all.indexOf(document.activeElement); i <= 0 ? $("#cpickQ").focus() : all[i - 1].focus(); }
+});
 document.addEventListener("click", async (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
-  if (t.id === "refreshBtn"){ await refresh(true); return; }
+  if (t.id === "refreshBtn"){ if (view === "subs" && isAdmin){ await loadSubs(); return; } await refresh(true); return; }
+  if (t.hasAttribute("data-cpick")){ pickOpen = !pickOpen; renderAdminBar(); if (pickOpen){ const i = $("#cpickQ"); if (i) i.focus(); if (!subs && !subsLoading) loadSubsQuiet(); } return; }
+  if (t.dataset.cgo){ goClient(t.dataset.cgo); return; }
+  if (t.hasAttribute("data-subs-open")){ view = "subs"; window.scrollTo(0, 0); if (!subs) await loadSubs(); else render(); return; }
+  if (t.hasAttribute("data-subs-close")){ view = "review"; render(); return; }
+  if (t.hasAttribute("data-subs-reload")){ await loadSubs(); return; }
+  if (t.dataset.subsStatus){ subsF.status = t.dataset.subsStatus; render(); return; }
   if (t.dataset.mic){ startMic(t.dataset.mic); return; }
   if (t.dataset.unshot != null){ shots.splice(+t.dataset.unshot, 1); refreshTools(); return; }
   if (t.hasAttribute("data-cancel") || t.hasAttribute("data-ov-cancel") || t.dataset.step || t.dataset.act === "change" || t.dataset.act === "copy" || t.dataset.act === "ovchange") resetInputs();
@@ -885,10 +1116,18 @@ document.addEventListener("submit", async (e) => {
       if (msg){ msg.className = "akmsg bad"; msg.textContent = "✕ That password didn't work. Check it and try again."; }
       return;
     }
-    adminClients = j.clients || [];
+    adminClients = j.clients || []; Object.assign(clientNames, j.names || {});
     adminKey = k; isAdmin = true; justSignedIn = true; try { localStorage.setItem("ar_admin_key", k); } catch(e){}
     toast("✓ Signed in. Admin mode is on"); render();
+    if (params.get("view") === "submissions"){ view = "subs"; loadSubs(); }
     setTimeout(() => { justSignedIn = false; renderAdminBar(); }, 4000);
+    return;
+  }
+  if (kind === "clientname"){
+    const v = $("#cnameIn").value.trim(); if (!v){ $("#cnameIn").focus(); return; }
+    if (v === data.client.name){ adminForm = null; render(); return; }
+    await guarded(f, async () => { try { await adminEdit("", "client:name", v); applyContent(); clientNames[clientKey] = v; adminForm = null; unlockUI(); toast("Client name saved"); render(); }
+    catch(err){ toast("Couldn't save: " + err.message); } });
     return;
   }
   if (kind === "details"){
@@ -933,7 +1172,13 @@ document.addEventListener("submit", async (e) => {
     return;
   }
   if (kind === "status"){
-    await guarded(f, async () => { try { await adminStatus(f.dataset.id, f.elements.status.value, f.elements.reply.value.trim()); unlockUI(); toast("Status saved"); render(); }
+    const stVal = f.elements.status.value, reply = f.elements.reply.value.trim();
+    if (stVal === ST.UPD && !reply){ toast("Add a short note so the client knows what changed"); f.elements.reply.focus(); return; }
+    await guarded(f, async () => { try {
+      const row = await adminStatus(f.dataset.id, stVal, reply, f.dataset.client);
+      if (row && subs){ const i = subs.rows.findIndex(x => x.id === row.id); if (i > -1) subs.rows[i] = Object.assign(subs.rows[i], row);
+        subs.log.push({timestamp:new Date().toISOString(), client:row.client, request_id:row.id, event:"status", status:stVal, note:reply, by:getReviewer().name || "LFMP team"}); }
+      unlockUI(); toast("Status saved"); render(); }
     catch(err){ toast("Couldn't save: " + err.message); } });
     return;
   }
@@ -978,8 +1223,9 @@ async function boot(){
   if (!ok) return;
   if (adminKey){ // signed in before on this device
     const j = await ping(adminKey);
-    if (j.ok){ isAdmin = true; wantAdmin = true; adminClients = j.clients || []; }
+    if (j.ok){ isAdmin = true; wantAdmin = true; adminClients = j.clients || []; Object.assign(clientNames, j.names || {}); }
   }
+  if (view === "subs"){ if (isAdmin) { await loadSubs(); return; } wantAdmin = true; view = "review"; }
   if (!matchMedia("(max-width:980px)").matches) selected = (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
   render();
 }
@@ -1001,7 +1247,7 @@ async function refresh(manual){
       render(); rendered = true;
       $("#updated").textContent = SAVE_URL ? "Loading saved responses…" : "";
     } else if (manual){ $("#updated").textContent = "Refreshing…"; }
-    try { const all = await loadAll(); responses = all.rows; content = all.content; lastLoaded = new Date(); loaded = true; loadFailed = false; }
+    try { const all = await loadAll(); responses = normRows(all.rows); content = all.content; revlog = all.log || []; lastLoaded = new Date(); loaded = true; loadFailed = false; }
     catch(e){ loadFailed = !loaded; toast("Couldn't load saved responses. Try Refresh again in a moment."); }
     applyContent();
     if (selected && !auto.steps.some(x => x.id === selected)) selected = null;
