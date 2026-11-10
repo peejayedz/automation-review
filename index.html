@@ -454,7 +454,8 @@ const ICON = {
   start:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16l12-8z"/></svg>',
   end:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>'
 };
-const TYPE = {sms:"Text message", email:"Email", call:"Phone call", vm:"Voicemail", team:"Team action", start:"Start", end:"End"};
+ICON.chat = ICON.sms; // live chat replies use the text-message icon
+const TYPE = {sms:"Text message", chat:"Live chat message", email:"Email", call:"Phone call", vm:"Voicemail", team:"Team action", start:"Start", end:"End"};
 
 /* ---------- admin: all submissions (every client) ---------- */
 let view = params.get("view") === "submissions" ? "subs" : "review";
@@ -760,7 +761,7 @@ function inspectorHTML(){
   if (s.body) content += `<p>${chips(s.body)}</p>`;
   if (s.sms){
     const len = s.sms.replace(/\[[^\]]+\]/g, "Maria").length;
-    content += `<div class="sms">${chips(s.sms)}</div><div class="len">About ${Math.round(len/10)*10} characters with names filled in${len>160?` · sends as ${Math.ceil(len/153)} text segments`:""}</div>`;
+    content += `<div class="sms">${chips(s.sms)}</div>${s.type === "sms" ? `<div class="len">About ${Math.round(len/10)*10} characters with names filled in${len>160?` · sends as ${Math.ceil(len/153)} text segments`:""}</div>` : ""}`;
   }
   if (s.type === "sms") content += smsReqHTML(s);
   if (s.email){
