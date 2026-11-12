@@ -6,6 +6,7 @@
   "smsHealthcare": false
  },
  "lfmpContact": "PJ at Law Firm Marketing Pros",
+ "customPage": "messages.html",
  "audience": "Lead",
  "automations": [
   {
