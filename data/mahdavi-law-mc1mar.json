@@ -171,7 +171,7 @@
    "name": "Agreement Sent Follow-Up",
    "version": "1.1",
    "sent": "Nov 12, 2026",
-   "summary": "When your team moves a card to 'Agreement Sent – Awaiting Signature', the lead gets reminders to sign the Vine Sign agreement. If it's still unsigned after 5 days, you get an alert.",
+   "summary": "When your team moves a card to 'Agreement Sent – Awaiting Signature', the lead gets reminders to sign the Vine Sign agreement. If it's still unsigned after 4 days, you get an alert.",
    "glance": [
     [
      "Starts when",
@@ -179,7 +179,7 @@
     ],
     [
      "Runs for",
-     "Up to 5 days"
+     "Up to 4 days"
     ],
     [
      "Lead receives",
@@ -187,7 +187,7 @@
     ],
     [
      "Your team receives",
-     "A Day 5 alert and a call task"
+     "A Day 4 alert and a call task"
     ],
     [
      "Ends",
@@ -197,7 +197,7 @@
    "questions": [
     {
      "id": "q1",
-     "text": "Who should get the Day 5 'still unsigned' alert besides Cyrus?",
+     "text": "Who should get the Day 4 'still unsigned' alert besides Cyrus?",
      "why": "As drafted, only Cyrus gets this alert.",
      "options": [
       "Only Cyrus",
@@ -290,27 +290,27 @@
     },
     {
      "id": "s8",
-     "day": "Day 5",
+     "day": "Day 4",
      "type": "team",
      "who": "team",
-     "when": "2 days later",
-     "gap": "2 days later",
+     "when": "1 day later",
+     "gap": "1 day later",
      "title": "Alert: agreement still unsigned",
-     "body": "Subject: Agreement still unsigned: [Full name]\n\n[Full name] has not signed after 5 days of reminders.\nPhone: [Phone] · Email: [Email] · Source: [Lead source]\n\nNext step: call them, forward the lead to the outside intake company, or mark the card Lost to stop all messages."
+     "body": "Subject: Agreement still unsigned: [Full name]\n\n[Full name] has not signed after 4 days of reminders.\nPhone: [Phone] · Email: [Email] · Source: [Lead source]\n\nNext step: call them, forward the lead to the outside intake company, or mark the card Lost to stop all messages."
     },
     {
      "id": "s9",
-     "day": "Day 5",
+     "day": "Day 4",
      "type": "team",
      "who": "team",
      "when": "Same time",
      "gap": "Same time",
      "title": "Task: call the lead",
-     "body": "A task is created for the assigned team member: Call [Full name] – agreement unsigned after 5 days."
+     "body": "A task is created for the assigned team member: Call [Full name] – agreement unsigned after 4 days."
     },
     {
      "id": "s10",
-     "day": "Day 5",
+     "day": "Day 4",
      "type": "end",
      "when": "End",
      "gap": "Then",
@@ -323,7 +323,7 @@
    "name": "Signed Case Handoff",
    "version": "1.1",
    "sent": "Nov 12, 2026",
-   "summary": "When a card is moved to Agreement Signed (or marked Won), your case manager gets an email with the new client's details, and all automated follow-up stops.",
+   "summary": "When a card is moved to Agreement Signed (or marked Won), Cyrus and your case manager get an email with the new client's details, and all automated follow-up stops.",
    "glance": [
     [
      "Starts when",
@@ -345,11 +345,10 @@
    "questions": [
     {
      "id": "q1",
-     "text": "Who should receive the signed-case email?",
+     "text": "Who is your case manager?",
      "why": "This email tells your case manager to open the new case in FileVine.",
      "options": [
-      "Send it to Cyrus",
-      "Someone else (tell us who in a change request)"
+      "Tell us their name and email in a change request"
      ]
     }
    ],
@@ -368,7 +367,7 @@
      "who": "team",
      "when": "Immediately",
      "gap": "Immediately",
-     "title": "Email to your case manager",
+     "title": "Email to Cyrus and your case manager",
      "body": "Subject: New signed case: [Full name]\n\n[Full name] has signed their agreement. Please open the case in FileVine.\nPhone: [Phone] · Email: [Email] · Source: [Lead source]\n\nAll automated follow-up for this lead has stopped."
     },
     {
