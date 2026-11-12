@@ -1,0 +1,275 @@
+{
+ "sections": [
+  {
+   "title": "New lead we haven't reached yet",
+   "sub": "5 texts and 3 emails over 4 days. Stops when your team reaches them.",
+   "msgs": [
+    {
+     "id": "new-lead.s7",
+     "kind": "Text",
+     "when": "Day 0 · right away",
+     "text": "Hi [First name], thank you for contacting The Mahdavi Law Firm. Someone from our team will call you shortly from [Firm phone]. If now isn't a good time, reply with a better time. Reply STOP to opt out."
+    },
+    {
+     "id": "new-lead.s3",
+     "kind": "Email",
+     "when": "Day 0 · right away",
+     "subject": "We received your message – The Mahdavi Law Firm",
+     "text": "Hi [First name],\n\nThank you for reaching out to The Mahdavi Law Firm. We received your information, and someone from our team will call you shortly from [Firm phone].\n\nIf you'd rather pick the time, just reply to this email with a good time to call.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "new-lead.s8",
+     "kind": "Text",
+     "when": "Day 0 · 3 hours later",
+     "text": "Hi [First name], it's The Mahdavi Law Firm following up on your message. What's the best time for a quick call? Reply here or call [Firm phone]. Reply STOP to opt out."
+    },
+    {
+     "id": "new-lead.s9",
+     "kind": "Text",
+     "when": "Day 1",
+     "text": "Hi [First name], we'd still like to hear what happened and talk through your options. Call [Firm phone] or reply with a good time. – The Mahdavi Law Firm. Reply STOP to opt out."
+    },
+    {
+     "id": "new-lead.s10",
+     "kind": "Email",
+     "when": "Day 1 · same time",
+     "subject": "Still here to help, [First name]",
+     "text": "Hi [First name],\n\nWe tried to reach you about your message and haven't been able to connect yet. Talking with us is the quickest way to understand your options. There is no cost to speak with us.\n\nCall us at [Firm phone], or reply with a good time and we'll call you.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "new-lead.s11",
+     "kind": "Text",
+     "when": "Day 2",
+     "text": "[First name], insurance companies often move quickly after an accident. Before you speak with them, give us a call at [Firm phone]. – The Mahdavi Law Firm. Reply STOP to opt out."
+    },
+    {
+     "id": "new-lead.s12",
+     "kind": "Email",
+     "when": "Day 3",
+     "subject": "A few things to keep in mind after an accident",
+     "text": "Hi [First name],\n\nWhile you decide on next steps, a few things can help protect your claim:\n\n- Keep copies of medical records, bills, photos and any police report.\n- Be careful about giving a recorded statement to an insurance company before you get advice.\n- Write down what you remember while it's fresh.\n\nIf you'd like to talk it through, call [Firm phone] or reply to this email.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "new-lead.s13",
+     "kind": "Text",
+     "when": "Day 4",
+     "text": "Hi [First name], this is our last check-in from The Mahdavi Law Firm. If you'd still like help, reply YES or call [Firm phone] anytime. Reply STOP to opt out."
+    }
+   ]
+  },
+  {
+   "title": "Agreement sent, not signed yet",
+   "sub": "4 texts and 2 emails, then an alert to Cyrus on Day 4. Stops when they sign.",
+   "msgs": [
+    {
+     "id": "agreement-sent.s2",
+     "kind": "Text",
+     "when": "Day 0 · 2 hours later",
+     "text": "Hi [First name], it's The Mahdavi Law Firm. We sent your agreement by text through Vine Sign, and it only takes a few minutes to sign on your phone. Questions? Reply here or call [Firm phone]. Reply STOP to opt out."
+    },
+    {
+     "id": "agreement-sent.s3",
+     "kind": "Text",
+     "when": "Day 1",
+     "text": "Hi [First name], just checking that you received your agreement link. Once it's signed, our team can start working on your case right away. – The Mahdavi Law Firm. Reply STOP to opt out."
+    },
+    {
+     "id": "agreement-sent.s4",
+     "kind": "Email",
+     "when": "Day 1 · same time",
+     "subject": "Your agreement with The Mahdavi Law Firm",
+     "text": "Hi [First name],\n\nThank you for speaking with us. We sent your agreement by text through Vine Sign so you can review and sign it on your phone.\n\nOnce it's signed, our team can start working on your case. If you have questions, or can't find the link, reply to this email or call [Firm phone] and we'll help.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "agreement-sent.s5",
+     "kind": "Text",
+     "when": "Day 2",
+     "text": "Have any questions about the agreement before you sign? We're happy to go over it with you. Call [Firm phone] or reply with a good time. – The Mahdavi Law Firm. Reply STOP to opt out."
+    },
+    {
+     "id": "agreement-sent.s6",
+     "kind": "Text",
+     "when": "Day 3",
+     "text": "Hi [First name], can't find the signing link? Reply RESEND and we'll send it again. – The Mahdavi Law Firm. Reply STOP to opt out."
+    },
+    {
+     "id": "agreement-sent.s7",
+     "kind": "Email",
+     "when": "Day 3 · same time",
+     "subject": "Following up on your agreement",
+     "text": "Hi [First name],\n\nWe haven't received your signed agreement yet. If you're still deciding, or have questions about anything in it, we're glad to walk you through it.\n\nCall [Firm phone] or reply to this email, and we'll resend the signing link if you need it.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "agreement-sent.s8",
+     "kind": "Alert",
+     "to": "To Cyrus",
+     "when": "Day 4",
+     "subject": "Agreement still unsigned: [Full name]",
+     "text": "[Full name] has not signed after 4 days of reminders.\nPhone: [Phone] · Email: [Email] · Source: [Lead source]\n\nNext step: call them, forward the lead to the outside intake company, or mark the card Lost to stop all messages."
+    }
+   ]
+  },
+  {
+   "title": "Leads you couldn't reach, or who aren't ready yet",
+   "sub": "6 emails over about 3.5 months. Stops on a reply, an unsubscribe or any card move.",
+   "msgs": [
+    {
+     "id": "long-term.s2",
+     "kind": "Email",
+     "when": "Day 3",
+     "subject": "Still here when you're ready, [First name]",
+     "text": "Hi [First name],\n\nWe know there's a lot to deal with after an accident, and calling a law firm may not be at the top of your list. Whenever you're ready, we're happy to answer your questions and explain your options.\n\nCall [Firm phone] or reply to this email with a good time to talk.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "long-term.s3",
+     "kind": "Email",
+     "when": "Day 10",
+     "subject": "Why it helps to get answers early",
+     "text": "Hi [First name],\n\nInjury claims have legal time limits, and evidence like photos, witness details and medical records is easier to gather early. A short conversation now can help you understand where you stand, even if you decide not to move forward.\n\nCall [Firm phone] or reply to this email.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "long-term.s4",
+     "kind": "Email",
+     "when": "Day 17",
+     "subject": "If the insurance company calls",
+     "text": "Hi [First name],\n\nIf an insurance adjuster contacts you, you don't have to answer every question or accept the first offer on the spot. It's worth getting advice first.\n\nIf you'd like to talk it through, call [Firm phone] or reply here.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "long-term.s5",
+     "kind": "Email",
+     "when": "Day 47",
+     "subject": "Checking in from The Mahdavi Law Firm",
+     "text": "Hi [First name],\n\nJust checking in. If anything has changed since you contacted us (new medical bills, a call from an insurer, or questions about your claim), we're here to help.\n\nCall [Firm phone] or reply to this email.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "long-term.s6",
+     "kind": "Email",
+     "when": "Day 77",
+     "subject": "Still here if you need us",
+     "text": "Hi [First name],\n\nA quick note to say we're still here if you have questions after your accident. A conversation with our team is a simple way to understand your options.\n\nCall [Firm phone] or reply anytime.\n\nThe Mahdavi Law Firm team"
+    },
+    {
+     "id": "long-term.s7",
+     "kind": "Email",
+     "when": "Day 107",
+     "subject": "Our last check-in",
+     "text": "Hi [First name],\n\nThis is our last scheduled check-in. If you ever need help after an accident, you can reach us at [Firm phone] or by replying to this email.\n\nWishing you a good recovery,\nThe Mahdavi Law Firm team"
+    }
+   ]
+  },
+  {
+   "title": "Alerts to your team",
+   "sub": "These go to your office, not to the lead.",
+   "msgs": [
+    {
+     "id": "signed-handoff.s2",
+     "kind": "Alert",
+     "to": "To Cyrus + case manager",
+     "when": "On signing",
+     "subject": "New signed case: [Full name]",
+     "text": "[Full name] has signed their agreement. Please open the case in FileVine.\nPhone: [Phone] · Email: [Email] · Source: [Lead source]\n\nAll automated follow-up for this lead has stopped."
+    },
+    {
+     "id": "reply-alert.s2",
+     "kind": "Alert",
+     "to": "To your team",
+     "when": "Any reply",
+     "subject": null,
+     "text": "Everyone on your team gets this text:\n\n“New Incoming Reply / Email / Call from: [Contact name] [Contact email] [Contact phone]\n\nMessage: “[Message]””"
+    }
+   ]
+  }
+ ],
+ "questions": [
+  {
+   "id": "alerts",
+   "q": "Who should the alerts go to?",
+   "why": "This covers the “still unsigned” alert and the signed-case alert.",
+   "opts": [
+    "Just Cyrus",
+    "Cyrus and someone else",
+    "A group email"
+   ]
+  },
+  {
+   "id": "case-manager",
+   "q": "Your case manager's name and email",
+   "why": "So the signed-case alert reaches them at the same time as you.",
+   "opts": []
+  },
+  {
+   "id": "hours",
+   "q": "Messaging hours",
+   "why": "When should texts and emails go out?",
+   "opts": [
+    "Mon–Fri, 8 AM–6 PM as proposed",
+    "A longer window",
+    "Weekends too"
+   ]
+  },
+  {
+   "id": "long-term",
+   "q": "How long should we keep checking in with leads you couldn't reach?",
+   "why": "About 3.5 months is a placeholder.",
+   "opts": [
+    "About 3.5 months",
+    "Shorter",
+    "Longer"
+   ]
+  },
+  {
+   "id": "newsletter",
+   "q": "Should we add these leads to your newsletter or contact list?",
+   "why": "After the long-term emails end, so they keep hearing from you.",
+   "opts": [
+    "Newsletter",
+    "Contact list",
+    "Neither"
+   ]
+  },
+  {
+   "id": "outside-intake",
+   "q": "Leads you never reach",
+   "why": "Should they also go to your outside intake company?",
+   "opts": [
+    "Yes",
+    "No"
+   ]
+  },
+  {
+   "id": "vine-sign",
+   "q": "Agreement software",
+   "why": "You send agreements through Vine Sign. Does it run through your FileVine account?",
+   "opts": [
+    "Yes",
+    "No",
+    "Not sure"
+   ]
+  },
+  {
+   "id": "filevine",
+   "q": "A FileVine login for our team",
+   "why": "It needs an admin or service account. If that doesn't suit you, we can email your intake team when a case signs.",
+   "opts": [
+    "We'll set up a login",
+    "Email our intake team instead"
+   ]
+  },
+  {
+   "id": "texting",
+   "q": "Details to register your texting number",
+   "why": "Legal business name, EIN and business address.",
+   "opts": []
+  },
+  {
+   "id": "logins",
+   "q": "LeadPro logins",
+   "why": "Names and emails for your intake team.",
+   "opts": []
+  }
+ ],
+ "reviewer": "Cyrus Mahdavi",
+ "questionsAutomation": "setup-questions",
+ "pageTitle": "Message review · The Mahdavi Law Firm",
+ "planUrl": "plans/mahdavi-law-mc1mar.html"
+}
