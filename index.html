@@ -424,12 +424,13 @@ function isOpenReq(r, rs){ const st = normStatus(r.status) || ST.REQ; return isR
 function isAwaiting(r, rs){ return isReq(r) && normStatus(r.status) === ST.UPD && !isReplaced(r, rs); }
 function stepState(stepId){
   if (!loaded) return "loading";
-  const rs = cur().filter(r => r.step === stepId && ["approve","change","copy"].includes(r.action));
+  const rs = cur().filter(r => r.step === stepId && ["approve","undo","change","copy"].includes(r.action));
   if (!rs.length) return "pending";
   const last = rs[rs.length - 1];
   const open = rs.filter(r => isOpenReq(r, rs));
   if (open.length) return open.every(r => normStatus(r.status) === ST.PROG) ? "progress" : "changes";
   if (last.action === "approve") return "approved";
+  if (last.action === "undo") return "pending";
   return "updated"; // LFMP has updated it; the client hasn't reviewed it again yet
 }
 const stateLabel = {loading:"Loading…", pending:"Needs your review", changes:"Changes requested", progress:"In progress with LFMP", updated:"Updated · please review", approved:"✓ Looks good"};
@@ -501,10 +502,10 @@ function subStatusKey(r, all){
   if ((st === ST.REQ || st === ST.PROG) && isReplaced(r, all.filter(x => x.client === r.client && x.automation === r.automation && sameV(x.version, r.version)))) return "ok";
   return st === ST.OK ? "ok" : st === ST.UPD ? "upd" : st === ST.PROG ? "prog" : "req";
 }
-function autoName(c, a){ const d = clientData[c]; const x = d && d.automations && d.automations.find(y => y.id === a); return x ? x.name : a; }
+function autoName(c, a){ const d = clientData[c]; const x = d && d.automations && d.automations.find(y => y.id === a); return x ? x.name : a === "setup-questions" ? "Setup questions" : a; }
 function clientName(c){ return clientNames[c] || (subs && subs.clients[c]) || (clientData[c] && clientData[c].client && clientData[c].client.name) || prettyClient(c); }
 function subsCounts(){
-  const all = subs.rows, n = { open:0, req:0, prog:0, upd:0, ok:0, answer:0, approve_all:0 };
+  const all = subs.rows, n = { open:0, req:0, prog:0, upd:0, ok:0, answer:0, approve_all:0, approve:0 };
   all.filter(r => subsF.client === "all" || r.client === subsF.client).forEach(r => {
     const k = subStatusKey(r, all); if (k in n) n[k]++; if (k === "req" || k === "prog") n.open++;
   });
@@ -517,7 +518,7 @@ function subsHTML(){
     if (subsF.client !== "all" && r.client !== subsF.client) return false;
     const k = subStatusKey(r, all);
     if (subsF.status === "open" && !(k === "req" || k === "prog")) return false;
-    if (["req","prog","upd","ok","answer","approve_all"].includes(subsF.status) && k !== subsF.status) return false;
+    if (["req","prog","upd","ok","answer","approve_all","approve"].includes(subsF.status) && k !== subsF.status) return false;
     if (subsF.status === "requests" && !isReq(r)) return false;
     if (subsF.status === "everything" && r.action === "approve") return false;
     if (q && ![r.details, r.new_copy, r.step_title, r.name, r.type, r.lfmp_reply, autoName(r.client, r.automation), clientName(r.client)].join(" ").toLowerCase().includes(q)) return false;
@@ -529,7 +530,7 @@ function subsHTML(){
   const label = { req:"Changes requested", prog:"In progress", upd:"Updated · waiting for the client", ok:"Approved" };
   const cards = list.map(r => {
     const k = subStatusKey(r, all);
-    const kindTxt = r.action === "answer" ? "Answered a question" : r.action === "approve_all" ? "Approved the whole automation" : r.action === "copy" ? "Sent new wording" : (r.type || "Requested a change");
+    const kindTxt = r.action === "answer" ? "Answered a question" : r.action === "approve_all" ? "Approved the whole automation" : r.action === "approve" ? (r.type === "Everything else looks good" ? "Marked looks good (Everything else looks good)" : "Marked looks good") : r.action === "undo" ? "Took back \u201clooks good\u201d" : r.action === "copy" ? "Sent new wording" : (r.type || "Requested a change");
     return `<article class="scard ${isReq(r) ? "st-" + k : "k-" + r.action}">
       <div class="shead"><span class="where"><b>${esc(clientName(r.client))}</b> · ${esc(autoName(r.client, r.automation))}${r.version ? " · v" + esc(r.version) : ""}</span>${isReq(r) ? `<span class="pill ${k === "ok" ? "approved" : k === "upd" ? "updated" : k === "prog" ? "progress" : "changes"}">${label[k]}</span>` : ""}</div>
       <div class="stitle">${esc(r.step_title || r.step || "")}</div>
@@ -548,7 +549,7 @@ function subsHTML(){
     <button class="btn small" type="button" data-subs-close>← Back to the review page</button>
     <h1>Client submissions</h1>
     <p class="hint" style="font-size:14px">Every change request, new wording, answer and approval from your clients, newest first. Update the status and reply here, and the client sees it on their dashboard straight away. Statuses: Changes Requested → In Progress → Updated (ready for the client) → Approved (only when the client approves).</p>
-    <div class="sumrow">${btn("open", "Open (needs work)", n.open)}${btn("upd", "Waiting for the client", n.upd)}${btn("ok", "Approved", n.ok)}${btn("answer", "Answers", n.answer)}${btn("approve_all", "Automations approved", n.approve_all)}${btn("everything", "Everything", all.filter(r => r.action !== "approve" && (subsF.client === "all" || r.client === subsF.client)).length)}</div>
+    <div class="sumrow">${btn("open", "Open (needs work)", n.open)}${btn("upd", "Waiting for the client", n.upd)}${btn("ok", "Approved", n.ok)}${btn("answer", "Answers", n.answer)}${btn("approve_all", "Automations approved", n.approve_all)}${btn("approve", "Looks good clicks", n.approve)}${btn("everything", "Everything", all.filter(r => r.action !== "approve" && (subsF.client === "all" || r.client === subsF.client)).length)}</div>
     <div class="filters"><label class="hint" for="subsClient">Client</label><select id="subsClient"><option value="all">All clients</option>${clients.map(c => `<option value="${esc(c)}" ${subsF.client === c ? "selected" : ""}>${esc(clientName(c))}</option>`).join("")}</select>
       <input type="search" id="subsQ" placeholder="Search requests, names, steps…" value="${esc(subsF.q)}">
       <button class="btn small" type="button" data-subs-reload>↻ Reload</button></div>
