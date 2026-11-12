@@ -2,38 +2,60 @@
  "client": {
   "key": "mahdavi-law-mc1mar",
   "name": "The Mahdavi Law Firm",
-  "location": "Houston, Texas"
+  "location": "Houston, Texas",
+  "smsHealthcare": false
  },
  "lfmpContact": "PJ at Law Firm Marketing Pros",
  "audience": "Lead",
  "automations": [
   {
    "id": "new-lead",
-   "name": "New Lead Follow-Up",
-   "version": "1.0",
-   "sent": "Nov 11, 2026",
-   "summary": "When someone submits your website intake form, or a call is logged as a phone lead, this adds them to your lead board and sends three emails over the next two days explaining what happens next and why to choose your firm.",
+   "name": "No-Contact Follow-Up",
+   "version": "1.1",
+   "sent": "Nov 12, 2026",
+   "summary": "When a new lead arrives and your team hasn't reached them yet, they get texts and emails over 4 days. It stops as soon as your team moves their card, they reply, or they opt out.",
    "glance": [
     [
      "Starts when",
-     "A website form is submitted, or a contact is tagged “phone lead”"
+     "A new lead arrives (web form, chat, Facebook, phone)"
     ],
     [
      "Runs for",
-     "2 days"
+     "Up to 4 days"
     ],
     [
      "Lead receives",
-     "3 emails"
+     "5 texts, 3 emails"
     ],
     [
      "Your team receives",
-     "Nothing (see Question 1)"
+     "An alert when the lead replies"
     ],
     [
      "Ends",
-     "Day 2, after the third email"
+     "Your team moves the card, the lead replies or opts out, or after the last text"
     ]
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "How long should we keep following up with leads you can't reach?",
+     "why": "As drafted, messages stop after Day 4 if nobody has reached the lead.",
+     "options": [
+      "4 days (as drafted)",
+      "4 days, then a weekly email for 3 weeks",
+      "Other"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Should leads you never reach be forwarded to your outside intake company?",
+     "why": "Right now nothing happens to these leads after the last text.",
+     "options": [
+      "Yes, automatically",
+      "No, we'll do it manually"
+     ]
+    }
    ],
    "steps": [
     {
@@ -41,19 +63,17 @@
      "day": "Day 0",
      "type": "start",
      "when": "Start",
-     "title": "A new lead comes in",
-     "body": "It starts two ways: someone submits the website intake form (“GHL Build Out - Optin Form”), or a contact is tagged “phone lead” after a call.",
-     "note": "All three automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+     "title": "New lead arrives in Lead Stages"
     },
     {
-     "id": "s2",
+     "id": "s7",
      "day": "Day 0",
-     "type": "team",
-     "who": "team",
+     "type": "sms",
+     "who": "patient",
      "when": "Immediately",
      "gap": "Immediately",
-     "title": "The lead is added to your lead board",
-     "body": "Website leads are tagged “web lead” and placed in Stage 1: Web Lead. Phone leads are placed in Stage 2: Phone Lead."
+     "title": "Text 1",
+     "sms": "Hi [First name], thank you for contacting The Mahdavi Law Firm. Someone from our team will call you shortly from [Firm phone]. If now isn't a good time, reply with a better time. Reply STOP to opt out."
     },
     {
      "id": "s3",
@@ -62,232 +82,303 @@
      "who": "patient",
      "when": "Immediately",
      "gap": "Immediately",
-     "title": "Email 1: We've received your submission",
+     "title": "Email 1",
      "email": {
-      "subject": "Confirmed: We've received your submission!",
-      "body": "Hi [First name],\n\nThank you for reaching out to The Mahdavi Law Firm and sharing the details of your incident.\n\nOur dedicated team is now reviewing the information you provided.\n\nIn the coming days, a member of our team will reach out to you to gather more details about your situation.\n\nPlease be on the lookout for a call from our office. The details to watch for are The Mahdavi Law Firm office at [Office phone].\n\nIf you see this number, it will be our team getting in touch to discuss your case further.\n\nWe understand the importance of your case and are committed to exploring how we can be of assistance.\n\nThank you for choosing The Mahdavi Law Firm.\n\nKind regards,\n[Team member's name]\n[Team member's email]\n[Office phone]\nThe Mahdavi Law Firm"
+      "subject": "We received your message – The Mahdavi Law Firm",
+      "body": "Hi [First name],\n\nThank you for reaching out to The Mahdavi Law Firm. We received your information, and someone from our team will call you shortly from [Firm phone].\n\nIf you'd rather pick the time, just reply to this email with a good time to call.\n\nThe Mahdavi Law Firm team"
+     }
+    },
+    {
+     "id": "s8",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "3 hours later",
+     "gap": "3 hours later",
+     "title": "Text 2",
+     "sms": "Hi [First name], it's The Mahdavi Law Firm following up on your message. What's the best time for a quick call? Reply here or call [Firm phone]. Reply STOP to opt out."
+    },
+    {
+     "id": "s9",
+     "day": "Day 1",
+     "type": "sms",
+     "who": "patient",
+     "when": "1 day later",
+     "gap": "1 day later",
+     "title": "Text 3",
+     "sms": "Hi [First name], we'd still like to hear what happened and talk through your options. Call [Firm phone] or reply with a good time. – The Mahdavi Law Firm. Reply STOP to opt out."
+    },
+    {
+     "id": "s10",
+     "day": "Day 1",
+     "type": "email",
+     "who": "patient",
+     "when": "Same time",
+     "gap": "Same time",
+     "title": "Email 2",
+     "email": {
+      "subject": "Still here to help, [First name]",
+      "body": "Hi [First name],\n\nWe tried to reach you about your message and haven't been able to connect yet. Talking with us is the quickest way to understand your options. There is no cost to speak with us.\n\nCall us at [Firm phone], or reply with a good time and we'll call you.\n\nThe Mahdavi Law Firm team"
      },
-     "note": "Phone leads get this email too, but it thanks them for “submitting” and “sharing the details of your incident”, which won't fit someone who called. We can send phone leads a version that says “thanks for calling”. The signature uses the name and email of the team member assigned to the lead. If no one is assigned yet, those lines come out blank. We can use a fixed signature instead (for example the firm name and intake line)."
+     "note": "Please confirm the line 'There is no cost to speak with us.'"
+    },
+    {
+     "id": "s11",
+     "day": "Day 2",
+     "type": "sms",
+     "who": "patient",
+     "when": "1 day later",
+     "gap": "1 day later",
+     "title": "Text 4",
+     "sms": "[First name], insurance companies often move quickly after an accident. Before you speak with them, give us a call at [Firm phone]. – The Mahdavi Law Firm. Reply STOP to opt out."
+    },
+    {
+     "id": "s12",
+     "day": "Day 3",
+     "type": "email",
+     "who": "patient",
+     "when": "1 day later",
+     "gap": "1 day later",
+     "title": "Email 3",
+     "email": {
+      "subject": "A few things to keep in mind after an accident",
+      "body": "Hi [First name],\n\nWhile you decide on next steps, a few things can help protect your claim:\n\n- Keep copies of medical records, bills, photos and any police report.\n- Be careful about giving a recorded statement to an insurance company before you get advice.\n- Write down what you remember while it's fresh.\n\nIf you'd like to talk it through, call [Firm phone] or reply to this email.\n\nThe Mahdavi Law Firm team"
+     }
+    },
+    {
+     "id": "s13",
+     "day": "Day 4",
+     "type": "sms",
+     "who": "patient",
+     "when": "1 day later",
+     "gap": "1 day later",
+     "title": "Text 5",
+     "sms": "Hi [First name], this is our last check-in from The Mahdavi Law Firm. If you'd still like help, reply YES or call [Firm phone] anytime. Reply STOP to opt out."
+    },
+    {
+     "id": "s6",
+     "day": "Day 4",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "Follow-up ends",
+     "body": "Moving the card at any point stops it sooner."
+    }
+   ]
+  },
+  {
+   "id": "agreement-sent",
+   "name": "Agreement Sent Follow-Up",
+   "version": "1.1",
+   "sent": "Nov 12, 2026",
+   "summary": "When your team moves a card to 'Agreement Sent – Awaiting Signature', the lead gets reminders to sign the Vine Sign agreement. If it's still unsigned after 5 days, you get an alert.",
+   "glance": [
+    [
+     "Starts when",
+     "Card moved to Agreement Sent – Awaiting Signature"
+    ],
+    [
+     "Runs for",
+     "Up to 5 days"
+    ],
+    [
+     "Lead receives",
+     "4 texts, 2 emails"
+    ],
+    [
+     "Your team receives",
+     "A Day 5 alert and a call task"
+    ],
+    [
+     "Ends",
+     "Agreement signed, lead marked lost, lead replies or opts out"
+    ]
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "Who should get the Day 5 'still unsigned' alert besides Cyrus?",
+     "why": "As drafted, only Cyrus gets this alert.",
+     "options": [
+      "Only Cyrus",
+      "Cyrus and someone else (tell us who)"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Is it OK that the texts don't include the signing link itself? (Vine Sign links are unique per client.)",
+     "why": "The texts point the lead to the link already sent by Vine Sign instead.",
+     "options": [
+      "Yes",
+      "No, let's discuss"
+     ]
+    }
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "Card moved to Agreement Sent – Awaiting Signature"
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "type": "sms",
+     "who": "patient",
+     "when": "2 hours later",
+     "gap": "2 hours later",
+     "title": "Text 1",
+     "sms": "Hi [First name], it's The Mahdavi Law Firm. We sent your agreement by text through Vine Sign, and it only takes a few minutes to sign on your phone. Questions? Reply here or call [Firm phone]. Reply STOP to opt out."
+    },
+    {
+     "id": "s3",
+     "day": "Day 1",
+     "type": "sms",
+     "who": "patient",
+     "when": "1 day later",
+     "gap": "1 day later",
+     "title": "Text 2",
+     "sms": "Hi [First name], just checking that you received your agreement link. Once it's signed, our team can start working on your case right away. – The Mahdavi Law Firm. Reply STOP to opt out."
     },
     {
      "id": "s4",
      "day": "Day 1",
      "type": "email",
      "who": "patient",
-     "when": "Next day",
-     "gap": "1 day later",
-     "title": "Email 2: How our process works",
+     "when": "Same time",
+     "gap": "Same time",
+     "title": "Email 1",
      "email": {
-      "subject": "We're Reviewing Your Incident Form",
-      "body": "Hi [First name],\n\nWe want to assure you that your incident form has been received and our dedicated team is already hard at work reviewing the information you've shared.\n\nNavigating through the complexities of insurance and dealing with the aftermath of an incident can be incredibly frustrating and emotionally taxing.\n\nAt The Mahdavi Law Firm, we recognize the burdens you're carrying, and we're here to lighten that load.\n\nHere's How Our Process Works:\n\nStep 1: Discovery\nOnce we accept your case, our dedicated team will carry out a comprehensive discovery phase. This involves contacting relevant insurance companies, obtaining police reports, and gathering essential information.\n\nStep 2: Assessment\nWe dive deep into assessing the damages you've faced, whether it's mounting medical expenses, lost wages, or any other challenges resulting from the incident.\n\nStep 3: Settlement\nOur ultimate goal is to work towards a fair settlement with the responsible parties. Once an agreement is reached, we guide you through the necessary steps, including signing off on the settlement and receiving the funds.\n\nTo give you peace of mind throughout this process, we'd like to share some successfully handled cases similar to yours:\n\n[Insert Case Study/Review]\n\nIf you have any questions or concerns, please feel free to reach out. We are here to provide the support and guidance you need during this challenging time.\n\nKind regards,\n[Team member's name]\n[Team member's email]\n[Office phone]\nThe Mahdavi Law Firm"
-     },
-     "note": "This still has a placeholder: “[Insert Case Study/Review]”. Please send us a short case result or client review to use, or we'll remove that paragraph."
-    },
-    {
-     "id": "s5",
-     "day": "Day 2",
-     "type": "email",
-     "who": "patient",
-     "when": "2 days after",
-     "gap": "1 day later",
-     "title": "Email 3: Why choose us",
-     "email": {
-      "subject": "Why Choose [Insert Name Of Law Firm]?",
-      "body": "Hi [First name],\n\nIn challenging times like these, making the right choice for legal representation is pivotal.\n\nWe understand the gravity of your situation, and we want to share why choosing The Mahdavi Law Firm is a decision centered around your needs.\n\nFirst and foremost, we acknowledge the urgency in resolving your case. Our approach is designed to get you the compensation you deserve as quickly as possible.\n\nOur commitment to efficiency is evident in our [XX] rating on [Website], highlighting our dedication to achieving prompt and successful resolutions.\n\nBut beyond our ratings lies what truly sets us apart – our sincere compassion. We extend our heartfelt apologies for the unfortunate events you or your loved one has experienced.\n\nOur team is not only incredibly experienced but also deeply understands the complications that Personal Injury can bring upon a family.\n\nChoosing The Mahdavi Law Firm means choosing a partner who prioritizes your peace of mind, values your time, and is dedicated to securing the best outcome for you.\n\nNo case is too difficult or complex for us. With decades of experience dedicated to practicing law, your case benefits from the wealth of knowledge and insight we've gained over [X]+ years.\n\nPlus, with our “No Fee Unless You Win” promise, you can rest assured that your financial well-being is a top priority.\n\nIf you have any questions or concerns, please feel free to reach out. We are here to provide the support and guidance you need during this challenging time.\n\nKind regards,\n[Team member's name]\n[Team member's email]\n[Office phone]\nThe Mahdavi Law Firm"
-     },
-     "note": "Three placeholders need filling: the subject (“[Insert Name Of Law Firm]”), your review rating (“[XX] rating”) and years of experience (“[X]+ years”). Please confirm the numbers, or we'll reword those lines."
-    },
-    {
-     "id": "s6",
-     "day": "Day 2",
-     "type": "end",
-     "when": "End",
-     "gap": "Then",
-     "title": "The follow-up ends",
-     "body": "The lead leaves this automation."
-    }
-   ],
-   "questions": [
-    {
-     "id": "q1",
-     "text": "Should your team get an alert for every new lead?",
-     "why": "Right now nobody is notified when a form comes in. The only alert is when a contact replies.",
-     "options": [
-      "Yes, text the intake team (recommended)",
-      "Yes, email the intake team",
-      "No alert needed"
-     ]
-    },
-    {
-     "id": "q2",
-     "text": "Should these emails stop once the lead books a consultation or signs?",
-     "why": "Today all three emails go out even if the lead has already booked or signed.",
-     "options": [
-      "Yes, stop them (recommended)",
-      "No, keep sending"
-     ]
-    },
-    {
-     "id": "q3",
-     "text": "Would you like a text message added?",
-     "why": "This follow-up is email only. A quick text on Day 0 usually gets a faster response from injury leads.",
-     "options": [
-      "Yes, add a text",
-      "Email only is fine"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "consultation",
-   "name": "Consultation Confirmation + Reminders",
-   "version": "1.0",
-   "sent": "Nov 11, 2026",
-   "summary": "When a consultation is confirmed, this sends a confirmation email with the Zoom link, then reminders 24 hours, 1 hour and 5 minutes before.",
-   "glance": [
-    [
-     "Starts when",
-     "A consultation appointment is confirmed"
-    ],
-    [
-     "Runs for",
-     "Until the consultation"
-    ],
-    [
-     "Lead receives",
-     "4 emails, 2 texts"
-    ],
-    [
-     "Your team receives",
-     "Nothing"
-    ],
-    [
-     "Ends",
-     "When the consultation starts"
-    ]
-   ],
-   "steps": [
-    {
-     "id": "s1",
-     "day": "Booking",
-     "type": "start",
-     "when": "Start",
-     "title": "A consultation is confirmed",
-     "body": "Starts when an appointment is confirmed in GHL.",
-     "note": "All three automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve. Your account doesn't have a booking calendar yet, so nothing can trigger this. We'll set one up (or connect your existing booking tool) before going live."
-    },
-    {
-     "id": "s2",
-     "day": "Booking",
-     "type": "team",
-     "who": "team",
-     "when": "Immediately",
-     "gap": "Immediately",
-     "title": "The lead moves to Booked Consultation",
-     "body": "The lead is tagged “consultation booked” and moved to Stage 5: Booked Consultation on your lead board."
-    },
-    {
-     "id": "s3",
-     "day": "Booking",
-     "type": "email",
-     "who": "patient",
-     "when": "Immediately",
-     "gap": "Immediately",
-     "title": "Email 1: Your appointment is confirmed",
-     "email": {
-      "subject": "Appointment Confirmation",
-      "body": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nWhen it is time, please use this Zoom Meeting ID: [Zoom link]\n\n- The Mahdavi Law Firm\n\nAdd to google calendar | Add to outlook\nCancel | Reschedule"
-     },
-     "note": "The Zoom link in all of these messages is still a placeholder in GHL (zoom.us/j/xyz), so it won't open a real meeting yet. Please send us your Zoom link, and tell us if different attorneys use different rooms or if some consultations are in person or by phone."
-    },
-    {
-     "id": "s4",
-     "day": "Day before",
-     "type": "email",
-     "who": "patient",
-     "when": "24 hours before",
-     "gap": "24 hours before",
-     "title": "Email 2: Your meeting is in 24 hours",
-     "email": {
-      "subject": "Your Meeting is in 24 Hours!",
-      "body": "Hi [First name],\n\nJust a friendly reminder that our appointment is in 24 Hours.\n\nWhen it is time, please use this zoom Meeting ID: [Zoom link]\n\n- The Mahdavi Law Firm"
+      "subject": "Your agreement with The Mahdavi Law Firm",
+      "body": "Hi [First name],\n\nThank you for speaking with us. We sent your agreement by text through Vine Sign so you can review and sign it on your phone.\n\nOnce it's signed, our team can start working on your case. If you have questions, or can't find the link, reply to this email or call [Firm phone] and we'll help.\n\nThe Mahdavi Law Firm team"
      }
     },
     {
      "id": "s5",
-     "day": "Consultation day",
-     "type": "email",
-     "who": "patient",
-     "when": "1 hour before",
-     "gap": "1 hour before",
-     "title": "Email 3: Your meeting is in 1 hour",
-     "email": {
-      "subject": "Your Meeting is in 1 hour!",
-      "body": "Hi [First name],\n\nJust a friendly reminder that your appointment is in one hour.\n\nPlease use this zoom Meeting ID: [Zoom link]\n\n- The Mahdavi Law Firm"
-     }
-    },
-    {
-     "id": "s6",
-     "day": "Consultation day",
+     "day": "Day 2",
      "type": "sms",
      "who": "patient",
-     "when": "1 hour before",
-     "gap": "At the same time",
-     "title": "Text 1: Your appointment is in one hour",
-     "sms": "Hi [First name], just a friendly reminder that our appointment is in one hour. - The Mahdavi Law Firm"
+     "when": "1 day later",
+     "gap": "1 day later",
+     "title": "Text 3",
+     "sms": "Have any questions about the agreement before you sign? We're happy to go over it with you. Call [Firm phone] or reply with a good time. – The Mahdavi Law Firm. Reply STOP to opt out."
+    },
+    {
+     "id": "s6",
+     "day": "Day 3",
+     "type": "sms",
+     "who": "patient",
+     "when": "1 day later",
+     "gap": "1 day later",
+     "title": "Text 4",
+     "sms": "Hi [First name], can't find the signing link? Reply RESEND and we'll send it again. – The Mahdavi Law Firm. Reply STOP to opt out."
     },
     {
      "id": "s7",
-     "day": "Consultation day",
+     "day": "Day 3",
      "type": "email",
      "who": "patient",
-     "when": "5 minutes before",
-     "gap": "5 minutes before",
-     "title": "Email 4: Your appointment is starting",
+     "when": "Same time",
+     "gap": "Same time",
+     "title": "Email 2",
      "email": {
-      "subject": "Your appointment is starting!",
-      "body": "Hi [First name],\n\nOur appointment is about to start. Please join here:\n[Zoom link]\n\n- The Mahdavi Law Firm"
+      "subject": "Following up on your agreement",
+      "body": "Hi [First name],\n\nWe haven't received your signed agreement yet. If you're still deciding, or have questions about anything in it, we're glad to walk you through it.\n\nCall [Firm phone] or reply to this email, and we'll resend the signing link if you need it.\n\nThe Mahdavi Law Firm team"
      }
     },
     {
      "id": "s8",
-     "day": "Consultation day",
-     "type": "sms",
-     "who": "patient",
-     "when": "5 minutes before",
-     "gap": "At the same time",
-     "title": "Text 2: Your appointment is starting",
-     "sms": "Hi [First name], our appointment is about to start - hop in here: [Zoom link]  - The Mahdavi Law Firm"
+     "day": "Day 5",
+     "type": "team",
+     "who": "team",
+     "when": "2 days later",
+     "gap": "2 days later",
+     "title": "Alert: agreement still unsigned",
+     "body": "Subject: Agreement still unsigned: [Full name]\n\n[Full name] has not signed after 5 days of reminders.\nPhone: [Phone] · Email: [Email] · Source: [Lead source]\n\nNext step: call them, forward the lead to the outside intake company, or mark the card Lost to stop all messages."
     },
     {
      "id": "s9",
-     "day": "Consultation day",
+     "day": "Day 5",
+     "type": "team",
+     "who": "team",
+     "when": "Same time",
+     "gap": "Same time",
+     "title": "Task: call the lead",
+     "body": "A task is created for the assigned team member: Call [Full name] – agreement unsigned after 5 days."
+    },
+    {
+     "id": "s10",
+     "day": "Day 5",
      "type": "end",
      "when": "End",
      "gap": "Then",
-     "title": "The reminders end",
-     "body": "The lead leaves this automation when the consultation starts."
+     "title": "Reminders end."
     }
+   ]
+  },
+  {
+   "id": "signed-handoff",
+   "name": "Signed Case Handoff",
+   "version": "1.1",
+   "sent": "Nov 12, 2026",
+   "summary": "When a card is moved to Agreement Signed (or marked Won), your case manager gets an email with the new client's details, and all automated follow-up stops.",
+   "glance": [
+    [
+     "Starts when",
+     "Card moved to Agreement Signed or marked Won"
+    ],
+    [
+     "Lead receives",
+     "Nothing"
+    ],
+    [
+     "Your team receives",
+     "One email with the client's details"
+    ],
+    [
+     "Ends",
+     "Immediately"
+    ]
    ],
    "questions": [
     {
      "id": "q1",
-     "text": "How do leads book a consultation today?",
-     "why": "There's no booking calendar in your GHL account yet, so this automation can't start.",
+     "text": "Who should receive the signed-case email?",
+     "why": "This email tells your case manager to open the new case in FileVine.",
      "options": [
-      "Set up a GHL calendar",
-      "We use another booking tool (tell us which)",
-      "Our team books by phone"
+      "Send it to Cyrus",
+      "Someone else (tell us who in a change request)"
      ]
+    }
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "Card moved to Agreement Signed"
     },
     {
-     "id": "q2",
-     "text": "Are consultations always on Zoom?",
-     "why": "Every reminder includes a Zoom link.",
-     "options": [
-      "Always Zoom",
-      "Sometimes phone or in person"
-     ]
+     "id": "s2",
+     "day": "Day 0",
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email to your case manager",
+     "body": "Subject: New signed case: [Full name]\n\n[Full name] has signed their agreement. Please open the case in FileVine.\nPhone: [Phone] · Email: [Email] · Source: [Lead source]\n\nAll automated follow-up for this lead has stopped."
+    },
+    {
+     "id": "s3",
+     "day": "Day 0",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "Done",
+     "body": "Later, this can open the case in FileVine automatically."
     }
    ]
   },
@@ -327,7 +418,7 @@
      "when": "Start",
      "title": "A contact replies",
      "body": "Starts every time any contact replies to a text or email, or calls in.",
-     "note": "All three automations are still in Draft in GHL, so nothing is being sent yet. They'll go live once you approve."
+     "note": "This alert stays in Draft until launch. It'll go live once you approve."
     },
     {
      "id": "s2",
@@ -375,9 +466,9 @@
   {
    "id": "chat-intake",
    "name": "Live Chat Intake (Personal Injury)",
-   "version": "1.0",
-   "sent": "Nov 11, 2026",
-   "summary": "When someone chats with you on your website, this asks four quick questions one at a time (date, type of incident, medical treatment, best phone and email). After the last answer it confirms in the chat, adds the lead to your lead board, emails the details and sends the lead a confirmation text.",
+   "version": "1.1",
+   "sent": "Nov 12, 2026",
+   "summary": "When someone chats with you on your website, this asks four quick questions one at a time (date, type of incident, medical treatment, best phone and email). After the last answer it confirms in the chat, adds the lead to your lead board, emails the details to your office and sends the lead a confirmation text.",
    "glance": [
     [
      "Starts when",
@@ -389,11 +480,11 @@
     ],
     [
      "Lead receives",
-     "5 chat replies, 1 email (see the note on it), 1 text"
+     "5 chat replies, 1 text"
     ],
     [
      "Your team receives",
-     "A copy of the intake email at info@mahdavilawfirm.com"
+     "An email with the new chat lead's details"
     ],
     [
      "Ends",
@@ -473,16 +564,13 @@
     {
      "id": "s8",
      "day": "Intake complete",
-     "type": "email",
-     "who": "patient",
-     "when": "Right after",
-     "gap": "Then",
-     "title": "Email: New PI chat intake (written for your team)",
-     "email": {
-      "subject": "New PI Chat Intake Completed for [Contact name]",
-      "body": "Hello Team,\n\nWe have successfully completed a personal injury chat intake for the contact: [Contact name].\n\nDetails:\n- Full Name: [Contact name]\n- Email: [Contact email]\n- Phone: [Contact phone]\n- Date of Accident: [Date of accident]\n- Incident Type: [Incident type]\n- Currently Receiving Medical Treatment: [Receiving medical treatment]\n\nPlease follow up with the contact promptly.\n\nBest regards,\n[Team member's name]\n[Team member's email signature]"
-     },
-     "note": "This email is written for your team, but in GHL it's a regular email step, which sends to the lead, with info@mahdavilawfirm.com copied. The sender also shows as “LFMP”. We recommend sending it to your team only. Also, nothing in this automation saves the chat answers into the Date of Accident, Incident Type and Medical Treatment fields, so those lines will likely be blank unless your chat tool fills them in."
+     "type": "team",
+     "who": "team",
+     "when": "Immediately",
+     "gap": "Immediately",
+     "title": "Email to your office: new chat lead",
+     "body": "Subject: New chat lead: [Full name]\n\nA new lead came in through the website chat.\nPhone: [Phone] · Email: [Email]\n\nTheir chat answers are in the Conversations tab in LeadPro. They are already getting the No-Contact Follow-Up messages, which stop once you move their card.",
+     "note": "Now an internal notice to the firm, no longer sent to the lead."
     },
     {
      "id": "s9",
@@ -527,11 +615,11 @@
     },
     {
      "id": "q2",
-     "text": "Who should receive the intake details email?",
-     "why": "Right now it goes to the lead, with info@mahdavilawfirm.com copied.",
+     "text": "Which inbox should chat leads go to?",
+     "why": "This email now goes to your office instead of the lead.",
      "options": [
-      "Only info@mahdavilawfirm.com (recommended)",
-      "Someone else (tell us who)"
+      "info@mahdavilawfirm.com",
+      "Another address"
      ]
     },
     {
