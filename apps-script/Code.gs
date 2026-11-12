@@ -1,5 +1,9 @@
 /**
- * LFMP Automation Review: response + content storage (v8)
+ * LFMP Automation Review: response + content storage (v9)
+ *
+ * v9: "undo" action (the client takes back a "looks good" on a step) and "approve_steps" (marks several steps
+ *     "looks good" in one request, used by the custom message review page's "Everything else looks good" button).
+ *     Neither sends an email.
  *
  * v8: admin "Submissions" view on the dashboard (admin_all returns every client's requests, answers and approvals
  *     with the full Revision Log), and an email to NOTIFY_EMAIL for every new client submission and every approval.
@@ -60,7 +64,7 @@ const HEADERS = ['id', 'timestamp', 'client', 'automation', 'version', 'step', '
                  'type', 'details', 'new_copy', 'name', 'email', 'status', 'lfmp_reply', 'attachments', 'updated_at', 'updated_by'];
 const CONTENT_SHEET = 'Content';
 const CONTENT_HEADERS = ['timestamp', 'client', 'automation', 'field', 'value', 'edited_by'];
-const ACTIONS = ['approve', 'change', 'copy', 'answer', 'approve_all'];
+const ACTIONS = ['approve', 'change', 'copy', 'answer', 'approve_all', 'undo'];
 const ST = { REQ: 'Changes Requested', PROG: 'In Progress', UPD: 'Updated — Ready for Review', OK: 'Approved' };
 const STATUSES = [ST.REQ, ST.PROG, ST.UPD, ST.OK];
 const TEAM_STATUSES = [ST.REQ, ST.PROG, ST.UPD]; // Approved is only ever set by the client's own approval
@@ -195,6 +199,27 @@ function doGet(e) {
 }
 
 /** POST (JSON body as text/plain) */
+/** v7: the client marking a step "Looks good" approves any earlier request on that step. Returns the updated revisions it approved. */
+function approveEarlier_(d, row) {
+  const approvedRevisions = [];
+  const sh = sheet_(d.client), vals = sh.getDataRange().getValues();
+  for (let i = 1; i < vals.length; i++) {
+    const r = toObj_(HEADERS, vals[i]);
+    if (r.client !== row.client || r.automation !== row.automation || r.step !== row.step) continue;
+    if (String(r.version) !== String(row.version) && Number(r.version) !== Number(row.version)) continue;
+    if (r.action !== 'change' && r.action !== 'copy') continue;
+    const st = normStatus_(r.status) || ST.REQ;
+    if (st === ST.OK) continue;
+    sh.getRange(i + 1, HEADERS.indexOf('status') + 1).setValue(ST.OK);
+    if (st === ST.UPD) approvedRevisions.push(r);
+    sh.getRange(i + 1, HEADERS.indexOf('updated_at') + 1).setValue(row.timestamp);
+    sh.getRange(i + 1, HEADERS.indexOf('updated_by') + 1).setValue(safe_(row.name));
+    log_({ client: row.client, automation: row.automation, version: row.version, request_id: r.id, step: r.step,
+      event: 'approved', status: ST.OK, note: st === ST.UPD ? 'Client approved the updated version' : 'Client approved the step as it is', previous: st, revised: '', by: row.name });
+  }
+  return approvedRevisions;
+}
+
 function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Bad request' }); }
@@ -286,6 +311,26 @@ function doPost(e) {
       return json_({ ok: true, row: updated });
     }
 
+    // ---- v9: several steps marked "looks good" at once ("Everything else looks good") ----
+    if (d.action === 'approve_steps') {
+      if (!String(d.name || '').trim()) return json_({ ok: false, error: 'Name required' });
+      const items = Array.isArray(d.items) ? d.items.slice(0, 100) : [];
+      const sh = sheet_(d.client), out = [];
+      items.forEach(it => {
+        const row = {
+          id: Utilities.getUuid(), timestamp: new Date().toISOString(), client: d.client,
+          automation: clip_(it.automation, 80), version: clip_(it.version, 20), step: clip_(it.step, 40),
+          step_title: clip_(it.step_title, 200), action: 'approve', type: clip_(it.type, 80), details: '', new_copy: '',
+          name: clip_(d.name, 120), email: clip_(d.email, 200), status: '', lfmp_reply: '', attachments: '', updated_at: '', updated_by: ''
+        };
+        sh.appendRow(HEADERS.map(h => safe_(row[h])));
+        approveEarlier_(d, row);
+        out.push(row);
+      });
+      try { buildTodo(); } catch (err) {}
+      return json_({ ok: true, rows: out });
+    }
+
     // ---- Client responses ----
     if (ACTIONS.indexOf(d.action) === -1) return json_({ ok: false, error: 'Unknown action' });
     if (!String(d.name || '').trim()) return json_({ ok: false, error: 'Name required' });
@@ -319,24 +364,7 @@ function doPost(e) {
     }
     // v7: the client marking a step "Looks good" approves any earlier request on that step
     // (an updated revision, or an open request they no longer need). Their approval is the only way a request becomes Approved.
-    const approvedRevisions = [];
-    if (row.action === 'approve') {
-      const sh = sheet_(d.client), vals = sh.getDataRange().getValues();
-      for (let i = 1; i < vals.length; i++) {
-        const r = toObj_(HEADERS, vals[i]);
-        if (r.client !== row.client || r.automation !== row.automation || r.step !== row.step) continue;
-        if (String(r.version) !== String(row.version) && Number(r.version) !== Number(row.version)) continue;
-        if (r.action !== 'change' && r.action !== 'copy') continue;
-        const st = normStatus_(r.status) || ST.REQ;
-        if (st === ST.OK) continue;
-        sh.getRange(i + 1, HEADERS.indexOf('status') + 1).setValue(ST.OK);
-        if (st === ST.UPD) approvedRevisions.push(r);
-        sh.getRange(i + 1, HEADERS.indexOf('updated_at') + 1).setValue(row.timestamp);
-        sh.getRange(i + 1, HEADERS.indexOf('updated_by') + 1).setValue(safe_(row.name));
-        log_({ client: row.client, automation: row.automation, version: row.version, request_id: r.id, step: r.step,
-          event: 'approved', status: ST.OK, note: st === ST.UPD ? 'Client approved the updated version' : 'Client approved the step as it is', previous: st, revised: '', by: row.name });
-      }
-    }
+    const approvedRevisions = row.action === 'approve' ? approveEarlier_(d, row) : [];
     try { buildTodo(); } catch (err) { console.warn('To-do rebuild failed: ' + err); }
     try { notify_(row, approvedRevisions); } catch (err) { console.warn('Email alert failed: ' + err); }
     try { slack_(row); } catch (err) { console.warn('Slack alert failed: ' + err); }
@@ -482,7 +510,7 @@ function trashAttachments_(cell) {
 
 const LABELS = {
   approve: 'marked a step as looks good', change: 'requested a change', copy: 'sent new wording',
-  answer: 'answered a question', approve_all: 'APPROVED the automation'
+  answer: 'answered a question', approve_all: 'APPROVED the automation', undo: 'took back a "looks good"'
 };
 function reviewLink_(row) {
   return REVIEW_BASE_URL + '?c=' + encodeURIComponent(row.client) + '&a=' + encodeURIComponent(row.automation);
@@ -492,7 +520,7 @@ function reviewLink_(row) {
 function slack_(row) {
   const url = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL');
   if (!url) return;
-  const icon = { approve: ':white_check_mark:', change: ':pencil2:', copy: ':memo:', answer: ':speech_balloon:', approve_all: ':tada:' }[row.action] || ':bell:';
+  const icon = { approve: ':white_check_mark:', change: ':pencil2:', copy: ':memo:', answer: ':speech_balloon:', approve_all: ':tada:', undo: ':leftwards_arrow_with_hook:' }[row.action] || ':bell:';
   const lines = [
     icon + ' *' + row.name + '* ' + LABELS[row.action] + ' · *' + tabName_(row.client) + '*',
     '*Automation:* ' + row.automation + ' (v' + row.version + ')',
@@ -522,6 +550,7 @@ function fmtET_(iso) {
 function notify_(row, approvedRevisions) {
   const to = notifyEmail_(); if (!to) return;
   approvedRevisions = approvedRevisions || [];
+  if (row.action === 'undo') return;
   if (row.action === 'approve' && !approvedRevisions.length) return;
   const client = displayNames_()[row.client] || tabName_(row.client);
   const what = row.action === 'approve' ? 'approved your revision' : LABELS[row.action];
