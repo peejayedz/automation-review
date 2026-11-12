@@ -11,8 +11,8 @@
   {
    "id": "new-lead",
    "name": "No-Contact Follow-Up",
-   "version": "1.1",
-   "sent": "Nov 12, 2026",
+   "version": "1.2",
+   "sent": "Nov 13, 2026",
    "summary": "When a new lead arrives and your team hasn't reached them yet, they get texts and emails over 4 days. It stops as soon as your team moves their card, they reply, or they opt out.",
    "glance": [
     [
@@ -37,16 +37,6 @@
     ]
    ],
    "questions": [
-    {
-     "id": "q1",
-     "text": "How long should we keep following up with leads you can't reach?",
-     "why": "As drafted, messages stop after Day 4 if nobody has reached the lead.",
-     "options": [
-      "4 days (as drafted)",
-      "4 days, then a weekly email for 3 weeks",
-      "Other"
-     ]
-    },
     {
      "id": "q2",
      "text": "Should leads you never reach be forwarded to your outside intake company?",
@@ -162,7 +152,7 @@
      "when": "End",
      "gap": "Then",
      "title": "Follow-up ends",
-     "body": "Moving the card at any point stops it sooner."
+     "body": "If we still haven't reached them, they move to the Long-Term Follow-Up the next day. Moving the card at any point stops it sooner."
     }
    ]
   },
@@ -319,6 +309,153 @@
    ]
   },
   {
+   "id": "long-term",
+   "name": "Long-Term Follow-Up",
+   "version": "1.2",
+   "sent": "Nov 13, 2026",
+   "summary": "Leads we couldn't reach after 4 days, and leads moved to Lead Thinking, get 6 emails over about 3.5 months.",
+   "glance": [
+    [
+     "Starts when",
+     "Not reached after the No-Contact Follow-Up, or card moved to Lead Thinking"
+    ],
+    [
+     "Runs for",
+     "About 3.5 months"
+    ],
+    [
+     "Lead receives",
+     "6 emails"
+    ],
+    [
+     "Your team receives",
+     "Nothing"
+    ],
+    [
+     "Ends",
+     "After the 6th email, or on a reply, an unsubscribe, any other card move, or Won/Lost"
+    ]
+   ],
+   "questions": [
+    {
+     "id": "q1",
+     "text": "How long should the long-term follow-up run?",
+     "why": "",
+     "options": [
+      "About 3.5 months as drafted",
+      "Shorter",
+      "Longer"
+     ]
+    },
+    {
+     "id": "q2",
+     "text": "Do you send a newsletter we should add these leads to?",
+     "why": "",
+     "options": [
+      "Yes",
+      "No",
+      "Not yet"
+     ]
+    }
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "Lead not reached after 4 days, or card moved to Lead Thinking",
+     "note": "Emails only, about 3.5 months, for leads we couldn't reach after 4 days and leads moved to Lead Thinking. Stops on a reply, an unsubscribe, any other card move, or Won/Lost."
+    },
+    {
+     "id": "s2",
+     "day": "Day 3",
+     "type": "email",
+     "who": "patient",
+     "when": "3 days later",
+     "gap": "3 days later",
+     "title": "Email 1",
+     "email": {
+      "subject": "Still here when you're ready, [First name]",
+      "body": "Hi [First name],\n\nWe know there's a lot to deal with after an accident, and calling a law firm may not be at the top of your list. Whenever you're ready, we're happy to answer your questions and explain your options.\n\nCall [Firm phone] or reply to this email with a good time to talk.\n\nThe Mahdavi Law Firm team"
+     }
+    },
+    {
+     "id": "s3",
+     "day": "Day 10",
+     "type": "email",
+     "who": "patient",
+     "when": "7 days later",
+     "gap": "7 days later",
+     "title": "Email 2",
+     "email": {
+      "subject": "Why it helps to get answers early",
+      "body": "Hi [First name],\n\nInjury claims have legal time limits, and evidence like photos, witness details and medical records is easier to gather early. A short conversation now can help you understand where you stand, even if you decide not to move forward.\n\nCall [Firm phone] or reply to this email.\n\nThe Mahdavi Law Firm team"
+     }
+    },
+    {
+     "id": "s4",
+     "day": "Day 17",
+     "type": "email",
+     "who": "patient",
+     "when": "7 days later",
+     "gap": "7 days later",
+     "title": "Email 3",
+     "email": {
+      "subject": "If the insurance company calls",
+      "body": "Hi [First name],\n\nIf an insurance adjuster contacts you, you don't have to answer every question or accept the first offer on the spot. It's worth getting advice first.\n\nIf you'd like to talk it through, call [Firm phone] or reply here.\n\nThe Mahdavi Law Firm team"
+     }
+    },
+    {
+     "id": "s5",
+     "day": "Day 47",
+     "type": "email",
+     "who": "patient",
+     "when": "30 days later",
+     "gap": "30 days later",
+     "title": "Email 4",
+     "email": {
+      "subject": "Checking in from The Mahdavi Law Firm",
+      "body": "Hi [First name],\n\nJust checking in. If anything has changed since you contacted us (new medical bills, a call from an insurer, or questions about your claim), we're here to help.\n\nCall [Firm phone] or reply to this email.\n\nThe Mahdavi Law Firm team"
+     }
+    },
+    {
+     "id": "s6",
+     "day": "Day 77",
+     "type": "email",
+     "who": "patient",
+     "when": "30 days later",
+     "gap": "30 days later",
+     "title": "Email 5",
+     "email": {
+      "subject": "Still here if you need us",
+      "body": "Hi [First name],\n\nA quick note to say we're still here if you have questions after your accident. A conversation with our team is a simple way to understand your options.\n\nCall [Firm phone] or reply anytime.\n\nThe Mahdavi Law Firm team"
+     }
+    },
+    {
+     "id": "s7",
+     "day": "Day 107",
+     "type": "email",
+     "who": "patient",
+     "when": "30 days later",
+     "gap": "30 days later",
+     "title": "Email 6",
+     "email": {
+      "subject": "Our last check-in",
+      "body": "Hi [First name],\n\nThis is our last scheduled check-in. If you ever need help after an accident, you can reach us at [Firm phone] or by replying to this email.\n\nWishing you a good recovery,\nThe Mahdavi Law Firm team"
+     }
+    },
+    {
+     "id": "s8",
+     "day": "Day 107",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "Follow-up ends"
+    }
+   ]
+  },
+  {
    "id": "signed-handoff",
    "name": "Signed Case Handoff",
    "version": "1.1",
@@ -458,176 +595,6 @@
      "options": [
       "All replies",
       "Only new leads (recommended)"
-     ]
-    }
-   ]
-  },
-  {
-   "id": "chat-intake",
-   "name": "Live Chat Intake (Personal Injury)",
-   "version": "1.1",
-   "sent": "Nov 12, 2026",
-   "summary": "When someone chats with you on your website, this asks four quick questions one at a time (date, type of incident, medical treatment, best phone and email). After the last answer it confirms in the chat, adds the lead to your lead board, emails the details to your office and sends the lead a confirmation text.",
-   "glance": [
-    [
-     "Starts when",
-     "A visitor replies in your website live chat"
-    ],
-    [
-     "Runs for",
-     "A few seconds after each reply"
-    ],
-    [
-     "Lead receives",
-     "5 chat replies, 1 text"
-    ],
-    [
-     "Your team receives",
-     "An email with the new chat lead's details"
-    ],
-    [
-     "Ends",
-     "After the fifth reply"
-    ]
-   ],
-   "steps": [
-    {
-     "id": "s1",
-     "day": "In the chat",
-     "type": "start",
-     "when": "Start",
-     "title": "A visitor replies in your website chat",
-     "body": "Each time the visitor replies, the next question is sent a few seconds later. The first reply starts the questions.",
-     "note": "Unlike the other automations here (all Draft), this one is already published and running in GHL."
-    },
-    {
-     "id": "s2",
-     "day": "In the chat",
-     "type": "chat",
-     "who": "patient",
-     "when": "After their 1st reply",
-     "gap": "A few seconds later",
-     "title": "Chat question 1: When did the accident happen?",
-     "sms": "Thanks, [First name]! To check the Texas Statute of Limitations, when did the accident occur?"
-    },
-    {
-     "id": "s3",
-     "day": "In the chat",
-     "type": "chat",
-     "who": "patient",
-     "when": "After their 2nd reply",
-     "gap": "A few seconds after they answer",
-     "title": "Chat question 2: Type of incident",
-     "sms": "What type of incident was it? (e.g., Car Wreck, 18-Wheeler, Slip & Fall, Workplace Injury)"
-    },
-    {
-     "id": "s4",
-     "day": "In the chat",
-     "type": "chat",
-     "who": "patient",
-     "when": "After their 3rd reply",
-     "gap": "A few seconds after they answer",
-     "title": "Chat question 3: Medical treatment",
-     "sms": "Are you currently receiving medical treatment for your injuries?"
-    },
-    {
-     "id": "s5",
-     "day": "In the chat",
-     "type": "chat",
-     "who": "patient",
-     "when": "After their 4th reply",
-     "gap": "A few seconds after they answer",
-     "title": "Chat question 4: Best phone and email",
-     "sms": "Lastly, what is the best phone number and email for an attorney to reach you for a free evaluation?"
-    },
-    {
-     "id": "s6",
-     "day": "In the chat",
-     "type": "chat",
-     "who": "patient",
-     "when": "After their 5th reply",
-     "gap": "A few seconds after they answer",
-     "title": "Chat reply: Intake confirmed",
-     "sms": "Got it. I'm sending this to our team now. Someone will reach out shortly. Hang in there!"
-    },
-    {
-     "id": "s7",
-     "day": "Intake complete",
-     "type": "team",
-     "who": "team",
-     "when": "Right after",
-     "gap": "Then",
-     "title": "The lead is added to your lead board",
-     "body": "A card named after the lead is created (or updated) in Lead Stages › Stage 1: Web Lead, with the source “Chat”."
-    },
-    {
-     "id": "s8",
-     "day": "Intake complete",
-     "type": "team",
-     "who": "team",
-     "when": "Immediately",
-     "gap": "Immediately",
-     "title": "Email to your office: new chat lead",
-     "body": "Subject: New chat lead: [Full name]\n\nA new lead came in through the website chat.\nPhone: [Phone] · Email: [Email]\n\nTheir chat answers are in the Conversations tab in LeadPro. They are already getting the No-Contact Follow-Up messages, which stop once you move their card.",
-     "note": "Now an internal notice to the firm, no longer sent to the lead."
-    },
-    {
-     "id": "s9",
-     "day": "Intake complete",
-     "type": "sms",
-     "who": "patient",
-     "when": "Right after",
-     "gap": "Then",
-     "title": "Text: Your intake was received",
-     "sms": "Hello [Contact name],\n\nYour intake information has been successfully received and recorded. Our legal team will be reaching out to you shortly.\n\nThank you,\n[Team member's name]",
-     "note": "The sign-off uses the name of the team member assigned to the lead. If no one is assigned yet, it comes out blank. This text also has no opt-out wording (“Reply STOP to opt out”)."
-    },
-    {
-     "id": "s10",
-     "day": "Afterwards",
-     "type": "team",
-     "who": "team",
-     "when": "If they reply again",
-     "gap": "Later",
-     "title": "The chat questions reset",
-     "body": "If the visitor replies again after finishing, the chat tags are cleared so the questions can start over next time."
-    },
-    {
-     "id": "s11",
-     "day": "Afterwards",
-     "type": "end",
-     "when": "End",
-     "gap": "Then",
-     "title": "Done",
-     "body": "The chat intake ends."
-    }
-   ],
-   "questions": [
-    {
-     "id": "q1",
-     "text": "Are these the right intake questions?",
-     "why": "The chat asks: accident date, type of incident, medical treatment, and best phone and email.",
-     "options": [
-      "Yes, keep them",
-      "Change or add questions (tell us which)"
-     ]
-    },
-    {
-     "id": "q2",
-     "text": "Which inbox should chat leads go to?",
-     "why": "This email now goes to your office instead of the lead.",
-     "options": [
-      "info@mahdavilawfirm.com",
-      "Another address"
-     ]
-    },
-    {
-     "id": "q3",
-     "text": "Should the lead also get the confirmation text?",
-     "why": "They already get a confirmation in the chat.",
-     "options": [
-      "Yes, keep the text",
-      "No, the chat confirmation is enough"
      ]
     }
    ]
