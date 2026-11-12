@@ -193,6 +193,7 @@ body.saving .actions button,body.saving form button[type=submit],body.saving [da
 .scard .copytxt{white-space:pre-line;background:var(--soft);border-radius:6px;padding:6px 8px}
 .scard .hadmin{margin-top:4px}
 .scard a.golink{font-size:13px}
+.srow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
 .cpick{position:relative;display:inline-block}
 .cpick>button{font-size:15px;font-weight:600;padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);cursor:pointer;max-width:100%}
 .cpick>button .lbl{font-weight:400;color:var(--muted);font-size:12px;margin-right:4px}
@@ -542,7 +543,7 @@ function subsHTML(){
       ${stampsHTML(r)}
       ${isReq(r) ? timelineHTML(r, subs.log) : ""}
       ${statusFormHTML(r, r.client)}
-      <a class="golink" href="?c=${encodeURIComponent(r.client)}&a=${encodeURIComponent(r.automation)}&admin">Open this on the client's dashboard →</a>
+      <div class="srow"><a class="golink" href="?c=${encodeURIComponent(r.client)}&a=${encodeURIComponent(r.automation)}&admin">Open this on the client's dashboard →</a><button class="del ${armed === "s:" + r.id ? "armed" : ""}" type="button" data-subdel="${esc(r.id)}" data-client="${esc(r.client)}">${armed === "s:" + r.id ? "Click again to delete for good" : "Delete"}</button></div>
     </article>`;
   }).join("");
   return `<section class="subs">
@@ -899,7 +900,7 @@ function renderAdminBar(){
   bar.hidden = false;
   bar.classList.toggle("welcome", isAdmin && justSignedIn);
   $("#adminbarIn").innerHTML = isAdmin
-    ? `<span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Admin mode on</span><button class="btn small subsbtn" type="button" data-subs-open>📥 Submissions${subs ? (() => { const c = subs.rows.filter(r => ["req","prog"].includes(subStatusKey(r, subs.rows))).length; return c ? `<span class="cnt">${c}</span>` : ""; })() : ""}</button>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminForm === "clientname" ? `<form class="cren" data-form="clientname"><label for="cnameIn" class="hint">Client name</label><input type="text" id="cnameIn" value="${esc(data.client.name)}" maxlength="120" required><button class="btn small primary" type="submit">Save name</button><button class="btn small" type="button" data-admin-cancel>Cancel</button></form>` : `${adminClients.length ? clientPickHTML() : ""}<button class="adm" type="button" data-admin="clientname" title="Change how this client's name appears on their dashboard">✎ Rename client</button>`}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button><button class="btn small" type="button" data-admin-exit>Sign out</button>`
+    ? `<span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Admin mode on</span><button class="btn small subsbtn" type="button" data-subs-open>📥 Submissions${subs ? (() => { const c = subs.rows.filter(r => ["req","prog"].includes(subStatusKey(r, subs.rows))).length; return c ? `<span class="cnt">${c}</span>` : ""; })() : ""}</button>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminForm === "clientname" ? `<form class="cren" data-form="clientname"><label for="cnameIn" class="hint">Client name</label><input type="text" id="cnameIn" value="${esc(data.client.name)}" maxlength="120" required><button class="btn small primary" type="submit">Save name</button><button class="btn small" type="button" data-admin-cancel>Cancel</button></form>` : `${adminClients.length ? clientPickHTML() : ""}<button class="adm" type="button" data-admin="clientname" title="Change how this client's name appears on their dashboard">✎ Rename client</button>`}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button>${data && data.customPage ? `<a class="btn small" href="${esc(data.customPage)}?c=${encodeURIComponent(clientKey)}" target="_blank" rel="noopener" title="This client is sent to a custom review page">Client's review page ↗</a>` : ""}<button class="btn small" type="button" data-admin-exit>Sign out</button>`
     : `<b>Team sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Password</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Sign in</button><button class="btn small" type="button" data-admin-close>Cancel</button><span id="akmsg" class="akmsg" role="status" aria-live="polite"></span></form>`;
 }
 function whoFields(p){
@@ -1042,6 +1043,20 @@ document.addEventListener("click", async (e) => {
   if (t.dataset.mic){ startMic(t.dataset.mic); return; }
   if (t.dataset.unshot != null){ shots.splice(+t.dataset.unshot, 1); refreshTools(); return; }
   if (t.hasAttribute("data-cancel") || t.hasAttribute("data-ov-cancel") || t.dataset.step || t.dataset.act === "change" || t.dataset.act === "copy" || t.dataset.act === "ovchange") resetInputs();
+  if (t.dataset.subdel){
+    // v9: delete one submission from the Submissions view (any client). Two clicks to confirm.
+    const id = t.dataset.subdel, c = t.dataset.client, k = "s:" + id;
+    if (armed !== k){ armed = k; render(); setTimeout(() => { if (armed === k){ armed = null; render(); } }, 4000); return; }
+    armed = null; if (busy){ toast("Still saving, one moment…"); return; }
+    busy = true; toast("Deleting…");
+    try {
+      if (SAVE_URL){ const j = await postJSON({action:"admin_delete", key:adminKey, client:c, ids:[id]}); if (!j.ok || !j.deleted) throw new Error(j.error || "Not found"); }
+      if (subs) subs.rows = subs.rows.filter(r => r.id !== id);
+      responses = responses.filter(r => r.id !== id);
+      toast("Deleted");
+    } catch(err){ toast("Couldn't delete: " + err.message); } finally { busy = false; }
+    render(); return;
+  }
   if (t.dataset.del){
     const id = t.dataset.del;
     if (armed !== id){ armed = id; render(); setTimeout(() => { if (armed === id){ armed = null; render(); } }, 4000); return; }
@@ -1239,6 +1254,10 @@ async function refresh(manual){
       const r = await fetch("data/" + clientKey + ".json?t=" + Date.now(), {cache:"no-store"});
       if (!r.ok) throw new Error("not found");
       baseData = await r.json();
+      // v9: a client with a custom review page (data file "customPage") is sent there. Signed-in admins, &admin and &classic keep this dashboard.
+      if (baseData.customPage && !rendered && !params.has("classic") && !params.has("admin") && !adminKey && params.get("view") !== "submissions"){
+        location.replace(baseData.customPage + (baseData.customPage.includes("?") ? "&" : "?") + "c=" + encodeURIComponent(clientKey)); return false;
+      }
     } catch(e){
       if (!baseData){ $("#app").innerHTML = '<div class="empty">We couldn\'t find this review. Please check the link LFMP sent you.</div>'; return false; }
     }
