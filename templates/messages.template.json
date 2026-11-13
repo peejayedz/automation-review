@@ -1,0 +1,63 @@
+{
+ "brand": {
+  "name": "Firm Name",
+  "logoMask": "(optional) data:image/png;base64,... — a transparent PNG of the logo; it is drawn in 'color' (and in white text color in dark mode). Leave out to show the firm name as text.",
+  "logoWidth": 145,
+  "logoHeight": 46,
+  "color": "#00243e"
+ },
+ "eyebrow": "Firm Name · LeadPro",
+ "title": "Your follow-up messages, for review",
+ "intro": "These are the texts and emails LeadPro will send your leads, word for word. Mark each one **Looks good**, or click **Change it** and type the wording you'd like. Your answers save as you go, and nothing is sent until you approve.",
+ "footer": "Prepared for Firm Name by Law Firm Marketing Pros · Month Year · You can come back to this page any time; your answers are saved.",
+ "reviewer": "Client contact name (every response is saved under this name)",
+ "questionsAutomation": "setup-questions",
+ "pageTitle": "Message review · Firm Name",
+ "planUrl": "plan.html?c=CLIENT-CODE",
+ "sections": [
+  {
+   "title": "New lead we haven't reached yet",
+   "sub": "How many texts/emails and when it stops.",
+   "msgs": [
+    {
+     "id": "AUTOMATION-ID.STEP-ID",
+     "kind": "Text",
+     "when": "Day 0 · right away",
+     "text": "Hi [First name], ... Reply STOP to opt out."
+    },
+    {
+     "id": "AUTOMATION-ID.STEP-ID",
+     "kind": "Email",
+     "when": "Day 0 · right away",
+     "subject": "Subject line",
+     "text": "Hi [First name],\n\nBody paragraph.\n\nFirm Name team"
+    },
+    {
+     "id": "AUTOMATION-ID.STEP-ID",
+     "kind": "Alert",
+     "to": "To your team",
+     "when": "Day 4",
+     "subject": "Alert subject",
+     "text": "Alert text."
+    }
+   ]
+  }
+ ],
+ "questions": [
+  {
+   "id": "short-id",
+   "q": "Question for the client?",
+   "why": "Why we ask.",
+   "opts": [
+    "Option A",
+    "Option B"
+   ]
+  },
+  {
+   "id": "free-text",
+   "q": "Open question",
+   "why": "Leave opts empty for a text-only answer.",
+   "opts": []
+  }
+ ]
+}

@@ -1,0 +1,37 @@
+{
+ "pageTitle": "How every new lead gets followed up · Firm Name",
+ "eyebrow": "Firm Name · LeadPro",
+ "title": "How every new lead gets followed up",
+ "intro": "One or two sentences on what LeadPro does for this firm.",
+ "status": "Built in LeadPro, switched off until you approve · Month Year",
+ "cta": {
+  "text": "**Ready to review?** Mark each message “Looks good” or change the wording on your review page. Your answers save as you go.",
+  "button": "Review the messages →"
+ },
+ "footer": "Prepared for Firm Name by Law Firm Marketing Pros · Month Year",
+ "sections": [
+  {
+   "type": "html",
+   "html": "<h2>Two jobs, clearly split</h2>\n<div class=\"split\"><div class=\"box lp\"><h3>LeadPro does</h3><ul><li>…</li></ul></div><div class=\"box tm\"><h3>Your team keeps doing</h3><ul><li>…</li></ul></div></div>\n<p class=\"caption\">…</p>"
+  },
+  {
+   "type": "html",
+   "html": "<h2>Your team's daily routine</h2>\n<ol class=\"steps\"><li><div><h3>Step title</h3><p>What to do.</p><span class=\"where\">Where: <b>Opportunities → Lead Stages</b> · <span class=\"tag team\">Your team</span></span></div></li></ol>"
+  },
+  {
+   "type": "messages",
+   "title": "Every message, word for word",
+   "sub": "Words in [brackets] are filled in automatically for each lead.",
+   "caption": "Every text names the firm and ends with “Reply STOP to opt out.”"
+  },
+  {
+   "type": "html",
+   "html": "<h2>Messaging rules built in</h2>\n<div class=\"rules\"><div class=\"rule\"><strong>Rule</strong><span>Explanation.</span></div></div>"
+  },
+  {
+   "type": "questions",
+   "title": "Open items",
+   "sub": "We need these answers to finish the setup. You can answer them on your review page."
+  }
+ ]
+}
