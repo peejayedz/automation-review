@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<script>try{var t=localStorage.getItem("ar-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <title>How your follow-up works</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&amp;family=Inter:wght@400;500;600&amp;display=swap">
@@ -98,6 +99,15 @@ tr:last-child td{border-bottom:0}
 .msg .body{display:flex;flex-direction:column;gap:8px;min-width:0;overflow-wrap:anywhere}
 .msg .subj{font-weight:600}
 .field{color:var(--accent);font-weight:600}
+.blank{color:var(--team);background:var(--team-soft);border:1px dashed var(--team);border-radius:4px;padding:0 4px;font-weight:600;white-space:nowrap}
+.agency-word{font:600 17px/1.2 var(--body);color:var(--fg)}
+.agency-logo{display:block;background:var(--agency-ink,var(--fg));-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-position:left center;mask-position:left center}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agency-logo{background:#ffffff}}
+:root[data-theme="dark"] .agency-logo{background:#ffffff}
+.themebtn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:6px 10px;font:500 12px/1 var(--body);cursor:pointer}
+.themebtn:hover{color:var(--fg)}
+.themebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.themebtn svg{width:15px;height:15px}
 .qs{display:flex;flex-direction:column;gap:10px}
 .q{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
 .q>div{flex:1;min-width:0}
@@ -123,8 +133,9 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
       <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="8" style="fill:var(--gold)"></rect><path d="M8 24 L14 17 L18 20 L26 11" style="fill:none;stroke:var(--gold-ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"></path><path d="M21 11 H26 V16" style="fill:none;stroke:var(--gold-ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"></path></svg>
       <span class="lp-word">Lead<span>Pro</span></span>
     </div>
-    <div class="brand"><span class="logo-mask lfmp-logo" role="img" aria-label="Law Firm Marketing Pros"><i class="logo-mask ink"></i><i class="logo-mask gold"></i></span></div>
+    <div class="brand" id="agency-brand"><span class="logo-mask lfmp-logo" role="img" aria-label="Law Firm Marketing Pros"><i class="logo-mask ink"></i><i class="logo-mask gold"></i></span></div>
     <div class="brand" id="client-brand" hidden></div>
+    <button type="button" class="themebtn" id="theme-btn" title="Switch between automatic, light and dark"></button>
   </div>
 
 <header>
@@ -145,10 +156,31 @@ const params = new URLSearchParams(location.search);
 const code = (params.get("c") || "").replace(/[^a-z0-9-]/gi, "");
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const chips = s => esc(s).replace(/\[([^\]]+)\]/g, '<span class="field">[$1]</span>');
+// [Merge field] = blue, filled in for each lead. A name listed in the messages file's "blanks" = amber, still to fill in.
+let BLANKS = new Set();
+const chips = s => esc(s).replace(/\[([^\]]+)\]/g, (m, k) => BLANKS.has(k) ? '<span class="blank" title="To fill in before go-live">[' + k + ']</span>' : '<span class="field">[' + k + ']</span>');
 const bold = s => chips(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 const paras = s => String(s).split(/\n\n+/).map(p => "<p>" + chips(p).replace(/\n/g, "<br>") + "</p>").join("");
 function fail(msg){ $("#page-h1").textContent = msg; }
+/* Light / dark: Auto follows the device; Light or Dark is remembered in this browser. */
+const THEMES = [
+  ["auto", "Auto", '<circle cx="12" cy="12" r="8"/><path d="M12 4v16"/><path d="M12 4a8 8 0 0 1 0 16" fill="currentColor" stroke="none"/>'],
+  ["light", "Light", '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/>'],
+  ["dark", "Dark", '<path d="M20 13.5A8.5 8.5 0 1 1 10.5 4a7 7 0 0 0 9.5 9.5Z"/>']
+];
+function applyTheme(mode, save){
+  if (mode === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", mode);
+  const t = THEMES.find(x => x[0] === mode) || THEMES[0], btn = $("#theme-btn");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + t[2] + "</svg><span>" + t[1] + "</span>";
+  btn.setAttribute("aria-label", "Theme: " + t[1] + ". Click to change.");
+  if (save){ try { if (mode === "auto") localStorage.removeItem("ar-theme"); else localStorage.setItem("ar-theme", mode); } catch(e){} }
+}
+applyTheme(document.documentElement.getAttribute("data-theme") || "auto", false);
+$("#theme-btn").addEventListener("click", () => {
+  const now = document.documentElement.getAttribute("data-theme") || "auto";
+  applyTheme(THEMES[(THEMES.findIndex(x => x[0] === now) + 1) % THEMES.length][0], true);
+});
+const AGENCIES = { LFMP: "Law Firm Marketing Pros", WPP: "Web Promotion Partners" };
 (async function(){
   if (!code){ fail("This link is missing the client code."); return; }
   let P, M;
@@ -156,6 +188,17 @@ function fail(msg){ $("#page-h1").textContent = msg; }
     [P, M] = await Promise.all([".plan.json", ".messages.json"].map(x => fetch("data/" + code + x + "?t=" + Date.now(), {cache: "no-store"}).then(r => { if (!r.ok) throw 0; return r.json(); })));
   } catch(e){ fail("We couldn't find this page. Please check the link."); return; }
   const review = P.reviewUrl || ("messages.html?c=" + encodeURIComponent(code));
+  BLANKS = new Set((M.blanks || []).map(esc));
+  // Agency logo: LFMP (default) or WPP, from the messages file's "agency".
+  const agency = AGENCIES[String(M.agency || "LFMP").toUpperCase()] ? String(M.agency || "LFMP").toUpperCase() : "LFMP";
+  const agencyName = AGENCIES[agency];
+  if (agency !== "LFMP"){
+    const L = M.agencyLogo || {}; // {logoMask (transparent PNG data URI), logoWidth, logoHeight, color}: brand colour in light mode, white in dark
+    $("#agency-brand").innerHTML = /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoMask || "")
+      ? '<span class="agency-logo" role="img" aria-label="' + esc(agencyName) + '" style="width:' + (+L.logoWidth || 112) + "px;height:" + (+L.logoHeight || 44) + "px;-webkit-mask-image:url(" + L.logoMask + ");mask-image:url(" + L.logoMask + ")" + (/^#[0-9a-f]{3,8}$/i.test(L.color || "") ? ";--agency-ink:" + L.color : "") + '"></span>'
+      : '<span class="agency-word">' + esc(agencyName) + "</span>";
+    $("#brands").setAttribute("aria-label", "LeadPro and " + agencyName);
+  }
   const b = M.brand || {};
   if (b.logoMask || b.name){
     const slot = $("#client-brand");
@@ -164,7 +207,7 @@ function fail(msg){ $("#page-h1").textContent = msg; }
       : '<span class="firm-word">' + esc(b.name) + '</span>';
     slot.hidden = false;
     if (b.color) document.documentElement.style.setProperty("--client-light", b.color);
-    if (b.name) $("#brands").setAttribute("aria-label", "LeadPro, Law Firm Marketing Pros and " + b.name);
+    if (b.name) $("#brands").setAttribute("aria-label", "LeadPro, " + agencyName + " and " + b.name);
   }
   document.title = P.pageTitle || P.title || document.title;
   $("#eyebrow").textContent = P.eyebrow || M.eyebrow || (b.name ? b.name + " · LeadPro" : "");

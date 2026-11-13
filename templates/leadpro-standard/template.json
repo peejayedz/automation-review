@@ -1,0 +1,65 @@
+{
+ "id": "leadpro-standard",
+ "name": "LeadPro standard package",
+ "version": "1.0.0",
+ "source": "[IN USE] LFMP Template / GHL Build (Andrew Cass)",
+ "checkedAgainst": "ZZ TEST 2, 13 Nov 2026",
+ "fidelity": "13 Nov 2026: all 10 messages compared (normalized) with ZZ TEST 2's live GHL copy (read-only, handoff section 9). 9 match word for word; Email 1 differs only by GHL's stray space before a full stop (noted + checklist). Email 3's subject shows the firm name where GHL has [Insert Name Of Law Firm] (noted + checklist). Phone-lead branch emails = web-lead branch.",
+ "startedFrom": "data/emery-law-9lp7do.json (Emery Law Office, 10 Nov 2026)",
+ "funnel": "consultation",
+ "variants": {
+  "consultation": "Default. The template as it is: new-lead emails, consultation confirmation + reminders, reply alert.",
+  "sign-on-first-call": "Reserved for later. Not built."
+ },
+ "files": ["data.json", "messages.json", "plan.json"],
+ "workflows": [
+  { "automation": "new-lead", "ghl": "GHL Build Out: Web Lead + Phone Lead", "lead": "3 emails (same on both branches)" },
+  { "automation": "consultation", "ghl": "Consultation Booked: Appointment Confirmation + Reminder", "lead": "4 emails, 2 texts" },
+  { "automation": "reply-alert", "ghl": "Internal Notification: SMS", "lead": "Nothing (team alert)" }
+ ],
+ "ghlMergeFields": {
+  "{{location.name}}": "Firm name (the sub-account's business name) in every body",
+  "{{location.phone}}": "[Office phone]",
+  "{{user.name}} / {{user.email}}": "[Team member's name] / [Team member's email] (the assigned team member)",
+  "{{contact.first_name}}": "[First name]",
+  "{{location.website}}": "[Firm website]",
+  "{{appointment.only_start_date}} / {{appointment.only_start_time}} / {{appointment.timezone}}": "[Appointment date] / [Appointment time] / [Time zone]",
+  "{{contact.name}} / {{contact.email}} / {{contact.phone}} / {{message.body}}": "[Contact name] / [Contact email] / [Contact phone] / [Message] (reply alert)",
+  "https://zoom.us/j/xyz": "[Zoom link] (placeholder, a blank to fill)"
+ },
+ "checklist": [
+  "Fix Email 3 subject in GHL (replace [Insert Name Of Law Firm] with the firm name)",
+  "Check the sub-account's business name and phone in GHL settings (they fill {{location.name}} and {{location.phone}})",
+  "Put the client's real Zoom link in the 5 consultation messages (GHL has https://zoom.us/j/xyz)",
+  "Set up the booking calendar and point the consultation trigger at it",
+  "Fill or remove the email blanks: [XX] rating, [X]+ years, [Insert Case Study/Review]",
+  "Email 1: remove the stray space in \"Thank you for choosing {{location.name}} .\"",
+  "Check the sub-account's website in GHL settings (Email 3 uses {{location.website}})",
+  "Apply the client's answers on claims, phone number and sender",
+  "Send a test lead through before switching the 3 workflows on"
+ ],
+ "placeholders": {
+  "AGENCY": "The record's Brand: LFMP or WPP (picks the header logo).",
+  "AGENCY_NAME": "Law Firm Marketing Pros or Web Promotion Partners.",
+  "CODE": "Client code: slug + '-' + 6 random [a-z0-9]. Also client.key.",
+  "FIRM_NAME": "The record's business name.",
+  "LOCATION": "City, State (state written out, e.g. 'Louisville, Kentucky').",
+  "AUDIENCE": "The record's audience, or 'Lead'.",
+  "SMS_HEALTHCARE": "The record's smsHealthcare (true/false). Replaced by a real boolean, not text.",
+  "REVIEWER": "The record's primary contact name (first + last).",
+  "PRACTICE_AREA": "The record's practice area, or 'not set yet'.",
+  "SENT_DATE": "Generation date, e.g. 'Nov 13, 2026'.",
+  "MONTH_YEAR": "Generation month, e.g. 'November 2026'.",
+  "TEMPLATE_VERSION": "This file's version."
+ },
+ "carryOver": [
+  { "id": "email3-subject", "what": "GHL sends Email 3 as \"Why Choose [Insert Name Of Law Firm]?\". The review shows the firm name (the client is told we'll fix it before go-live).", "where": ["new-lead.s5"] },
+  { "id": "claims", "what": "Email 3 promises \"No Fee Unless You Win\" and mentions decades of experience.", "where": ["new-lead.s5"], "question": "claims" },
+  { "id": "phone", "what": "Emails use {{location.phone}} (the sub-account's business phone), which may be a call-tracking number.", "where": ["new-lead.s3", "new-lead.s4", "new-lead.s5"], "question": "phone-number" },
+  { "id": "signature", "what": "New-lead emails are signed {{user.name}} / {{user.email}} (the assigned team member); blank when no one is assigned.", "where": ["new-lead.s3", "new-lead.s4", "new-lead.s5"], "question": "sender" },
+  { "id": "zoom", "what": "Zoom link is a placeholder in GHL (https://zoom.us/j/xyz).", "where": ["consultation.s3", "consultation.s4", "consultation.s5", "consultation.s7", "consultation.s8"], "question": "zoom" },
+  { "id": "calendar", "what": "The consultation automation needs a booking calendar; a new sub-account has none.", "where": ["consultation.s1"], "question": "booking" },
+  { "id": "email-blanks", "what": "Email placeholders: [XX] rating, [X]+ years, [Insert Case Study/Review]. ([Firm website] is {{location.website}}, filled automatically.)", "where": ["new-lead.s4", "new-lead.s5"], "question": "email-details" },
+  { "id": "personal-injury", "what": "The new-lead emails are written for personal injury.", "where": ["new-lead.s3", "new-lead.s4", "new-lead.s5"], "question": "practice-area" }
+ ]
+}

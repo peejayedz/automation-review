@@ -1,5 +1,11 @@
 /**
- * LFMP Automation Review: response + content storage (v9)
+ * LFMP Automation Review: response + content storage (v10)
+ *
+ * v10: "admin_register_client" (admin key): adds ONE new client to the CLIENTS script property, used by the Sub-account
+ *     Builder's Publish. It only appends "code=Tab name"; existing entries are never replaced or reordered (the old value
+ *     stays byte-for-byte at the start). Refused if the code or tab name is already used, or the code fails the pattern.
+ *     Rows saved under the name "LFMP smoke test" WITH a valid admin key (the builder's publish check, deleted straight after)
+ *     send no email or Slack alert.
  *
  * v9: "undo" action (the client takes back a "looks good" on a step) and "approve_steps" (marks several steps
  *     "looks good" in one request, used by the custom message review page's "Everything else looks good" button).
@@ -220,9 +226,43 @@ function approveEarlier_(d, row) {
   return approvedRevisions;
 }
 
+// ---- v10: register a new client (Sub-account Builder "Publish") ----------
+const CLIENT_CODE_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{6}$/; // e.g. "zz-test-2-ftz6fb": name, hyphen, 6 random characters
+const PROPERTY_MAX = 9000; // Apps Script keeps about 9 KB per script property value
+const SMOKE_TEST_NAME = 'LFMP smoke test'; // the builder's publish check: no email or Slack for these rows
+
+/** Appends one "code=Tab name" entry to the CLIENTS script property. Never edits, removes or reorders what is already there. */
+function registerClient_(d) {
+  if (!isAdmin_(d.key)) return { ok: false, error: 'Not authorized' };
+  const code = String(d.code == null ? '' : d.code).trim();
+  const tab = String(d.tab == null ? '' : d.tab).trim();
+  if (code.length > 60 || !CLIENT_CODE_RE.test(code)) return { ok: false, error: 'Bad client code' };
+  if (!tab || tab.length > 90 || /[,=]/.test(tab)) return { ok: false, error: 'Bad tab name (1-90 characters, no comma or =)' };
+  const lc = s => String(s).trim().toLowerCase();
+  if (clients_().indexOf(code) !== -1) return { ok: false, error: 'Client code already registered' };
+  const usedTabs = clients_().map(tabName_).concat([TODO_SHEET, CONTENT_SHEET, LOG_SHEET, LEGACY_SHEET]);
+  if (usedTabs.some(t => lc(t) === lc(tab))) return { ok: false, error: 'Tab name already used' };
+  if (SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tab)) return { ok: false, error: 'A tab with this name already exists in the Sheet' };
+  const props = PropertiesService.getScriptProperties();
+  const before = props.getProperty('CLIENTS') || '';
+  const sep = /\S/.test(before) ? (/,\s*$/.test(before) ? ' ' : ', ') : '';
+  const after = before + sep + code + '=' + tab;
+  if (after.length > PROPERTY_MAX) return { ok: false, error: 'The CLIENTS list is full (about 9 KB). Move some clients into CLIENT_TABS in Code.gs first.' };
+  props.setProperty('CLIENTS', after);
+  if (props.getProperty('CLIENTS') !== after) return { ok: false, error: 'CLIENTS did not save; check it in Script properties' };
+  return { ok: true, code: code, tab: tab, count: extraClients_().length, total: clients_().length };
+}
+
 function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Bad request' }); }
+  if (!d || typeof d !== 'object') return json_({ ok: false, error: 'Bad request' });
+  if (d.action === 'admin_register_client') {
+    // Before the "Unknown client" check below: the new code isn't a client yet.
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try { return json_(registerClient_(d)); } finally { lock.releaseLock(); }
+  }
   if (clients_().indexOf(d.client) === -1) return json_({ ok: false, error: 'Unknown client' });
 
   const lock = LockService.getScriptLock();
@@ -366,8 +406,11 @@ function doPost(e) {
     // (an updated revision, or an open request they no longer need). Their approval is the only way a request becomes Approved.
     const approvedRevisions = row.action === 'approve' ? approveEarlier_(d, row) : [];
     try { buildTodo(); } catch (err) { console.warn('To-do rebuild failed: ' + err); }
-    try { notify_(row, approvedRevisions); } catch (err) { console.warn('Email alert failed: ' + err); }
-    try { slack_(row); } catch (err) { console.warn('Slack alert failed: ' + err); }
+    // v10: the builder's publish check (name "LFMP smoke test" AND a valid admin key) sends no alerts. Anyone else using that name still alerts.
+    if (!(row.name === SMOKE_TEST_NAME && isAdmin_(d.key))) {
+      try { notify_(row, approvedRevisions); } catch (err) { console.warn('Email alert failed: ' + err); }
+      try { slack_(row); } catch (err) { console.warn('Slack alert failed: ' + err); }
+    }
     return json_({ ok: true, row: row });
   } finally {
     lock.releaseLock();
