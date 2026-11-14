@@ -154,7 +154,7 @@
   {
    "id": "consultation",
    "name": "Consultation Confirmation + Reminders",
-   "version": "1.1",
+   "version": "1.2",
    "sent": "Nov 14, 2026",
    "source": "customised",
    "templateVersion": "1.0.0",
@@ -249,7 +249,7 @@
      "when": "1 hour before",
      "gap": "At the same time",
      "title": "Text 1: Your appointment is in one hour",
-     "sms": "Hi [First name], just a friendly reminder that our appointment is in one hour Test5. - ZZ TEST 2"
+     "sms": "Hi [First name], just a friendly reminder that our appointment is in one hour. - ZZ TEST 2"
     },
     {
      "id": "s7",
@@ -309,7 +309,7 @@
   {
    "id": "reply-alert",
    "name": "Reply Alert for Your Team",
-   "version": "1.1",
+   "version": "1.2",
    "sent": "Nov 14, 2026",
    "source": "customised",
    "templateVersion": "1.0.0",
@@ -354,7 +354,7 @@
      "when": "Immediately",
      "gap": "Immediately",
      "title": "Your team gets a text",
-     "body": "Everyone on your team gets this text:\n\nfresh Incoming Reply / Email / Call from:\n\n[Contact name]\n[Contact email]\n[Contact phone]\n\nMessage:\ntest4\n\" [Message] \"",
+     "body": "Everyone on your team gets this text:\n\nfresh Incoming Reply / Email / Call from:\n\n[Contact name]\n[Contact email]\n[Contact phone]\n\nMessage:\n\" [Message] \"",
      "note": "This goes to every user in your account, for every reply from any contact, including existing clients. Busy accounts can get a lot of texts. We can limit it to new leads only, or to one intake person."
     },
     {
@@ -388,6 +388,87 @@
      ]
     }
    ]
+  },
+  {
+   "id": "missed-call-text-back",
+   "name": "Missed Call Text-Back",
+   "version": "1.0",
+   "sent": "Nov 14, 2026",
+   "source": "custom",
+   "ghlName": "Missed Call Text-Back",
+   "summary": "Texts and emails a caller we missed so they can reach us",
+   "glance": [
+    [
+     "Starts when",
+     "Call Details"
+    ],
+    [
+     "Lead receives",
+     "1 text, 1 email"
+    ],
+    [
+     "Your team receives",
+     "1 alert"
+    ],
+    [
+     "Ends",
+     "After the last message"
+    ]
+   ],
+   "steps": [
+    {
+     "id": "s1",
+     "day": "Day 0",
+     "type": "start",
+     "when": "Start",
+     "title": "Starts when: Call Details",
+     "body": "This automation starts when: Call Details.",
+     "note": "Still in Draft in GHL, so nothing is being sent yet. It goes live once you approve."
+    },
+    {
+     "id": "s2",
+     "day": "Day 0",
+     "when": "Right away",
+     "gap": "Right away",
+     "type": "sms",
+     "who": "patient",
+     "title": "Text 1",
+     "sms": "Hi [First name], sorry we missed your call. Reply here or call us back."
+    },
+    {
+     "id": "s3",
+     "day": "Day 1",
+     "when": "1 day later",
+     "gap": "1 day later",
+     "type": "email",
+     "who": "patient",
+     "title": "Email 1",
+     "email": {
+      "subject": "Sorry we missed you",
+      "body": "Hi [First name], we saw your call and want to make sure you get help. Reply to this email or call us back."
+     }
+    },
+    {
+     "id": "s4",
+     "day": "Day 1",
+     "when": "At the same time",
+     "gap": "At the same time",
+     "type": "team",
+     "who": "team",
+     "title": "Your team gets an alert",
+     "body": "Everyone on your team gets this text:\n\nMissed call from [Contact name] [Contact phone]"
+    },
+    {
+     "id": "s5",
+     "day": "Day 1",
+     "type": "end",
+     "when": "End",
+     "gap": "Then",
+     "title": "The automation ends",
+     "body": "Nothing more is sent from this automation."
+    }
+   ],
+   "questions": []
   }
  ]
 }

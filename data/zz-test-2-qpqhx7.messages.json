@@ -74,7 +74,7 @@
      "id": "consultation.s6",
      "kind": "Text",
      "when": "1 hour before · same time",
-     "text": "Hi [First name], just a friendly reminder that our appointment is in one hour Test5. - ZZ TEST 2"
+     "text": "Hi [First name], just a friendly reminder that our appointment is in one hour. - ZZ TEST 2"
     },
     {
      "id": "consultation.s7",
@@ -100,7 +100,33 @@
      "kind": "Alert",
      "to": "To your team",
      "when": "Any reply",
-     "text": "Everyone on your team gets this text:\n\nfresh Incoming Reply / Email / Call from:\n\n[Contact name]\n[Contact email]\n[Contact phone]\n\nMessage:\ntest4\n\" [Message] \""
+     "text": "Everyone on your team gets this text:\n\nfresh Incoming Reply / Email / Call from:\n\n[Contact name]\n[Contact email]\n[Contact phone]\n\nMessage:\n\" [Message] \""
+    }
+   ]
+  },
+  {
+   "title": "Missed Call Text-Back",
+   "sub": "1 text · 1 email · 1 alert.",
+   "msgs": [
+    {
+     "id": "missed-call-text-back.s2",
+     "kind": "Text",
+     "when": "Day 0 · right away",
+     "text": "Hi [First name], sorry we missed your call. Reply here or call us back."
+    },
+    {
+     "id": "missed-call-text-back.s3",
+     "kind": "Email",
+     "when": "Day 1",
+     "subject": "Sorry we missed you",
+     "text": "Hi [First name], we saw your call and want to make sure you get help. Reply to this email or call us back."
+    },
+    {
+     "id": "missed-call-text-back.s4",
+     "kind": "Alert",
+     "to": "To your team",
+     "when": "Day 1 · same time",
+     "text": "Everyone on your team gets this text:\n\nMissed call from [Contact name] [Contact phone]"
     }
    ]
   }
