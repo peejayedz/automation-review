@@ -54,7 +54,7 @@
      "kind": "Email",
      "when": "When booked · right away",
      "subject": "Appointment Confirmation",
-     "text": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nWhen it is time, please use this Zoom Meeting ID: [Zoom link]\n\n- ZZ TEST 2\n\nAdd to google calendar | Add to outlook\nCancel | Reschedule"
+     "text": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nWhen it is time, please use this Zoom Meeting ID: [Zoom link]\n\n- ZZ TEST 2\n\ntest2\n\nAdd to google calendar | Add to outlook\nCancel | Reschedule"
     },
     {
      "id": "consultation.s4",
@@ -74,7 +74,7 @@
      "id": "consultation.s6",
      "kind": "Text",
      "when": "1 hour before · same time",
-     "text": "Hi [First name], just a friendly reminder that our appointment is in one hour. - ZZ TEST 2"
+     "text": "Hi [First name], just a friendly reminder that our appointment is in one hour Test5. - ZZ TEST 2"
     },
     {
      "id": "consultation.s7",
@@ -100,7 +100,7 @@
      "kind": "Alert",
      "to": "To your team",
      "when": "Any reply",
-     "text": "Everyone on your team gets this text:\n\nNew Incoming Reply / Email / Call from:\n\n[Contact name]\n[Contact email]\n[Contact phone]\n\nMessage:\n\n\" [Message] \""
+     "text": "Everyone on your team gets this text:\n\nfresh Incoming Reply / Email / Call from:\n\n[Contact name]\n[Contact email]\n[Contact phone]\n\nMessage:\ntest4\n\" [Message] \""
     }
    ]
   }

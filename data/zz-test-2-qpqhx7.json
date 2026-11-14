@@ -154,9 +154,9 @@
   {
    "id": "consultation",
    "name": "Consultation Confirmation + Reminders",
-   "version": "1.0",
+   "version": "1.1",
    "sent": "Nov 14, 2026",
-   "source": "template",
+   "source": "customised",
    "templateVersion": "1.0.0",
    "summary": "When a consultation is confirmed, this sends a confirmation email with the Zoom link, then reminders 24 hours, 1 hour and 5 minutes before.",
    "glance": [
@@ -211,7 +211,7 @@
      "title": "Email 1: Your appointment is confirmed",
      "email": {
       "subject": "Appointment Confirmation",
-      "body": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nWhen it is time, please use this Zoom Meeting ID: [Zoom link]\n\n- ZZ TEST 2\n\nAdd to google calendar | Add to outlook\nCancel | Reschedule"
+      "body": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nWhen it is time, please use this Zoom Meeting ID: [Zoom link]\n\n- ZZ TEST 2\n\ntest2\n\nAdd to google calendar | Add to outlook\nCancel | Reschedule"
      },
      "note": "The Zoom link in all of these messages is still a placeholder in GHL (zoom.us/j/xyz), so it won't open a real meeting yet. Please send us your Zoom link, and tell us if different attorneys use different rooms or if some consultations are in person or by phone."
     },
@@ -249,7 +249,7 @@
      "when": "1 hour before",
      "gap": "At the same time",
      "title": "Text 1: Your appointment is in one hour",
-     "sms": "Hi [First name], just a friendly reminder that our appointment is in one hour. - ZZ TEST 2"
+     "sms": "Hi [First name], just a friendly reminder that our appointment is in one hour Test5. - ZZ TEST 2"
     },
     {
      "id": "s7",
@@ -309,9 +309,9 @@
   {
    "id": "reply-alert",
    "name": "Reply Alert for Your Team",
-   "version": "1.0",
+   "version": "1.1",
    "sent": "Nov 14, 2026",
-   "source": "template",
+   "source": "customised",
    "templateVersion": "1.0.0",
    "summary": "Whenever a contact replies by text, email or call, everyone on your team gets a text with who it is and what they said.",
    "glance": [
@@ -354,7 +354,7 @@
      "when": "Immediately",
      "gap": "Immediately",
      "title": "Your team gets a text",
-     "body": "Everyone on your team gets this text:\n\nNew Incoming Reply / Email / Call from:\n\n[Contact name]\n[Contact email]\n[Contact phone]\n\nMessage:\n\n\" [Message] \"",
+     "body": "Everyone on your team gets this text:\n\nfresh Incoming Reply / Email / Call from:\n\n[Contact name]\n[Contact email]\n[Contact phone]\n\nMessage:\ntest4\n\" [Message] \"",
      "note": "This goes to every user in your account, for every reply from any contact, including existing clients. Busy accounts can get a lot of texts. We can limit it to new leads only, or to one intake person."
     },
     {
