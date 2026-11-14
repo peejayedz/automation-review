@@ -61,6 +61,9 @@ header{display:flex;flex-direction:column;gap:4px}
 .teambar{background:var(--surface);border:1px dashed var(--accent);border-radius:10px;padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:14px}
 .teambar .t{font-weight:600;color:var(--accent)}
 section{display:flex;flex-direction:column;gap:10px}
+/* message groups: clear space above each group heading, a little more under the heading/sub-line */
+#sections{display:flex;flex-direction:column;gap:44px}
+#sections .list{margin-top:6px}
 .sub{color:var(--muted);font-size:14px;margin-bottom:4px}
 .list{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .msg{display:grid;grid-template-columns:130px minmax(0,1fr) 160px;gap:18px;padding:16px 18px;border-top:1px solid var(--line)}
@@ -136,6 +139,7 @@ footer a{color:var(--accent)}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){.track i{transition:none}}
 @media (max-width:700px){
+  #sections{gap:32px}
   .msg{grid-template-columns:minmax(0,1fr);gap:10px}
   .when{flex-direction:row;align-items:center}
   .acts{flex-direction:row;flex-wrap:wrap}
