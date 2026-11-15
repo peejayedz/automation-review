@@ -1,4 +1,4 @@
-// Review admin v1.1.0 in Chromium: home, Details, Submissions, every old admin action, the backend calls (real Code.gs in a
+// Review admin v1.1.2 in Chromium: home, Details (client links, Copy, Not started), Submissions, every old admin action, the backend calls (real Code.gs in a
 // mock: ghl-subaccount-builder/tests/mock/apps-script.mjs), light/dark at 1440 and 390, AA contrast, no sideways scroll.
 // Needs the sibling repo ../ghl-subaccount-builder (playwright-core + the Code.gs mock). Writes nothing in any repo.
 // Run: CHROMIUM_PATH=… node admin/tests/e2e.mjs [screenshot folder]
@@ -19,6 +19,7 @@ const PW = 'review admin test password', KEY = 'review-admin-e2e-key', salt = ra
 const LOCK = { salt: salt.toString('base64'), iterations: 100000, verifier: pbkdf2Sync(PW, salt, 100000, 64, 'sha256').subarray(0, 32).toString('base64') };
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.woff2': 'font/woff2', '.png': 'image/png', '.svg': 'image/svg+xml', '.txt': 'text/plain' };
 const LIST = await readdir(join(AR, 'data'));
+const PLANS = await readdir(join(AR, 'plans')).catch(() => []);   // hand-made plans/<code>.html (Mahdavi)
 const CODES = LIST.filter(n => /^[a-z0-9-]+\.json$/.test(n)).map(n => n.slice(0, -5));
 const DATA = Object.fromEntries(await Promise.all(CODES.map(async c => [c, JSON.parse(await readFile(join(AR, 'data', `${c}.json`), 'utf8'))])));
 
@@ -71,6 +72,8 @@ async function ctxFor({ width = 1440, height = 900, scheme = 'light' } = {}) {
   const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme });
   await ctx.route('https://api.github.com/**', r => r.fulfill({ status: 404, contentType: 'application/json', body: '{}' }));
   await ctx.route(/^https:\/\/api\.github\.com\/repos\/peejayedz\/automation-review\/contents\/data/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(LIST.map(name => ({ name, type: 'file' }))) }));
+  await ctx.route(/^https:\/\/api\.github\.com\/repos\/peejayedz\/automation-review\/contents\/plans/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(PLANS.map(name => ({ name, type: 'file' }))) }));
+  await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
   await ctx.route('https://drive.google.com/**', r => r.fulfill({ status: 404, body: '' }));
   return ctx;
 }
@@ -99,13 +102,22 @@ try {
     assert(!(await page.locator('.crow[data-client="zz-test-2-qpqhx7"]').count()), 'ZZ shown');
     assert(!(await page.locator('.bell, #loadedAt').count()), 'bell / loaded line on the home');
   });
-  await check('home: statuses follow the rule (Needs you / Waiting / OK), Needs you rows first, Details gold only when needed', async () => {
+  await check('home: statuses follow the rule (Needs you / Waiting / Not started / OK), Details gold only when needed', async () => {
     const rows = await page.$$eval('.crow', rs => rs.map(r => [r.dataset.client, r.querySelector('.cstat').innerText.replace(/\s+/g, ' ').trim(), r.querySelector('.cacts .btn.p') ? 'gold' : '']));
     const get = c => rows.find(r => r[0] === c);
     assert(rows[0][0] === 'dumas-sanclemente-mo5cay' && /Needs you 6 requests to answer/.test(rows[0][1]) && rows[0][2] === 'gold', JSON.stringify(rows[0]));
     assert(/Needs you 1 request to answer/.test(get('palm-beach-plastic-n9umxi')[1]), 'palm');
     assert(/Waiting Waiting for the client/.test(get('mahdavi-law-mc1mar')[1]) && !get('mahdavi-law-mc1mar')[2], 'mahdavi');
     assert(/OK Nothing waiting/.test(get('boca-dental-e770de')[1]), `boca (replaced request + approval): ${get('boca-dental-e770de')[1]}`);
+    // no responses at all (Emery, Hedayati, Sralla in the seed) → grey "○ Not started · Links not opened yet", never "OK"
+    for (const c of ['emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(/○\s*Not started\s*Links not opened yet$/.test(get(c)[1]) && !get(c)[2], `${c}: ${get(c)[1]}`);
+    assert(await page.$eval('.crow[data-client="emery-law-9lp7do"] .st', e => e.classList.contains('new')), 'not started is grey (.st.new)');
+  });
+  await check('home order: Needs you, then Waiting, then Not started, then OK', async () => {
+    const order = await page.$$eval('.crow .st', s => s.map(x => x.className.replace('st ', '')));
+    const rank = { need: 0, wait: 1, new: 2, ok: 3 };
+    assert(order.every((k, i) => !i || rank[order[i - 1]] <= rank[k]), order.join(','));
+    assert(order.join(',') === 'need,need,wait,new,new,new,ok', order.join(','));
   });
   await check('home: Needs you filter (also from the top line), Show test clients, search', async () => {
     await page.click('.strip .stripbtn'); assert(await page.locator('.crow').count() === 2, 'needs-you filter from strip');
@@ -114,23 +126,68 @@ try {
     await page.uncheck('#showTests');
     await page.fill('#homeQ', 'palm'); assert(await page.locator('.crow').count() === 1, 'search'); await page.fill('#homeQ', '');
   });
-  await check('home: Review page ↗ opens the client link in a new tab; row click = Details (hash link)', async () => {
+  await check('home: Review page ↗ = Link A when the client has one (plans/ page for Mahdavi), else the classic ?c= link; new tab; row click = Details', async () => {
     const href = await page.getAttribute('.crow[data-client="boca-dental-e770de"] .cacts a:first-child', 'href');
     assert(href === '../?c=boca-dental-e770de' && await page.getAttribute('.crow[data-client="boca-dental-e770de"] .cacts a:first-child', 'target') === '_blank', href);
+    assert(await page.getAttribute('.crow[data-client="mahdavi-law-mc1mar"] .cacts a:first-child', 'href') === '../plans/mahdavi-law-mc1mar.html', 'mahdavi home link');
+    assert(await page.getAttribute('.crow[data-client="dumas-sanclemente-mo5cay"] .cacts a:first-child', 'href') === '../?c=dumas-sanclemente-mo5cay', 'dumas home link');
     await page.click('.crow[data-client="mahdavi-law-mc1mar"] .cname'); await page.waitForSelector('#dPanel:not([hidden])');
     assert(page.url().endsWith('#/client/mahdavi-law-mc1mar'), page.url());
   });
   await shot(page, 'home_1440_light');
 
   // ===== 2) Details
-  await check('Details: open items, automations approved, links (Review page, classic dashboard, plan + messages pages), last activity', async () => {
+  // reads one Details "Client links" list: [key, name, hint, shown url, Open href, Copy text]
+  const clientLinks = () => page.$$eval('#dPanel .clinks li', ls => ls.map(l => [l.dataset.link, l.querySelector('b').textContent, l.querySelector('small').textContent, l.querySelector('.url').textContent, l.querySelector('.cla a').getAttribute('href'), l.querySelector('[data-copy]').dataset.copy]));
+  await check('Details: status line, open items, automations approved, last activity', async () => {
     const t = await page.innerText('#dPanel');
+    assert(/Waiting\s*·?\s*Waiting for the client/.test(await page.innerText('#dPanel .dstat')), 'status line');
     assert(/Nothing to answer\. 1 update is waiting for the client/.test(t), 'open items');
     assert(new RegExp(`0\\s*of ${DATA['mahdavi-law-mc1mar'].automations.length}`).test(t), 'approved count');
-    const links = await page.$$eval('#dPanel .links a', as => as.map(a => [a.textContent.trim(), a.getAttribute('href')]));
-    const L = Object.fromEntries(links.map(([k, v]) => [k.replace(/\s*↗/, ''), v]));
-    assert(L['Review page'] && L['Classic dashboard'] === '../?c=mahdavi-law-mc1mar&admin' && L['Plan page'] === '../plan.html?c=mahdavi-law-mc1mar' && L['Messages page'] === '../messages.html?c=mahdavi-law-mc1mar', JSON.stringify(links));
     assert(/Last activity\s+\w{3} \d+, \d+:\d\d [AP]M ET/i.test(t), 'last activity');
+  });
+  await check('Details Mahdavi: CLIENT LINKS (send to the client) = Link A · Plan + review (plans/ page), Link B · Review only; For the team: Classic dashboard', async () => {
+    assert(/CLIENT LINKS\s*\(SEND TO THE CLIENT\)/i.test(await page.innerText('#clTitle')), 'heading');
+    const ls = await clientLinks();
+    const abs = rel => new URL(rel, ADMIN).href;
+    assert(JSON.stringify(ls.map(l => l.slice(0, 3))) === JSON.stringify([['a', 'Link A · Plan + review', 'Send this one first'], ['b', 'Link B · Review only', 'For re-reviews']]), JSON.stringify(ls));
+    assert(ls[0][4] === '../plans/mahdavi-law-mc1mar.html' && ls[0][5] === abs('../plans/mahdavi-law-mc1mar.html') && ls[0][3] === abs('../plans/mahdavi-law-mc1mar.html').replace(/^https?:\/\//, ''), JSON.stringify(ls[0]));
+    assert(ls[1][4] === '../messages.html?c=mahdavi-law-mc1mar' && ls[1][5] === abs('../messages.html?c=mahdavi-law-mc1mar'), JSON.stringify(ls[1]));
+    assert(await page.$$eval('#dPanel .clinks .cla a', as => as.every(a => a.target === '_blank' && /Open/.test(a.textContent))), 'Open ↗ in a new tab');
+    assert(!(await page.locator('#dPanel .links, #dPanel .clinks li:has-text("Sent")').count()), 'old Links block / a "Sent" mark (the Builder record has no sent field)');
+    const team = await page.$eval('#dPanel .lbl.team + a', a => [a.previousElementSibling.textContent, a.textContent.trim(), a.getAttribute('href'), a.target]);
+    assert(team[0] === 'For the team' && team[1] === 'Classic dashboard ↗' && team[2] === '../?c=mahdavi-law-mc1mar&admin' && team[3] === '_blank', JSON.stringify(team));
+    const fs = await page.$$eval('#dPanel .clt b, #dPanel .lbl.team + a', e => e.map(x => parseFloat(getComputedStyle(x).fontSize)));
+    assert(fs[fs.length - 1] < fs[0], `team link smaller than the client links ${fs}`);
+  });
+  await check('Copy: copies the full link and shows "Copied" next to that button for 4 s', async () => {
+    await page.click('#dPanel .clinks li[data-link="b"] [data-copy]');
+    assert(await page.evaluate(() => navigator.clipboard.readText()) === new URL('../messages.html?c=mahdavi-law-mc1mar', ADMIN).href, 'clipboard');
+    assert(await page.innerText('#dPanel .clinks li[data-link="b"] .copied') === 'Copied' && await page.innerText('#dPanel .clinks li[data-link="a"] .copied') === '', 'Copied next to B only');
+    await page.waitForTimeout(3500); assert(await page.innerText('#dPanel .clinks li[data-link="b"] .copied') === 'Copied', 'gone before 4 s');
+    await page.waitForFunction(() => document.querySelector('#dPanel .clinks li[data-link="b"] .copied').textContent === '', null, { timeout: 1500 });
+    await page.click('#dPanel .clinks li[data-link="a"] [data-copy]');
+    assert(await page.evaluate(() => navigator.clipboard.readText()) === new URL('../plans/mahdavi-law-mc1mar.html', ADMIN).href, 'clipboard A');
+  });
+  await check('Details ZZ TEST 2 (Builder package): Link A = plan.html?c=, Link B = messages.html?c=', async () => {
+    await page.goto(`${ADMIN}#/client/zz-test-2-qpqhx7`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
+    const ls = await clientLinks();
+    assert(ls.map(l => `${l[0]}=${l[4]}`).join(' ') === 'a=../plan.html?c=zz-test-2-qpqhx7 b=../messages.html?c=zz-test-2-qpqhx7', JSON.stringify(ls));
+  });
+  await check('Details Dumas (classic only): one "Review page" link (the ?c= link they were sent) with Open + Copy, no A/B', async () => {
+    await page.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
+    const ls = await clientLinks();
+    assert(ls.length === 1 && ls[0][0] === 'c' && ls[0][1] === 'Review page' && ls[0][4] === '../?c=dumas-sanclemente-mo5cay' && ls[0][5] === new URL('../?c=dumas-sanclemente-mo5cay', ADMIN).href, JSON.stringify(ls));
+    assert(/Needs you\s*·?\s*6 requests to answer/.test(await page.innerText('#dPanel .dstat')), 'status line');
+    await page.click('#dPanel .clinks [data-copy]'); assert(await page.evaluate(() => navigator.clipboard.readText()) === ls[0][5], 'copy');
+  });
+  await check('Details Emery (no responses): grey "○ Not started · Links not opened yet"; Palm Beach is classic too', async () => {
+    await page.goto(`${ADMIN}#/client/emery-law-9lp7do`); await page.waitForSelector('#dPanel:not([hidden]) .dstat');
+    assert(/^○\s*Not started\s*·?\s*Links not opened yet$/.test((await page.innerText("#dPanel .dstat")).trim()), await page.innerText('#dPanel .dstat'));
+    assert(/No responses yet/.test(await page.innerText('#dPanel')), 'last activity');
+    await page.goto(`${ADMIN}#/client/palm-beach-plastic-n9umxi`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
+    const ls = await clientLinks(); assert(ls.length === 1 && ls[0][4] === '../?c=palm-beach-plastic-n9umxi', JSON.stringify(ls));
+    await page.goto(`${ADMIN}#/client/mahdavi-law-mc1mar`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
   });
   await check('Details: Esc closes and returns to #/; a hash link opens Details straight away', async () => {
     await page.keyboard.press('Escape'); await page.waitForSelector('#dPanel', { state: 'hidden' }); assert(!/client/.test(page.url().split('#')[1] || ''), page.url());
@@ -253,8 +310,21 @@ try {
         for (const [k, v, on] of [['ink', m.ink, m.bg], ['accent', m.acc, m.bg], ['needs you', m.need, m.panel], ['waiting', m.wait, m.panel], ['ok', m.ok, m.panel], ['muted', m.mut, m.panel], ['active filter', m.seg, m.segbg]]) if (v && on) assert(ratio(v, on) >= 4.5, `${where} ${k} ${ratio(v, on).toFixed(2)}`);
       };
       await measure('home'); await shot(p, `home_${w}_${scheme}`, w === 390);
-      await p.click('.crow[data-client="dumas-sanclemente-mo5cay"] .cname'); await p.waitForSelector('#dPanel:not([hidden])'); await p.waitForTimeout(100);
-      await shot(p, `details_${w}_${scheme}`); await p.keyboard.press('Escape');
+      // Not started is grey and readable (AA on the row)
+      const nm = await p.$eval('.st.new', e => [getComputedStyle(e).color, getComputedStyle(document.querySelector('.clist')).backgroundColor]);
+      assert(ratio(nm[0], nm[1]) >= 4.5, `not started ${ratio(nm[0], nm[1]).toFixed(2)}`);
+      await p.check('#showTests'); await p.waitForSelector('.crow[data-client="zz-test-2-qpqhx7"]'); await shot(p, `home-tests_${w}_${scheme}`, w === 390);
+      // Details: Mahdavi (A plans/ + B), ZZ TEST 2 (A + B, test client shown), Dumas (classic only); Copy → "Copied"
+      for (const [code, name] of [['mahdavi-law-mc1mar', 'mahdavi'], ['zz-test-2-qpqhx7', 'zz-test-2'], ['dumas-sanclemente-mo5cay', 'dumas']]) {
+        await p.click(`.crow[data-client="${code}"] .cname`); await p.waitForSelector('#dPanel:not([hidden]) .clinks'); await p.waitForTimeout(100);
+        await p.$eval('#dPanel .clinks', el => el.scrollIntoView({ block: 'start' }));
+        await p.click('#dPanel .clinks li:first-child [data-copy]'); await p.waitForFunction(() => document.querySelector('#dPanel .clinks li:first-child .copied').textContent === 'Copied');
+        await measure(`details ${name}`);
+        const ov = await p.$$eval('#dPanel .clinks li, #dPanel .dhead', els => els.filter(e => e.scrollWidth > e.clientWidth + 1).length);
+        assert(!ov, `details ${name}: ${ov} clipped link rows`);
+        await shot(p, `details-${name}_${w}_${scheme}`); await p.keyboard.press('Escape'); await p.waitForSelector('#dPanel', { state: 'hidden' });
+      }
+      await p.uncheck('#showTests');
       await p.goto(`${ADMIN}#/subs`); await p.waitForSelector('.sline'); await p.click('.sline >> nth=1'); await p.waitForSelector('.sopen');
       await measure('submissions'); await shot(p, `submissions_${w}_${scheme}`, w === 390);
       if (w === 390) { const sc = await p.evaluate(() => { const s = document.querySelector('.segscroll'); return [s.scrollWidth, s.clientWidth, getComputedStyle(s).overflowX]; }); assert(sc[2] === 'auto', `filters don't scroll sideways: ${sc}`); }

@@ -1,11 +1,11 @@
-// Automation Review admin v1.1.0: Review home · Details panel · Submissions, behind the one LFMP login.
+// Automation Review admin v1.1.2: Review home · Details panel · Submissions, behind the one LFMP login.
 // The client pages (index.html, plan.html, messages.html, plans/, data/) are NOT changed and never load this file.
 // Backend: the same Apps Script and the same admin actions the review page uses (admin_ping, admin_all, admin_status,
 // admin_delete, admin_edit), with the same fields. No Code.gs change. The admin key comes from the one-login vault.
 // While signed in, the key is also put where index.html looks for it (localStorage "ar_admin_key"), so "Edit wording" and
 // "Open their review" open the classic page in admin mode; every lock removes it (lfmp-login.js).
 import { createLogin } from './lfmp-login.js';
-import * as L from './review-logic.mjs';
+import * as L from './review-logic.mjs?v=1.1.2';   // versioned: admin.js needs this release's rules
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -15,6 +15,7 @@ const { OWNER, REPO } = (() => {
   return { OWNER: 'peejayedz', REPO: 'automation-review' };
 })();
 const LIST_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/data?ref=main`;
+const PLANS_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/plans?ref=main`;   // hand-made plans/<code>.html pages
 const BASE = '../';
 
 const $ = id => document.getElementById(id);
@@ -52,17 +53,20 @@ async function post(obj) {
   throw new Error(`Couldn't reach the review backend (${last?.message || 'network error'}).`);
 }
 async function listData() {
-  const r = await fetch(LIST_URL, { cache: 'no-store', headers: { Accept: 'application/vnd.github+json' } });
+  const gh = { cache: 'no-store', headers: { Accept: 'application/vnd.github+json' } };
+  // plans/ is optional (most clients have none): any failure there just means "no plans/ page"
+  const [r, plans] = await Promise.all([fetch(LIST_URL, gh), fetch(PLANS_URL, gh).then(x => (x.ok ? x.json() : [])).catch(() => [])]);
   if (!r.ok) throw new Error(r.status === 403 ? 'GitHub is limiting requests from this network for a few minutes. Try Refresh shortly.' : `Couldn't list review clients from GitHub (HTTP ${r.status}).`);
   const names = (await r.json()).map(f => f.name);
   const codes = names.filter(n => /^[a-z0-9-]+\.json$/.test(n)).map(n => n.slice(0, -5));
-  return { codes, plan: new Set(names.filter(n => n.endsWith('.plan.json')).map(n => n.slice(0, -10))), messages: new Set(names.filter(n => n.endsWith('.messages.json')).map(n => n.slice(0, -14))) };
+  const plansPage = new Set((Array.isArray(plans) ? plans : []).map(f => f.name).filter(n => /^[a-z0-9-]+\.html$/.test(n)).map(n => n.slice(0, -5)));
+  return { codes, plansPage, plan: new Set(names.filter(n => n.endsWith('.plan.json')).map(n => n.slice(0, -10))), messages: new Set(names.filter(n => n.endsWith('.messages.json')).map(n => n.slice(0, -14))) };
 }
 const checkKey = async (key, code) => { const j = await post({ action: 'admin_ping', key, client: code }); return j && j.ok ? j : null; };
 
 // ---------- state ----------
 let login = null, adminKey = null, loadSeq = 0, busy = false;
-const D = { codes: [], plan: new Set(), messages: new Set(), files: {}, names: {}, renames: {}, rows: [], log: [], loaded: false, error: '' };
+const D = { codes: [], plan: new Set(), messages: new Set(), plansPage: new Set(), files: {},names: {}, renames: {}, rows: [], log: [], loaded: false, error: '' };
 const F = { home: 'all', q: '', tests: store.get(TESTS_KEY) === '1', status: 'answer', client: 'all', sq: '', type: 'all', open: null, more: new Set(), armed: null, rowMenu: null, history: null };
 // Same name the client page shows: a rename (Content tab, newest wins) > the data file's name > the Sheet tab name.
 const nameOf = c => D.renames[c] || D.files[c]?.client?.name || D.names[c] || L.prettyClient(c);
@@ -73,6 +77,12 @@ const visibleClients = () => clientsAll().filter(c => F.tests || !isTest(c));
 const sumOf = c => L.summarize(c, D.files[c], D.rows);
 const reviewUrl = c => (D.files[c]?.customPage ? `${D.files[c].customPage}?c=${encodeURIComponent(c)}` : `${BASE}?c=${encodeURIComponent(c)}`);
 const classicUrl = (c, a) => `${BASE}?c=${encodeURIComponent(c)}${a ? `&a=${encodeURIComponent(a)}` : ''}&admin`;
+// Client links, as on the Builder's Review card: A = plan + review (default; the hand-made plans/<code>.html page when the
+// client has one, else plan.html?c=), B = messages only (re-reviews). Clients without these pages have the classic ?c= link.
+const linkA = c => (D.plansPage.has(c) ? `${BASE}plans/${encodeURIComponent(c)}.html` : D.plan.has(c) ? `${BASE}plan.html?c=${encodeURIComponent(c)}` : null);
+const linkB = c => (D.messages.has(c) ? `${BASE}messages.html?c=${encodeURIComponent(c)}` : null);
+const homeLink = c => linkA(c) || reviewUrl(c);
+const absUrl = rel => new URL(rel, location.href).href;
 
 // ---------- routing: #/ home · #/client/<code> Details · #/subs[/<code>] Submissions ----------
 function route() {
@@ -166,16 +176,25 @@ function draw() {
   else { drawHome(); if (r.details) openDetails(r.details); else closeDetails(true); }
 }
 
+// ----- status (home row + Details) -----
+// Home: "N requests to answer →" links to Details. Details: the same words without the link.
+function statusHtml(c, s, { details = false } = {}) {
+  if (s.state === 'need') {
+    const n = `${s.open} request${s.open === 1 ? '' : 's'} to answer`;
+    return `<span class="st need"><i aria-hidden="true">!</i>Needs you</span>${details ? `<span class="stsub">${n}</span>` : `<a class="stlink" href="#/client/${encodeURIComponent(c)}" data-row-stop>${n} ${ARROW}</a>`}`;
+  }
+  if (s.state === 'wait') return '<span class="st wait"><i aria-hidden="true">●</i>Waiting</span><span class="stsub">Waiting for the client</span>';
+  if (s.state === 'new') return '<span class="st new"><i aria-hidden="true">○</i>Not started</span><span class="stsub">Links not opened yet</span>';
+  return '<span class="st ok"><i aria-hidden="true">●</i>OK</span><span class="stsub">Nothing waiting</span>';
+}
+
 // ----- 1) Review home -----
 function drawHome() {
   const cs = visibleClients().map(c => ({ c, s: sumOf(c), name: nameOf(c) }));
   const need = cs.filter(x => x.s.state === 'need').length, q = F.q.trim().toLowerCase();
   const list = cs.filter(x => (F.home !== 'need' || x.s.state === 'need') && (!q || `${x.name} ${x.c}`.toLowerCase().includes(q)))
-    .sort((a, b) => ({ need: 0, wait: 1, ok: 2 }[a.s.state] - { need: 0, wait: 1, ok: 2 }[b.s.state]) || b.s.open - a.s.open || a.name.localeCompare(b.name));
-  const stat = x => x.s.state === 'need'
-    ? `<span class="st need"><i aria-hidden="true">!</i>Needs you</span><a class="stlink" href="#/client/${encodeURIComponent(x.c)}" data-row-stop>${x.s.open} request${x.s.open === 1 ? '' : 's'} to answer ${ARROW}</a>`
-    : x.s.state === 'wait' ? `<span class="st wait"><i aria-hidden="true">●</i>Waiting</span><span class="stsub">Waiting for the client</span>`
-      : `<span class="st ok"><i aria-hidden="true">●</i>OK</span><span class="stsub">Nothing waiting</span>`;
+    .sort((a, b) => L.STATE_ORDER[a.s.state] - L.STATE_ORDER[b.s.state] || b.s.open - a.s.open || a.name.localeCompare(b.name));
+  const stat = x => statusHtml(x.c, x.s);
   const keepFocus = document.activeElement?.id === 'homeQ';
   $('screen').innerHTML = `${heroHtml('home')}
     <div class="toolbar">
@@ -186,7 +205,7 @@ function drawHome() {
     <div class="clist">${list.map(x => `<div class="crow" data-client="${esc(x.c)}" tabindex="0" role="link" aria-label="${esc(x.name)}: open details">
         <div class="cname"><span class="disp">${esc(x.name)}</span>${isTest(x.c) ? '<span class="testtag">Test</span>' : ''}</div>
         <div class="cstat">${stat(x)}</div>
-        <div class="cacts"><a class="btn sm" href="${esc(reviewUrl(x.c))}" target="_blank" rel="noopener" data-row-stop aria-label="Open ${esc(x.name)}'s review page (new tab)">Review page ${EXT}</a><a class="btn sm${x.s.state === 'need' ? ' p' : ''}" href="#/client/${encodeURIComponent(x.c)}" data-row-stop>Details ${ARROW}</a></div>
+        <div class="cacts"><a class="btn sm" href="${esc(homeLink(x.c))}" target="_blank" rel="noopener" data-row-stop aria-label="Open ${esc(x.name)}'s review page (new tab)">Review page ${EXT}</a><a class="btn sm${x.s.state === 'need' ? ' p' : ''}" href="#/client/${encodeURIComponent(x.c)}" data-row-stop>Details ${ARROW}</a></div>
       </div>`).join('') || `<div class="empty">${q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : 'No review clients yet.'}</div>`}</div>`;
   if (keepFocus) { const i = $('homeQ'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
 }
@@ -199,9 +218,10 @@ function openDetails(code) {
   dpCode = code;
   const s = sumOf(code), name = nameOf(code), file = D.files[code];
   const open = D.rows.filter(r => r.client === code && L.isReq(r) && ['req', 'prog'].includes(L.statusKey(r, D.rows))).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
-  const links = [`<a class="lk" href="${esc(reviewUrl(code))}" target="_blank" rel="noopener">Review page ${EXT}</a>`, `<a class="lk" href="${esc(classicUrl(code))}" target="_blank" rel="noopener">Classic dashboard ${EXT}</a>`];
-  if (D.plan.has(code)) links.push(`<a class="lk" href="${BASE}plan.html?c=${encodeURIComponent(code)}" target="_blank" rel="noopener">Plan page ${EXT}</a>`);
-  if (D.messages.has(code)) links.push(`<a class="lk" href="${BASE}messages.html?c=${encodeURIComponent(code)}" target="_blank" rel="noopener">Messages page ${EXT}</a>`);
+  const A = linkA(code), B = linkB(code);
+  const clientLinks = A || B
+    ? [A && ['a', 'Link A · Plan + review', 'Send this one first', A], B && ['b', 'Link B · Review only', 'For re-reviews', B]].filter(Boolean)
+    : [['c', 'Review page', 'The link this client was sent', reviewUrl(code)]];
   const autos = file?.automations || [];
   const body = dpMode === 'rename' ? renameHtml(code, name) : dpMode === 'clear' ? clearHtml(code, name, autos) : `
     <section class="dsec"><h3 class="lbl">Open items${open.length ? ` · ${open.length}` : ''}</h3>
@@ -211,9 +231,15 @@ function openDetails(code) {
     <section class="dsec"><h3 class="lbl">Automations approved</h3><p class="big">${s.approved} <span>of ${s.autos}</span></p>
       ${autos.length ? `<ul class="alist">${autos.map(a => { const ok = D.rows.some(r => r.client === code && r.action === 'approve_all' && r.automation === a.id && L.sameV(r.version, a.version)); return `<li><span class="${ok ? 'aok' : 'ano'}" aria-hidden="true">${ok ? '✓' : '·'}</span>${esc(a.name)}<span class="sr">${ok ? ' (approved)' : ' (not approved yet)'}</span></li>`; }).join('')}</ul>` : ''}
     </section>
-    <section class="dsec"><h3 class="lbl">Links</h3><div class="links">${links.join('')}</div></section>
+    <section class="dsec" aria-labelledby="clTitle"><h3 class="lbl" id="clTitle">Client links <span class="lblnote">(send to the client)</span></h3>
+      <ul class="clinks">${clientLinks.map(([k, label, hint, rel]) => { const url = absUrl(rel); return `<li data-link="${k}">
+        <div class="clt"><b>${esc(label)}</b><small>${esc(hint)}</small><span class="url mono">${esc(url.replace(/^https?:\/\//, ''))}</span></div>
+        <div class="cla"><a class="btn sm" href="${esc(rel)}" target="_blank" rel="noopener" aria-label="Open ${esc(label)} (new tab)">Open ${EXT}</a><button class="btn sm" type="button" data-copy="${esc(url)}" aria-label="Copy ${esc(label)}">Copy</button><span class="copied" aria-live="polite"></span></div>
+      </li>`; }).join('')}</ul>
+      <p class="lbl team">For the team</p><a class="lk sm" href="${esc(classicUrl(code))}" target="_blank" rel="noopener">Classic dashboard ${EXT}</a>
+    </section>
     <section class="dsec"><h3 class="lbl">Last activity</h3><p class="sub">${s.last ? esc(fmtWhen(new Date(s.last).toISOString())) : 'No responses yet.'}</p></section>`;
-  $('dPanel').innerHTML = `<div class="dhead"><div><p class="ey">Client details</p><h2 class="disp" id="dpTitle">${esc(name)}</h2></div>
+  $('dPanel').innerHTML = `<div class="dhead"><div><p class="ey">Client details</p><h2 class="disp" id="dpTitle">${esc(name)}</h2><p class="dstat">${statusHtml(code, s, { details: true })}</p></div>
       <div class="dtools"><span class="menuwrap"><button class="btn icon iconbtn" type="button" data-menu="dpMenu" aria-haspopup="menu" aria-expanded="false" aria-label="More for ${esc(name)}">⋯</button>
         <div class="menu" id="dpMenu" role="menu" hidden>
           <button type="button" role="menuitem" data-dp="rename">Rename client</button>
@@ -372,6 +398,19 @@ async function clearResponses(code, autoId) {
   return ids.length;
 }
 
+// ---------- Copy (client links): the full link; "Copied" next to the button for 4 s ----------
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); return ok;
+}
+async function copyLink(btn) {
+  const note = btn.parentElement.querySelector('.copied'), ok = await copyText(btn.dataset.copy);
+  note.textContent = ok ? 'Copied' : "Couldn't copy"; note.classList.toggle('bad', !ok);
+  clearTimeout(note.t); note.t = setTimeout(() => { note.textContent = ''; }, 4000);
+}
+
 // ---------- dialog (reserved for future confirmations; Esc closes) ----------
 function closeDialog() { $('ovl').hidden = true; $('dlg').innerHTML = ''; }
 
@@ -381,6 +420,7 @@ document.addEventListener('click', async e => {
   if (m) { const menu = $(m.dataset.menu); const open = menu.hidden; closeMenus(); menu.hidden = !open; m.setAttribute('aria-expanded', String(open)); if (open) menu.querySelector('button,a')?.focus(); return; }
   if (!e.target.closest('.menu')) closeMenus();
   const t = e.target.closest('[data-theme-set]'); if (t) { applyTheme(t.dataset.themeSet); return; }
+  const cp = e.target.closest('[data-copy]'); if (cp) { copyLink(cp); return; }
   if (e.target.closest('#dpShade')) { closeDetails(); return; }
   const hf = e.target.closest('[data-home-filter]'); if (hf) { F.home = hf.dataset.homeFilter; if (route().screen !== 'home') go('#/'); else drawHome(); return; }
   const sf = e.target.closest('[data-subs-filter]'); if (sf) { F.status = sf.dataset.subsFilter; F.open = null; F.more.clear(); drawSubs(); return; }
@@ -449,4 +489,5 @@ document.addEventListener('submit', async e => {
 
 // ---------- start ----------
 login = createLogin({ tool: 'review', onUnlock: unlocked, onLock: locked });
-if (await login.start() === 'error') { show('setupView'); $('setupMsg').textContent = login.error; }
+// One message only: the page's own "file is missing" text (with the command formatted), or the other reason in its place.
+if (await login.start() === 'error') { show('setupView'); if (!/lfmp-lock\.json is missing/.test(login.error)) $('setupMsg').textContent = login.error; }

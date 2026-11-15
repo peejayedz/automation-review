@@ -44,7 +44,9 @@ export function inType(r, k, t) {
   return r.action === t;
 }
 
-// One client on the home: 'need' (any open request), 'wait' (any updated, waiting on the client) or 'ok'.
+// One client on the home: 'need' (any open request), 'wait' (any updated, waiting on the client), 'new' (no responses at
+// all: Not started) or 'ok'. Home order: need, wait, new, ok.
+export const STATE_ORDER = { need: 0, wait: 1, new: 2, ok: 3 };
 export function summarize(code, data, all) {
   const rows = all.filter(r => r.client === code);
   let open = 0, waiting = 0;
@@ -52,7 +54,7 @@ export function summarize(code, data, all) {
   const autos = (data && data.automations) || [];
   const approved = autos.filter(a => rows.some(r => r.action === 'approve_all' && r.automation === a.id && sameV(r.version, a.version))).length;
   const last = rows.reduce((m, r) => Math.max(m, Date.parse(r.timestamp) || 0, Date.parse(r.updated_at) || 0), 0);
-  return { code, open, waiting, approved, autos: autos.length, last, state: open ? 'need' : waiting ? 'wait' : 'ok' };
+  return { code, open, waiting, approved, autos: autos.length, last, state: open ? 'need' : waiting ? 'wait' : rows.length ? 'ok' : 'new' };
 }
 export const isTestClient = (code, name) => /^zz[-\s]/i.test(code || '') || /^zz\b|\btest\b/i.test(name || '');
 

@@ -48,14 +48,21 @@ t('statusKey = index.html subStatusKey for every kind of row (incl. a later Look
   for (const r of norm) eq(L.statusKey(r, norm), I.subStatusKey(r, norm), `row ${r.id}`);
   eq(norm.map(r => L.statusKey(r, norm)).join(','), 'req,prog,upd,ok,ok,approve,req,approve,approve_all,answer,undo,upd,req');
 });
-t('home status rule: any Changes requested / In progress → Needs you; else any Updated → Waiting; else OK', () => {
+t('home status rule: any Changes requested / In progress → Needs you; else any Updated → Waiting; no responses at all → Not started; else OK', () => {
   const norm = rows.map(r => (L.isReq(r) ? { ...r, status: L.normStatus(r.status) || L.ST.REQ } : r));
   const c1 = L.summarize('c1', { automations: [{ id: 'x', version: '1.0' }] }, norm);
   eq([c1.state, c1.open, c1.waiting, c1.approved], ['need', 2, 1, 0]);
   const c2 = L.summarize('c2', { automations: [{ id: 'y', version: '2.0' }, { id: 'z', version: '1.0' }] }, norm);
   eq([c2.state, c2.open, c2.waiting, c2.approved, c2.autos], ['need', 2, 1, 1, 2]);
   const w = L.summarize('c2', null, norm.filter(r => r.id === 'l')); eq(w.state, 'wait');
-  eq(L.summarize('c3', null, norm).state, 'ok');
+  // c3 answered a question and clicked Looks good: nothing open or waiting → OK
+  eq(L.summarize('c3', null, [...norm, { client: 'c3', action: 'answer', step: 'q1', timestamp: '2026-11-01T00:00:00Z' }, { client: 'c3', action: 'approve', step: 's1', timestamp: '2026-11-01T00:01:00Z' }]).state, 'ok');
+  // no rows at all (not even an answer or a Looks good) → Not started; a single answer → OK
+  const none = L.summarize('nobody', { automations: [{ id: 'x', version: '1.0' }] }, norm);
+  eq([none.state, none.open, none.waiting, none.approved, none.last], ['new', 0, 0, 0, 0]);
+  eq(L.summarize('a1', null, [{ client: 'a1', action: 'answer', timestamp: '2026-11-01T00:00:00Z' }]).state, 'ok');
+  // home order: Needs you, Waiting, Not started, OK
+  eq(['ok', 'new', 'need', 'wait'].sort((a, b) => L.STATE_ORDER[a] - L.STATE_ORDER[b]), ['need', 'wait', 'new', 'ok']);
 });
 t('Submissions filters: To answer = req+prog · Waiting = upd · Done = approved + automation approvals · Everything = all', () => {
   eq(['req', 'prog', 'upd', 'ok', 'approve_all', 'answer'].map(k => L.FILTERS.map(([f]) => +L.inFilter(k, f)).join('')).join(' '), '1001 1001 0101 0011 0011 0001');

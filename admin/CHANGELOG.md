@@ -2,6 +2,13 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog here and are never changed by admin work.
 
+## v1.1.2 — 15 Nov 2026
+- **Client links in Details:** the Links block is now "CLIENT LINKS (send to the client)", with the same names and order as the Builder's Review card. **Link A · Plan + review** ("Send this one first") is `plans/<code>.html` when the client has one (Mahdavi), else `plan.html?c=<code>`. **Link B · Review only** ("For re-reviews") is `messages.html?c=<code>`. Each row has Open ↗ and Copy (the full link; "Copied" shows next to the button for 4 s). Clients without A/B pages (classic only, e.g. Dumas, Palm Beach) get one "Review page" row with the `?c=` link they were sent. Below, smaller, "For the team": Classic dashboard ↗. No "Sent" mark: the Builder record doesn't say which link was sent.
+- **Home row Review page ↗** opens Link A when the client has one, else the classic `?c=` link.
+- **Not started:** a client with no responses at all shows a grey "○ Not started · Links not opened yet" instead of "OK", on the home row and in Details (Details now shows the status under the client name). Needs you and Waiting rules unchanged. Home order: Needs you, Waiting, Not started, OK.
+- "Sign-in not ready" keeps the formatted `set-shared-password.mjs` text (the same message is no longer swapped for a plain copy).
+- `plans/` is listed from the GitHub API alongside `data/` (a failure there only hides the plans/ link). `review-logic.mjs` is now imported with `?v=` so a cached old copy can't break the page. Tests: logic 6/6 (Not started rule + order), e2e 29 checks.
+
 ## v1.1.1 — 15 Nov 2026
 - The "one login not set up" fallback text no longer mentions the classic `&admin` sign-in as a way round it; a missing `lfmp-lock.json` shows "Sign-in not ready" with the `set-shared-password.mjs` step. Shared `lfmp-login.js` update (same file as the Builder and KPI admin): no legacy mode, old per-page tokens removed on sign-in, an expired session locks on the next click.
 
