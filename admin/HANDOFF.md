@@ -6,8 +6,9 @@ The repo README covers the client pages, the Apps Script and the Sheet. This fil
 
 | Area | State |
 |---|---|
-| Admin page v1.0.0 | Live (commit c5efbc8), behind the one LFMP login. |
-| Admin page v1.1.0 (redesign) | Built and tested, **not pushed yet** (waiting for PJ). |
+| Admin page v1.1.0 (redesign) | **Live** (commit 407db7e, 15 Nov 2026). v1.0.0 (c5efbc8) before it. |
+| Live check | 10/10 (`assets/code/2026-11-15_review-admin-v110_live-check.mjs` in PJ's LFMP folder): deployed files = pushed, client pages unchanged live, real sign-in at 1440/390 light/dark, deployed code with a test lock + mocked backend (home, Details, Submissions, Save → admin_status). Screenshots: `assets/images/2026-11-15_review-admin-v110-live/`. |
+| Not yet seen | PJ's own sign-in with the real ADMIN_KEY and the real Sheet (names from the Content tab, real statuses). |
 | Client pages | Unchanged by admin work (index.html, plan.html, messages.html, plans/, data/, preview/, templates/, config.js, apps-script/). |
 
 ## How it fits together
@@ -41,6 +42,12 @@ The repo README covers the client pages, the Apps Script and the Sheet. This fil
 - `node admin/tests/logic.test.mjs`: the request rules are compared with index.html's own functions, taken from the file.
 - `CHROMIUM_PATH=… node admin/tests/e2e.mjs [screenshot folder]`: 23 browser checks against the real Code.gs in a mock. They cover home, Details, Submissions, every action, the admin_status payload (compared with the classic page's), Delete asking twice, Esc, 1440 and 390 in light and dark, AA contrast and no sideways scroll. Needs `../ghl-subaccount-builder` (playwright-core and `tests/mock/apps-script.mjs`).
 - The cross-tool login test is in the builder repo: `tests/e2e/one-login.mjs`.
+
+## Decisions
+
+- PJ approved the look on 15 Nov ("design looks good, just minimize the information"). The home shows only name, status and two buttons. No bell, no "loaded" line, no approved/progress columns.
+- Names follow the client page: a rename > the data file name > the Sheet tab name. Tab names are sometimes just the code.
+- Clear all responses: every automation or one, type-to-confirm. Replaces the classic page's two-click clear.
 
 ## Before pushing
 
