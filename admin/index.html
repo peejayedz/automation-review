@@ -10,18 +10,18 @@
 <script>try { var t = localStorage.getItem('lfmp-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
 <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="lfmp-ui.css?v=1.1.0">
-<link rel="stylesheet" href="admin.css?v=1.1.0">
-<link rel="stylesheet" href="lfmp-login.css?v=1.1.0">
+<link rel="stylesheet" href="lfmp-ui.css?v=1.1.1">
+<link rel="stylesheet" href="admin.css?v=1.1.1">
+<link rel="stylesheet" href="lfmp-login.css?v=1.1.1">
 <script src="../config.js"></script>
 </head>
 <body>
 
-<!-- One login not set up yet (no lfmp-lock.json) or this browser can't run it -->
+<!-- The one login can't start (no lfmp-lock.json, or an old browser) -->
 <div class="gate" id="setupView" hidden><div class="card">
   <div class="gatehead"><span class="mark" aria-hidden="true">LFMP</span><p class="ey">LFMP · Review admin</p></div>
-  <h1 class="disp">One login <span class="g">not set up.</span></h1>
-  <p class="sub" id="setupMsg">The shared admin password isn't set yet. In Terminal, in the leadpro-kpi folder, run <code class="mono">node scripts/set-shared-password.mjs</code>, then publish the three tools. Until then, admin mode still works on a client's review link with <code class="mono">&amp;admin</code> at the end.</p>
+  <h1 class="disp">Sign-in <span class="g">not ready.</span></h1>
+  <p class="sub" id="setupMsg">The shared admin password file (lfmp-lock.json) is missing. In Terminal, in the leadpro-kpi folder, run <code class="mono">node scripts/set-shared-password.mjs</code>, then publish the three tools.</p>
 </div></div>
 
 <!-- One time: add the Automation Review admin key to the vault -->
@@ -62,7 +62,7 @@
       </div>
     </header>
     <main id="screen" aria-live="polite"></main>
-    <footer class="foot"><span>LFMP Automation Review admin · v1.1.0</span><span>Client pages never show these controls.</span></footer>
+    <footer class="foot"><span>LFMP Automation Review admin · v1.1.1</span><span>Client pages never show these controls.</span></footer>
   </div>
 </div>
 
@@ -71,6 +71,6 @@
 <div class="ovl" id="ovl" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-<script type="module" src="admin.js?v=1.1.0"></script>
+<script type="module" src="admin.js?v=1.1.1"></script>
 </body>
 </html>

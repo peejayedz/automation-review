@@ -449,6 +449,4 @@ document.addEventListener('submit', async e => {
 
 // ---------- start ----------
 login = createLogin({ tool: 'review', onUnlock: unlocked, onLock: locked });
-const mode = await login.start();
-if (mode === 'legacy') show('setupView');
-else if (mode === 'error') { show('setupView'); $('setupMsg').textContent = login.error; }
+if (await login.start() === 'error') { show('setupView'); $('setupMsg').textContent = login.error; }
