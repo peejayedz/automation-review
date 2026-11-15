@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Review admin · LFMP</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2309100f'/%3E%3Crect x='3' y='3' width='26' height='26' fill='none' stroke='%233fb6b0' stroke-width='2'/%3E%3Cpath d='m9 16.5 4.5 4.5L23 11.5' fill='none' stroke='%233fb6b0' stroke-width='3'/%3E%3C/svg%3E">
+<script>try { var t = localStorage.getItem('lfmp-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
+<link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="lfmp-ui.css?v=1.0.0">
+<link rel="stylesheet" href="admin.css?v=1.0.0">
+<link rel="stylesheet" href="lfmp-login.css?v=1.0.0">
+<script src="../config.js"></script>
+</head>
+<body>
+
+<!-- One login not set up yet (no lfmp-lock.json) or this browser can't run it -->
+<div class="gate" id="setupView" hidden><div class="card">
+  <div class="gatehead"><span class="mark" aria-hidden="true">LFMP</span><p class="ey">LFMP · Review admin</p></div>
+  <h1 class="disp">One login <span class="g">not set up.</span></h1>
+  <p class="sub" id="setupMsg">The shared admin password isn't set yet. In Terminal, in the leadpro-kpi folder, run <code class="mono">node scripts/set-shared-password.mjs</code>, then publish the three tools. Until then, admin mode still works on a client's review link with <code class="mono">&amp;admin</code> at the end.</p>
+</div></div>
+
+<!-- One time: add the Automation Review admin key to the vault -->
+<div class="gate wide" id="keyView" hidden><div class="card">
+  <div class="gatehead"><span class="mark" aria-hidden="true">LFMP</span><p class="ey">LFMP · Review admin</p></div>
+  <div><h1 class="disp">Add the review <span class="g">admin key.</span></h1>
+    <p class="sub" id="keyWhy" style="margin-top:10px">One time per browser. The key is the ADMIN_KEY script property of the Automation Review Apps Script (in your password manager). It's saved here only, encrypted with the admin password, and turns admin mode on for you on every review page while you're signed in.</p></div>
+  <form id="keyForm" autocomplete="off" novalidate>
+    <label class="f" for="keyIn">Review admin key
+      <span class="pw"><input type="password" id="keyIn" autocomplete="off" spellcheck="false" required><button type="button" class="eye" id="keyEye" aria-controls="keyIn" aria-label="Show key">Show</button></span>
+    </label>
+    <p class="ferr" id="keyErr" role="alert"></p>
+    <div class="btnrow"><button class="btn p big" id="keyGo" type="submit">Check and save</button><button class="btn big" type="button" data-act="keycancel" id="keyCancel" hidden>Cancel</button><button class="btn big" type="button" data-act="lock">Lock</button></div>
+  </form>
+</div></div>
+
+<!-- App -->
+<div id="appView" hidden>
+  <div class="wrapx">
+    <header class="top">
+      <a class="mark" href="./" title="LFMP · Review admin">LFMP</a>
+      <span class="toolchip" aria-label="You are in: Review">Review</span>
+      <nav class="nav" aria-label="LFMP tools">
+        <a href="/ghl-subaccount-builder-page/">Clients</a>
+        <a href="/leadpro-kpi/admin/">KPI admin</a>
+        <a href="./" aria-current="page">Review</a>
+      </nav>
+      <div class="topr">
+        <div class="upd" aria-live="polite">Loaded<b id="loadedAt">…</b></div>
+        <div class="themeseg" id="themeSeg" role="group" aria-label="Theme"></div>
+        <span class="menuwrap">
+          <button class="btn icon iconbtn" type="button" data-menu="topMenu" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋯</button>
+          <div class="menu" id="topMenu" role="menu" hidden>
+            <button type="button" role="menuitem" data-act="reload">Refresh</button>
+            <button type="button" role="menuitem" data-act="changekey">Change review admin key</button>
+            <button type="button" role="menuitem" data-act="lock">Lock</button>
+          </div>
+        </span>
+      </div>
+    </header>
+    <main id="screen" aria-live="polite"></main>
+    <footer class="foot"><span>LFMP Automation Review admin · v1.0.0</span><span>Client pages are unchanged and never ask for a password.</span></footer>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script type="module" src="admin.js?v=1.0.0"></script>
+</body>
+</html>

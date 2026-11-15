@@ -1,0 +1,82 @@
+/* Automation Review admin (admin/ only; the client pages keep their own look). Shared look: lfmp-ui.css (same file as the
+   Builder and KPI admin). Tool colour = teal: only the top band, the REVIEW chip, the menu underline and the headline
+   eyebrow + accent use it. Main buttons stay gold; status colours stay the same. Every pair passes WCAG AA. */
+:root{--tool:#1f7f7a;--tool-ink:#1b746f;--bg:#ecf4f2}   /* text teal a shade darker: #1f7f7a is 4.29:1 on #ecf4f2, #1b746f 4.98:1 */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--tool:#3fb6b0;--tool-ink:#3fb6b0;--bg:#09100f}}
+:root[data-theme="dark"]{--tool:#3fb6b0;--tool-ink:#3fb6b0;--bg:#09100f}
+body:has(#appView:not([hidden]))::before{content:"";display:block;height:4px;background:var(--tool)}
+
+/* the same pieces as the Builder / KPI admin pages */
+.sub{font-size:14px;color:var(--mut);margin:0}
+.btn.big{min-height:46px;padding:14px 22px;font-size:13px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.iconbtn{width:40px;padding:0}
+label.f{display:flex;flex-direction:column;gap:8px;font:700 11.5px/1.2 var(--b);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+label.f input{text-transform:none;letter-spacing:0;font-weight:400}
+.pw{position:relative;display:block}
+.pw input{padding-right:74px}
+.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--mut);padding:8px 10px;cursor:pointer;font:700 11px/1 var(--b);letter-spacing:.14em;text-transform:uppercase}
+.eye:hover{color:var(--ink)}
+.ferr{color:var(--red);font:600 13.5px/1.4 var(--b);margin:10px 0 0}
+.ferr:empty{display:none}
+.gate{min-height:100vh;display:grid;place-items:center;padding:24px 16px}
+.gate .card{width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;background:var(--panel);border:1px solid var(--line);padding:32px}
+.gate.wide .card{max-width:600px}
+.gate .disp{font-size:44px}
+.gatehead{display:flex;align-items:center;gap:12px}
+.top{flex-wrap:wrap;row-gap:14px}
+.topr{flex-wrap:wrap;justify-content:flex-end}
+.toolchip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border:1px solid var(--tool);color:var(--tool-ink);font:700 10.5px/1 var(--b);letter-spacing:.14em;text-transform:uppercase;flex:0 0 auto;margin-left:-14px}
+.nav a[aria-current="page"]{border-bottom-color:var(--tool)}
+.themeseg{display:inline-flex;border:1px solid var(--line);min-height:38px}
+.themeseg button{border:0;background:transparent;padding:0 10px;font:700 11.5px/1 var(--b);letter-spacing:.12em;text-transform:uppercase;color:var(--mut);cursor:pointer}
+.themeseg button[aria-pressed="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--acc)}
+.themeseg button:hover{color:var(--ink)}
+.themeseg .sep{align-self:center;color:var(--mut)}
+.menuwrap{position:relative;display:inline-flex}
+.menu{position:absolute;right:0;top:calc(100% + 6px);min-width:240px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);z-index:45;display:flex;flex-direction:column;padding:6px 0}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:11px 16px;font:600 14px var(--b);color:var(--ink);cursor:pointer;white-space:nowrap}
+.menu button:hover,.menu button:focus-visible{background:var(--panel2)}
+.foot{display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;padding:28px 0 40px;font-size:12.5px;color:var(--mut)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;font-size:14px;box-shadow:var(--shadow);z-index:70;max-width:calc(100vw - 32px)}
+
+/* home */
+.hero{padding:40px 0 22px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px 24px;flex-wrap:wrap}
+.hero .ey{margin-bottom:12px;color:var(--tool-ink)}
+.hero .disp{font-size:clamp(44px,5.4vw,72px)}
+.hero .disp .g{color:var(--tool-ink)}
+.hero>.btn.p{min-height:46px;padding:0 22px}
+.strip{margin-bottom:8px}
+.list{display:flex;flex-direction:column}
+.lhead,.row{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1.5fr) minmax(0,1.6fr) 112px;gap:16px;align-items:center}
+.lhead{padding:18px 0 10px;font:700 11px/1.2 var(--b);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);border-bottom:1px solid var(--line)}
+.row{padding:16px 0;border-bottom:1px solid var(--line)}
+.row .nm{font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm small{display:block;font-weight:400;font-size:13px;color:var(--mut)}
+.row .au{font-size:14px;color:var(--ink)} .row .au small{display:block;font-size:13px;color:var(--mut)}
+.st{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.st i{font-style:normal;font-weight:800;width:16px;text-align:center}
+.st.warn{color:var(--acc-ink)} .st.ok{color:var(--green)} .st.wait{color:var(--blue)} .st.none{color:var(--mut)}
+.st small{font-weight:400;color:var(--mut)}
+.row .acts{display:flex;gap:8px;justify-content:flex-end}
+.empty,.loading{padding:40px 0;color:var(--mut)}
+.errbox{border:1px solid var(--line);border-left:3px solid var(--red);padding:12px 14px;font-size:14px;background:var(--panel);margin:18px 0}
+.errbox::before{content:"✕";color:var(--red);font-weight:800;margin-right:7px}
+.note{font-size:13px;color:var(--mut);margin:18px 0 0}
+
+@media (max-width:860px){
+  .top .upd{display:none}
+  .lhead{display:none}
+  .row{grid-template-columns:1fr auto;grid-template-areas:"nm acts" "au au" "st st";gap:6px 12px;padding:16px 0}
+  .row .nm{grid-area:nm;white-space:normal} .row .au{grid-area:au} .row .stc{grid-area:st} .row .acts{grid-area:acts;align-self:start}
+}
+@media (max-width:560px){
+  .top{gap:14px 20px}
+  .nav{gap:18px;order:3;width:100%}
+  .toolchip{margin-left:-6px}
+  .hero{padding:28px 0 18px}
+  .hero>.btn.p{width:100%}
+  .menu{position:fixed;left:8px;right:8px;top:auto;bottom:8px;min-width:0}
+  .menu button{padding:15px 18px;font-size:15px}
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
