@@ -10,9 +10,9 @@
 <script>try { var t = localStorage.getItem('lfmp-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
 <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="lfmp-ui.css?v=1.0.0">
-<link rel="stylesheet" href="admin.css?v=1.0.0">
-<link rel="stylesheet" href="lfmp-login.css?v=1.0.0">
+<link rel="stylesheet" href="lfmp-ui.css?v=1.1.0">
+<link rel="stylesheet" href="admin.css?v=1.1.0">
+<link rel="stylesheet" href="lfmp-login.css?v=1.1.0">
 <script src="../config.js"></script>
 </head>
 <body>
@@ -50,7 +50,6 @@
         <a href="./" aria-current="page">Review</a>
       </nav>
       <div class="topr">
-        <div class="upd" aria-live="polite">Loaded<b id="loadedAt">…</b></div>
         <div class="themeseg" id="themeSeg" role="group" aria-label="Theme"></div>
         <span class="menuwrap">
           <button class="btn icon iconbtn" type="button" data-menu="topMenu" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋯</button>
@@ -63,11 +62,15 @@
       </div>
     </header>
     <main id="screen" aria-live="polite"></main>
-    <footer class="foot"><span>LFMP Automation Review admin · v1.0.0</span><span>Client pages are unchanged and never ask for a password.</span></footer>
+    <footer class="foot"><span>LFMP Automation Review admin · v1.1.0</span><span>Client pages never show these controls.</span></footer>
   </div>
 </div>
 
+<div class="dshade" id="dpShade" hidden></div>
+<aside class="dpanel" id="dPanel" role="dialog" aria-modal="true" aria-labelledby="dpTitle" hidden></aside>
+<div class="ovl" id="ovl" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div></div>
+
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-<script type="module" src="admin.js?v=1.0.0"></script>
+<script type="module" src="admin.js?v=1.1.0"></script>
 </body>
 </html>

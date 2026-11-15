@@ -1,0 +1,73 @@
+// Automation Review admin: pure rules (no DOM), unit-tested in admin/tests/logic.test.mjs.
+// The request rules copy index.html's (normStatus, sameV, isReplaced, subStatusKey) so the admin and the client
+// page always agree on what is open.
+
+export const ST = { REQ: 'Changes Requested', PROG: 'In Progress', UPD: 'Updated — Ready for Review', OK: 'Approved' };
+export const TEAM_ST = [ST.REQ, ST.PROG, ST.UPD];   // Approved is only ever set by the client
+export const ST_LABEL = { [ST.REQ]: 'Changes requested', [ST.PROG]: 'In progress', [ST.UPD]: 'Updated — ready for client review' };
+
+export const isReq = r => !!r && (r.action === 'change' || r.action === 'copy');
+export function normStatus(s) {
+  s = String(s == null ? '' : s).trim(); if (!s) return '';
+  const k = s.toLowerCase(), L = { open: ST.REQ, 'in progress': ST.PROG, done: ST.UPD };
+  if (L[k]) return L[k];
+  const m = Object.values(ST).find(x => x.toLowerCase() === k); if (m) return m;
+  return /^updated/i.test(s) ? ST.UPD : s;
+}
+// Google Sheets can turn "1.0" into the number 1.
+export const sameV = (a, b) => String(a) === String(b) || (a !== '' && b !== '' && a != null && b != null && Number(a) === Number(b));
+// A later "Looks good" on the same step replaces earlier requests.
+export function isReplaced(r, rs) {
+  const t = Date.parse(r.timestamp) || 0;
+  return rs.some(x => x.step === r.step && x.action === 'approve' && (Date.parse(x.timestamp) || 0) > t);
+}
+// 'req' | 'prog' | 'upd' | 'ok' for requests; the action ('answer', 'approve', 'approve_all', 'undo') otherwise.
+export function statusKey(r, all) {
+  if (!isReq(r)) return r.action;
+  const st = normStatus(r.status) || ST.REQ;
+  if ((st === ST.REQ || st === ST.PROG) && isReplaced(r, all.filter(x => x.client === r.client && x.automation === r.automation && sameV(x.version, r.version)))) return 'ok';
+  return st === ST.OK ? 'ok' : st === ST.UPD ? 'upd' : st === ST.PROG ? 'prog' : 'req';
+}
+
+// Submissions filters. Everything also has a small type filter.
+export const FILTERS = [['answer', 'To answer'], ['waiting', 'Waiting for client'], ['done', 'Done'], ['everything', 'Everything']];
+export const TYPES = [['all', 'All types'], ['requests', 'Change requests'], ['answer', 'Answers'], ['approve', 'Looks good clicks'], ['undo', 'Took back looks good'], ['approve_all', 'Automation approvals']];
+export function inFilter(k, f) {
+  if (f === 'answer') return k === 'req' || k === 'prog';
+  if (f === 'waiting') return k === 'upd';
+  if (f === 'done') return k === 'ok' || k === 'approve_all';
+  return true;
+}
+export function inType(r, k, t) {
+  if (t === 'all') return true;
+  if (t === 'requests') return isReq(r);
+  return r.action === t;
+}
+
+// One client on the home: 'need' (any open request), 'wait' (any updated, waiting on the client) or 'ok'.
+export function summarize(code, data, all) {
+  const rows = all.filter(r => r.client === code);
+  let open = 0, waiting = 0;
+  for (const r of rows) { if (!isReq(r)) continue; const k = statusKey(r, all); if (k === 'req' || k === 'prog') open++; else if (k === 'upd') waiting++; }
+  const autos = (data && data.automations) || [];
+  const approved = autos.filter(a => rows.some(r => r.action === 'approve_all' && r.automation === a.id && sameV(r.version, a.version))).length;
+  const last = rows.reduce((m, r) => Math.max(m, Date.parse(r.timestamp) || 0, Date.parse(r.updated_at) || 0), 0);
+  return { code, open, waiting, approved, autos: autos.length, last, state: open ? 'need' : waiting ? 'wait' : 'ok' };
+}
+export const isTestClient = (code, name) => /^zz[-\s]/i.test(code || '') || /^zz\b|\btest\b/i.test(name || '');
+
+// What the client did, in words (same wording as index.html's Submissions).
+export function kindText(r) {
+  if (r.action === 'answer') return 'Answered a question';
+  if (r.action === 'approve_all') return 'Approved the whole automation';
+  if (r.action === 'approve') return r.type === 'Everything else looks good' ? 'Marked looks good (Everything else looks good)' : 'Marked looks good';
+  if (r.action === 'undo') return 'Took back “looks good”';
+  if (r.action === 'copy') return 'Sent new wording';
+  return r.type || 'Requested a change';
+}
+// Short tag per line: request status, or the kind of response.
+export function tagOf(r, k) {
+  if (isReq(r)) return { req: ['Change', 'red'], prog: ['In progress', 'blue'], upd: ['Updated', 'tool'], ok: ['Approved', 'green'] }[k];
+  return { answer: ['Answer', 'mut'], approve: ['Looks good', 'green'], approve_all: ['Approved', 'green'], undo: ['Took back', 'mut'] }[r.action] || [r.action || 'Response', 'mut'];
+}
+export const prettyClient = c => String(c || '').replace(/-(?=[a-z0-9]*\d)[a-z0-9]{6}$/i, '').split('-').map(w => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ');
