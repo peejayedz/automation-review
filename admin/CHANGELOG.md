@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## v1.6.2 — 18 Nov 2026: team Moved page fits phones
+- **[internal]** The team's "We've moved." page (`admin/moved.html`) fits phones: below 880px the top panel is tighter (headline min(56px,14vw), subtitle hidden below 480px, tool dots kept), so "Open LFMP tools" shows without scrolling even on 360x640; the footer moved to the very bottom, under the card; at tablet widths the card follows right after the top panel. Desktop unchanged. Still a byte-identical copy of the Builder's `admin-site/moved.html`. Client pages untouched.
+
 ## v1.6.1 — 17 Nov 2026: team Moved page restyled
 - **[internal]** The team's "We've moved." page at the old public admin address (`admin/moved.html`) has the new "Option C refined" look, matching the team sign-in page. It's a byte-identical copy of the Builder's `admin-site/moved.html`, and the wording and link are unchanged. The client-facing "This review has moved" page (`index.html`, `preview/`) is **not** touched.
 
