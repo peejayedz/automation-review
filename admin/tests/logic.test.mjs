@@ -1,25 +1,26 @@
-// Review admin rules = index.html's rules. The functions are taken from index.html itself (read only), so a later change
-// to the client page that the admin doesn't follow fails here. Run: node admin/tests/logic.test.mjs  (Node 20+, no install)
+// Review admin rules = the client pages' rules. The functions are taken from the files themselves (read only), so a later
+// change to a client page that the admin doesn't follow fails here. Run: node admin/tests/logic.test.mjs  (Node 20+, no install)
+// v1.6.0: the classic index.html is retired (a redirect / "moved" page), so the request rules come from messages.html
+// (Link B, the page clients use) and the Submissions rule (isReplaced, subStatusKey) from admin/edit.js (classic editor,
+// to be deleted ~15 Dec 2026: then keep those two as fixtures here). The Edit tab's wording rules come from messages.html.
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import * as L from '../review-logic.mjs';
 
-// v1.4.0: the Submissions rule (subStatusKey) moved with the admin mode from index.html to admin/edit.js (Edit wording).
-const html = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
+const html = await readFile(new URL('../../messages.html', import.meta.url), 'utf8');
 const editJs = await readFile(new URL('../edit.js', import.meta.url), 'utf8');
-const grab = (re, what, text = html, file = 'index.html') => { const m = text.match(re); if (!m) throw new Error(`${file}: ${what} not found`); return m[0]; };
+const grab = (re, what, text = html, file = 'messages.html') => { const m = text.match(re); if (!m) throw new Error(`${file}: ${what} not found`); return m[0]; };
 const src = [
   grab(/const ST = \{[^\n]*\};/, 'ST'),
   grab(/const isReq = [^\n]*;/, 'isReq'),
-  grab(/function normStatus\(s\)\{[\s\S]*?\n\}/, 'normStatus'),
+  grab(/function normStatus\(s\)\{[\s\S]*?return m \|\| [^\n]*\}/, 'normStatus'),
   grab(/const sameV = [^\n]*;/, 'sameV'),
-  grab(/function isReplaced\(r, rs\)\{[\s\S]*?\n\}/, 'isReplaced'),
+  grab(/function isReplaced\(r, rs\)\{[\s\S]*?\n\}/, 'isReplaced', editJs, 'admin/edit.js'),
   grab(/function subStatusKey\(r, all\)\{[\s\S]*?\n\}/, 'subStatusKey', editJs, 'admin/edit.js'),
-].join('\n') + '\nthis.X = { ST, isReq, normStatus, sameV, isReplaced, subStatusKey };';
-// edit.js keeps the same client rules as index.html (it is the classic page with its edit controls)
-for (const [re, what] of [[/const ST = \{[^\n]*\};/, 'ST'], [/const isReq = [^\n]*;/, 'isReq'], [/function normStatus\(s\)\{[\s\S]*?\n\}/, 'normStatus'], [/const sameV = [^\n]*;/, 'sameV'], [/function isReplaced\(r, rs\)\{[\s\S]*?\n\}/, 'isReplaced']]) {
-  if (grab(re, what) !== grab(re, what, editJs, 'admin/edit.js')) throw new Error(`${what} differs between index.html and admin/edit.js`);
-}
+  'let versions = {}, edits = {}, editAt = {};',
+  grab(/function applyContent\(content, base\)\{[\s\S]*?\n\}/, 'applyContent'),
+  grab(/function updated\(m\)\{[\s\S]*?\n\}/, 'updated'),
+].join('\n') + '\nthis.X = { ST, isReq, normStatus, sameV, isReplaced, subStatusKey, applyContent, updated, get versions(){ return versions; }, get edits(){ return edits; } };';
 const ctx = {}; vm.runInNewContext(src, ctx); const I = ctx.X;
 
 let pass = 0, fail = 0;
@@ -43,13 +44,13 @@ const rows = [
   { id: 'm', client: 'c2', automation: 'y', version: '1.0', step: 's1', action: 'change', status: 'Changes Requested', timestamp: T(1) }, // other version
 ];
 
-t('ST, normStatus, sameV, isReq are the same as index.html', () => {
+t('ST, normStatus, sameV, isReq are the same as messages.html (Link B)', () => {
   eq(L.ST, I.ST);
   for (const s of ['', 'Open', 'in progress', 'DONE', 'Approved', 'Updated — Ready for Review', 'Updated', 'weird', null]) eq(L.normStatus(s), I.normStatus(s), `normStatus(${s})`);
   for (const [a, b] of [['1.0', 1], ['1.0', '1'], ['1.1', '1.10'], ['2', '1.0'], ['', 0]]) eq(L.sameV(a, b), I.sameV(a, b), `sameV(${a},${b})`);
   for (const r of rows) eq(L.isReq(r), I.isReq(r), `isReq ${r.id}`);
 });
-t('statusKey = index.html subStatusKey for every kind of row (incl. a later Looks good replacing a request)', () => {
+t('statusKey = subStatusKey (admin/edit.js) for every kind of row (incl. a later Looks good replacing a request)', () => {
   const norm = rows.map(r => (I.isReq(r) ? { ...r, status: I.normStatus(r.status) || I.ST.REQ } : r));   // admin_all / normRows do this
   for (const r of norm) eq(L.statusKey(r, norm), I.subStatusKey(r, norm), `row ${r.id}`);
   eq(norm.map(r => L.statusKey(r, norm)).join(','), 'req,prog,upd,ok,ok,approve,req,approve,approve_all,answer,undo,upd,req');
@@ -81,6 +82,59 @@ t('wording matches the Edit wording page\'s Submissions (formerly index.html)', 
   eq(L.kindText({ action: 'approve', type: 'Everything else looks good' }), 'Marked looks good (Everything else looks good)');
   eq(L.kindText({ action: 'copy' }), 'Sent new wording'); eq(L.kindText({ action: 'change', type: 'Change timing' }), 'Change timing');
   eq(L.prettyClient('boca-dental-e770de'), 'Boca Dental');
+});
+
+// ---------- Edit tab (v1.6.0): the wording Link B shows, from messages.html's own applyContent() / updated() ----------
+const BASE = { automations: [{ id: 'nl', version: '1.0' }, { id: 'ns', version: 2 }] };
+const MSGS = [
+  { id: 'nl.s3', kind: 'Email', subject: 'Welcome', text: 'Hi [First name],\n\nThanks.' },
+  { id: 'nl.s5', kind: 'Text', text: 'Hi [First name], call us.' },
+  { id: 'ns.s2', kind: 'Email', subject: 'Missed you', text: 'Body' },
+];
+let seed = 7; const rnd = n => { seed = (seed * 16807) % 2147483647; return seed % n; };
+const FIELDS = ['email.subject', 'email.body', 'sms', 'body', 'title', 'note'];
+function randomContent(n) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const m = MSGS[rnd(3)], a = m.id.split('.')[0], s = m.id.split('.')[1], kind = rnd(9);
+    if (kind === 0) out.push({ timestamp: T(10 + rnd(15)), automation: a, field: 'version', value: `1.${rnd(5)}` });
+    else { const f = FIELDS[rnd(FIELDS.length)]; out.push({ timestamp: T(10 + rnd(15)), automation: a, field: `step:${s}:${f}`, value: f === 'body' && rnd(2) ? `Subject: S${i}\n\nB${i}` : `v${i}` }); }
+  }
+  if (rnd(3) === 0) out.push({ timestamp: T(26), automation: '', field: 'client:name', value: 'New name' });
+  return out;
+}
+const iShown = m => { const u = I.updated(m); return u ? { subject: u.subject, text: u.text } : { subject: m.subject, text: m.text }; };
+t('Link B wording = messages.html applyContent()/updated() for 300 random edit histories (versions, every field, body with Subject:)', () => {
+  for (let k = 0; k < 300; k++) {
+    const content = randomContent(1 + rnd(8));
+    I.applyContent(content, BASE); const mine = L.linkB(content, BASE);
+    eq(mine.versions, JSON.parse(JSON.stringify(I.versions)), `versions #${k}`);
+    for (const m of MSGS) { const s = L.shownWording(m, mine.edits); eq({ subject: s.subject, text: s.text }, iShown(m), `${m.id} #${k}`); eq(s.edited, !!I.updated(m), `edited ${m.id} #${k}`); }
+  }
+});
+t('Edit tab save: the fields it writes make Link B (messages.html) show exactly the new wording, whatever was edited before', () => {
+  for (let k = 0; k < 300; k++) {
+    const content = randomContent(rnd(8));
+    const m = MSGS[rnd(3)], email = L.isEmailMsg(m);
+    const want = { subject: email ? `New subject ${k}` : L.shownWording(m, L.linkB(content, BASE).edits).subject, text: `New text ${k}\n\nSecond paragraph` };   // a text has no subject box: it stays
+    const fields = L.editFieldsFor(m, L.linkB(content, BASE).edits, want.subject, want.text);
+    const after = [...content, ...fields.map(([field, value], i) => ({ timestamp: `2026-10-28T12:00:0${i}Z`, automation: m.id.split('.')[0], field, value }))];
+    I.applyContent(after, BASE);
+    eq(iShown(m), want, `${m.id} #${k} after ${JSON.stringify(fields)}`);
+    for (const o of MSGS.filter(x => x !== m)) { I.applyContent(content, BASE); const before = iShown(o); I.applyContent(after, BASE); eq(iShown(o), before, `other message ${o.id} unchanged #${k}`); }
+  }
+  // no change → nothing written; email → email.subject / email.body; text → sms
+  const none = L.linkB([], BASE).edits;
+  eq(L.editFieldsFor(MSGS[0], none, 'Welcome', MSGS[0].text), []);
+  eq(L.editFieldsFor(MSGS[0], none, 'Hello', MSGS[0].text), [['step:s3:email.subject', 'Hello']]);
+  eq(L.editFieldsFor(MSGS[1], none, undefined, 'Hi'), [['step:s5:sms', 'Hi']]);
+});
+t('new version = the classic editor\'s nextVersion(); Automations approved follows the current version', () => {
+  const cx = {}; vm.runInNewContext(grab(/function nextVersion\(v\)\{[\s\S]*?\n\}/, 'nextVersion', editJs, 'admin/edit.js') + '\nthis.f = nextVersion;', cx);
+  for (const v of ['1.0', '1.9', '2', 2, '', 'x', '3.10']) eq(L.nextVersion(v), cx.f(v), `nextVersion(${v})`);
+  const rowsV = [{ client: 'c', automation: 'nl', version: '1.0', action: 'approve_all', timestamp: T(1) }];
+  eq(L.summarize('c', BASE, rowsV).approved, 1);
+  eq(L.summarize('c', BASE, rowsV, { nl: '1.1', ns: '2' }).approved, 0, 'approval of the old version no longer counts');
 });
 
 console.log(`\n${pass}/${pass + fail} passed`);

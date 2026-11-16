@@ -215,3 +215,48 @@ label.f input,label.f select{text-transform:none;letter-spacing:0;font-weight:40
   .menu button,.menu a{padding:15px 18px;font-size:15px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+
+/* v1.6.0: Details tabs (Overview · Edit), Edit tab, "No client link yet" */
+.dpanel{transition:width .18s ease}
+.dpanel.wide{width:min(760px,100vw)}
+.dtabs{display:flex;gap:24px;padding:0 24px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.dtabs a{padding:13px 0 11px;font:700 12px/1 var(--b);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+.dtabs a:hover{color:var(--ink)}
+.dtabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--tool)}
+.nolink{font-size:12.5px;color:var(--mut);white-space:nowrap;align-self:center}
+.nolinkbox{margin:0;padding:12px 14px;background:var(--panel);border:1px dashed var(--line);border-left:3px solid var(--tool);font-size:14px;color:var(--ink)}
+.edmore{margin-top:10px}
+.edintro .btnrow{align-items:center;margin-top:12px}
+.edlbl{margin:0 4px 0 0 !important;font-size:10.5px}
+.edbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px}
+.edpick{flex:1 1 260px;min-width:0}
+.edver{display:flex;align-items:center;gap:10px;min-height:44px}
+.edver .lbl{margin:0 !important}
+.edver b{font-size:14px}
+.edconfirm{margin-top:14px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--tool)}
+.edconfirm p{margin:0 0 4px;font-size:14px}
+.edcount{margin:18px 0 10px}
+.edlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.edmsg{background:var(--panel);border:1px solid var(--line);padding:12px 14px;min-width:0}
+.edmsg.on{border-color:var(--tool);box-shadow:inset 3px 0 0 var(--tool)}
+.edm-h{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap}
+.edm-h .btn{margin-left:auto}
+.edwhen{font-size:13px;color:var(--mut);min-width:0}
+.edtag{font:700 10.5px/1 var(--b);letter-spacing:.1em;text-transform:uppercase;color:var(--tool-ink);border:1px solid currentColor;padding:4px 6px;white-space:nowrap}
+.edsubj{margin:10px 0 0;font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.edtext{margin-top:6px;font-size:14px;white-space:pre-line;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink)}
+.edform{margin-top:12px;gap:12px}
+.edform textarea{resize:vertical;line-height:1.5;text-transform:none;letter-spacing:0;font-weight:400}
+label.f textarea{text-transform:none;letter-spacing:0;font-weight:400}
+.edhint{font-size:12.5px}
+.btn.lnkbtn{border-color:transparent;background:transparent;color:var(--tool-ink);margin-left:auto}
+.btn.lnkbtn:hover{text-decoration:underline;background:transparent}
+.menuold{color:var(--mut) !important;border-top:1px solid var(--line);margin-top:4px}
+@media (max-width:560px){
+  .dtabs{padding:0 16px;gap:20px}
+  .edm-h .btn{margin-left:auto}
+  .edbar{flex-direction:column;align-items:stretch}
+  .edpick{flex:none}
+  .btn.lnkbtn{margin-left:0}
+  .cacts .nolink{white-space:normal}
+}

@@ -1,4 +1,5 @@
-// Edit wording v1.4.0 (team only, lfmp-admin.pages.dev behind Google sign-in): the classic review page with its edit
+// Classic editor (old), was "Edit wording" v1.4.0 (v1.6.0: reachable only from Details → ⋯ → Classic editor (old), with an
+// "Old editor" banner; to be deleted ~15 Dec 2026 once the Review admin's Edit tab is proven) (team only, lfmp-admin.pages.dev behind Google sign-in): the classic review page with its edit
 // controls on. Moved here from the public index.html, which no longer has an admin mode (16 Nov 2026).
 // Same features as the old "&admin" mode: edit automation name / summary / summary boxes, start a new review round
 // (version), edit step title / timing / description / note, edit text and email copy, edit questions, rename the client,
@@ -280,7 +281,7 @@ function render(){
   if (view === "subs" && isAdmin){
     $("#clientName").textContent = "All clients · Submissions";
     $("#clientSub").textContent = "Admin only · Powered by Law Firm Marketing Pros";
-    document.title = "Submissions · Edit wording · LFMP";
+    document.title = "Submissions · Classic editor (old) · LFMP";
     const ap = document.querySelector(".autopick"); if (ap) ap.hidden = true;
     $("#app").innerHTML = subsHTML();
     renderAdminBar();
@@ -288,7 +289,7 @@ function render(){
   }
   $("#clientName").textContent = data.client.name + " · Automation Review";
   $("#clientSub").textContent = "Powered by Law Firm Marketing Pros";
-  document.title = "Edit wording · " + data.client.name + " · LFMP";
+  document.title = "Classic editor (old) · " + data.client.name + " · LFMP";
   const mark = {loading:"Loading…", approved:"✓ Approved", changes:"● Changes requested", updated:"◐ Updated · please review", pending:"○ Needs review"};
   $("#autoSelect").innerHTML = data.automations.map((a, i) => `<option value="${esc(a.id)}" ${a.id===auto.id?"selected":""}>${i+1}. ${esc(a.name)} · ${mark[autoState(a)]}</option>`).join("");
   const nApproved = data.automations.filter(a => autoState(a) === "approved").length;
@@ -539,8 +540,8 @@ function renderAdminBar(){
   bar.hidden = false;
   bar.classList.toggle("welcome", isAdmin && justSignedIn);
   $("#adminbarIn").innerHTML = isAdmin
-    ? `<a class="btn small" href="${esc(REVIEW_ADMIN)}#/client/${encodeURIComponent(clientKey)}">← Review admin</a><span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Edit wording</span><span class="hint" data-me>Signed in as <b>${esc(ME.name || ME.email)}</b></span><button class="btn small subsbtn" type="button" data-subs-open>📥 Submissions${subs ? (() => { const c = subs.rows.filter(r => ["req","prog"].includes(subStatusKey(r, subs.rows))).length; return c ? `<span class="cnt">${c}</span>` : ""; })() : ""}</button>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminForm === "clientname" ? `<form class="cren" data-form="clientname"><label for="cnameIn" class="hint">Client name</label><input type="text" id="cnameIn" value="${esc(data.client.name)}" maxlength="120" required><button class="btn small primary" type="submit">Save name</button><button class="btn small" type="button" data-admin-cancel>Cancel</button></form>` : `${adminClients.length ? clientPickHTML() : ""}<button class="adm" type="button" data-admin="clientname" title="Change how this client's name appears on their dashboard">✎ Rename client</button>`}<span>Edit names, versions and copy, update statuses, and delete test responses. Team only: clients never see this page.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button>${data && data.customPage ? `<a class="btn small" href="${esc(BASE + data.customPage)}?c=${encodeURIComponent(clientKey)}" target="_blank" rel="noopener" title="This client is sent to a custom review page">Client's review page ↗</a>` : ""}<button class="btn small" type="button" data-admin-exit>Sign out</button>`
-    : `<a class="btn small" href="${esc(REVIEW_ADMIN)}">← Review admin</a><b>Edit wording is off</b><span class="akmsg bad" role="alert">${esc(signInError || "Checking your sign-in…")}</span><button class="btn small" type="button" data-admin-exit>Sign out</button>`;
+    ? `<a class="btn small" href="${esc(REVIEW_ADMIN)}#/client/${encodeURIComponent(clientKey)}">← Review admin</a><span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Classic editor (old)</span><span class="hint" data-me>Signed in as <b>${esc(ME.name || ME.email)}</b></span><button class="btn small subsbtn" type="button" data-subs-open>📥 Submissions${subs ? (() => { const c = subs.rows.filter(r => ["req","prog"].includes(subStatusKey(r, subs.rows))).length; return c ? `<span class="cnt">${c}</span>` : ""; })() : ""}</button>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminForm === "clientname" ? `<form class="cren" data-form="clientname"><label for="cnameIn" class="hint">Client name</label><input type="text" id="cnameIn" value="${esc(data.client.name)}" maxlength="120" required><button class="btn small primary" type="submit">Save name</button><button class="btn small" type="button" data-admin-cancel>Cancel</button></form>` : `${adminClients.length ? clientPickHTML() : ""}<button class="adm" type="button" data-admin="clientname" title="Change how this client's name appears on their dashboard">✎ Rename client</button>`}<span>Edit names, versions and copy, update statuses, and delete test responses. Team only: clients never see this page.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button>${data && data.customPage ? `<a class="btn small" href="${esc(BASE + data.customPage)}?c=${encodeURIComponent(clientKey)}" target="_blank" rel="noopener" title="This client is sent to a custom review page">Client's review page ↗</a>` : ""}<button class="btn small" type="button" data-admin-exit>Sign out</button>`
+    : `<a class="btn small" href="${esc(REVIEW_ADMIN)}">← Review admin</a><b>Classic editor is off</b><span class="akmsg bad" role="alert">${esc(signInError || "Checking your sign-in…")}</span><button class="btn small" type="button" data-admin-exit>Sign out</button>`;
 }
 
 function questionsHTML(){
@@ -733,7 +734,7 @@ matchMedia("(max-width:980px)").addEventListener("change", (m) => { if (m.matche
 async function boot(){
   if (!SAVE_URL){ const b = $("#banner"); b.hidden = false; b.textContent = "Demo mode: responses are saved only in this browser until the Google Sheet connection is set up."; }
   const logo = document.querySelector(".logochip img"); if (logo) logo.src = BASE + "assets/lfmp-logo.png";
-  if (!clientKey){ $("#app").innerHTML = '<div class="empty">Open Edit wording from the <a href="' + esc(REVIEW_ADMIN) + '">Review admin</a> (a client\'s Details → ⋯ → Edit wording).</div>'; return; }
+  if (!clientKey){ $("#app").innerHTML = '<div class="empty">Open the classic editor from the <a href="' + esc(REVIEW_ADMIN) + '">Review admin</a> (a client\'s Details → ⋯ → Classic editor (old)).</div>'; return; }
   // Google sign-in (Cloudflare Access) first: no sign-in → the sign-in page. Then the review backend, through the server.
   try { ME = await startSession(); } catch(e){ if (e.status !== 401) $("#app").innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; return; }
   const j = await ping();

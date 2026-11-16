@@ -51,12 +51,13 @@ Definition of done for one request:
 
 An **approve_all** row is the client's sign-off. It records who approved, which version and when. Publish in GHL only after that row exists.
 
-## Team editing (Review admin + Edit wording, team site only)
+## Team editing (Review admin, team site only)
 
-Since 16 Nov 2026 the public review page (`index.html`) has **no admin mode**: no `&admin`, no Team sign-in, no edit controls. `&admin` and `?view=submissions` are ignored and show the normal client view. The team works only on the team site, behind Google sign-in (`@lawfirmmarketingpros.com`):
+**Since 17 Nov 2026 the classic review page is retired.** The public `index.html?c=<code>` shows no review content and has no admin mode. If the client has the new pages, it redirects to Link A (`plans/<code>.html`, else `plan.html?c=`; Link B if there is no plan page), keeping any `#hash`. Otherwise it shows "This review has moved. Your LFMP team will send you the new link." Clients use only Link A / Link B. The team works only on the team site, behind Google sign-in (`@lawfirmmarketingpros.com`):
 
-- **Review admin:** `https://lfmp-admin.pages.dev/automation-review/admin/`. Shows every client, their submissions, status + reply, delete/clear, and rename client.
-- **Edit wording:** Review admin → a client's Details → ⋯ → Edit wording (`admin/edit.html?c=<code>`). This is the classic page with its edit controls on. You can edit an automation's **name, summary and summary boxes**, **start a new review round** (version 1.0 → 1.1), edit **step title, timing, description and note**, edit the **copy of any text or email**, edit **questions**, set **status + reply**, delete a response, and **clear all responses** on an automation. It also has the all-clients Submissions view and the client picker.
+- **Review admin:** `https://lfmp-admin.pages.dev/automation-review/admin/`. Shows every client, their submissions, status + reply, delete, clear test responses and rename client.
+- **Edit tab:** Review admin → a client's Details → **Edit**. Edits Link B's message wording (email subject + body, text messages, team alerts) and starts a new version. Changes show on Link B; Link A (the plan page) reads only the JSON files. Clients without Link B have nothing to edit there ("No client link yet — create an A/B package in the Builder.").
+- **Classic editor (old):** Details → ⋯ → Classic editor (old) (`admin/edit.html?c=<code>`), until ~15 Dec 2026. Only there: automation name, summary, summary boxes, step title/timing/note and questions. Those only ever showed on the retired classic page.
 
 Edits are saved to the **Content** tab of the Sheet and shown to everyone straight away. The data file in GitHub stays as the starting point, and the newest edit wins. The browser never holds the admin key. The team site's server (`/api/review`, in the ghl-subaccount-builder repo) adds it, along with the signed-in person's first name.
 

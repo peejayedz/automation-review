@@ -152,11 +152,12 @@ try {
     await page.uncheck('#showTests');
     await page.fill('#homeQ', 'palm'); assert(await page.locator('.crow').count() === 1, 'search'); await page.fill('#homeQ', '');
   });
-  await check('home: Review page ↗ = Link A when the client has one (plans/ page for Mahdavi), else the classic ?c= link; new tab; row click = Details', async () => {
-    const href = await page.getAttribute('.crow[data-client="boca-dental-e770de"] .cacts a:first-child', 'href');
-    assert(href === '../?c=boca-dental-e770de' && await page.getAttribute('.crow[data-client="boca-dental-e770de"] .cacts a:first-child', 'target') === '_blank', href);
-    assert(await page.getAttribute('.crow[data-client="mahdavi-law-mc1mar"] .cacts a:first-child', 'href') === '../plans/mahdavi-law-mc1mar.html', 'mahdavi home link');
-    assert(await page.getAttribute('.crow[data-client="dumas-sanclemente-mo5cay"] .cacts a:first-child', 'href') === '../?c=dumas-sanclemente-mo5cay', 'dumas home link');
+  await check('home: Review page ↗ = Link A (plans/ page for Mahdavi), new tab; classic-only clients show "No client link yet" (no ?c= link anywhere); row click = Details', async () => {
+    assert(await page.getAttribute('.crow[data-client="mahdavi-law-mc1mar"] .cacts a:first-child', 'href') === '../plans/mahdavi-law-mc1mar.html' && await page.getAttribute('.crow[data-client="mahdavi-law-mc1mar"] .cacts a:first-child', 'target') === '_blank', 'mahdavi home link');
+    for (const c of ['dumas-sanclemente-mo5cay', 'palm-beach-plastic-n9umxi', 'boca-dental-e770de', 'emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) {
+      assert(await page.innerText(`.crow[data-client="${c}"] .cacts .nolink`) === 'No client link yet' && await page.locator(`.crow[data-client="${c}"] .cacts a`).count() === 1, c);
+    }
+    assert(!(await page.$$eval('a[href]', as => as.filter(a => /[?&]c=/.test(a.getAttribute('href')) && !/(plan|messages)\.html\?c=/.test(a.getAttribute('href'))).length)), 'a classic ?c= link on the home');
     await page.click('.crow[data-client="mahdavi-law-mc1mar"] .cname'); await page.waitForSelector('#dPanel:not([hidden])');
     assert(page.url().endsWith('#/client/mahdavi-law-mc1mar'), page.url());
   });
@@ -172,7 +173,8 @@ try {
     assert(new RegExp(`0\\s*of ${DATA['mahdavi-law-mc1mar'].automations.length}`).test(t), 'approved count');
     assert(/Last activity\s+\w{3} \d+, \d+:\d\d [AP]M ET/i.test(t), 'last activity');
   });
-  await check('Details Mahdavi: CLIENT LINKS (send to the client) = Link A · Plan + review (plans/ page), Link B · Review only; For the team: Classic dashboard', async () => {
+  await check('Details Mahdavi: tabs Overview · Edit; CLIENT LINKS (send to the client) = Link A · Plan + review (plans/ page), Link B · Review only; no Classic dashboard link', async () => {
+    assert(await page.$$eval('#dPanel .dtabs a', as => as.map(a => `${a.textContent}${a.getAttribute('aria-current') ? '*' : ''}=${a.getAttribute('href')}`).join(' ')) === 'Overview*=#/client/mahdavi-law-mc1mar Edit=#/client/mahdavi-law-mc1mar/edit', 'tabs');
     assert(/CLIENT LINKS\s*\(SEND TO THE CLIENT\)/i.test(await page.innerText('#clTitle')), 'heading');
     const ls = await clientLinks();
     const abs = rel => new URL(rel, ADMIN).href;
@@ -181,10 +183,7 @@ try {
     assert(ls[1][4] === '../messages.html?c=mahdavi-law-mc1mar' && ls[1][5] === abs('../messages.html?c=mahdavi-law-mc1mar'), JSON.stringify(ls[1]));
     assert(await page.$$eval('#dPanel .clinks .cla a', as => as.every(a => a.target === '_blank' && /Open/.test(a.textContent))), 'Open ↗ in a new tab');
     assert(!(await page.locator('#dPanel .links, #dPanel .clinks li:has-text("Sent")').count()), 'old Links block / a "Sent" mark (the Builder record has no sent field)');
-    const team = await page.$eval('#dPanel .lbl.team + a', a => [a.previousElementSibling.textContent, a.textContent.trim(), a.getAttribute('href'), a.target]);
-    assert(team[0] === 'For the team' && team[1] === 'Classic dashboard ↗' && team[2] === '../?c=mahdavi-law-mc1mar&classic' && team[3] === '_blank', JSON.stringify(team));
-    const fs = await page.$$eval('#dPanel .clt b, #dPanel .lbl.team + a', e => e.map(x => parseFloat(getComputedStyle(x).fontSize)));
-    assert(fs[fs.length - 1] < fs[0], `team link smaller than the client links ${fs}`);
+    assert(!(await page.locator('#dPanel .lbl.team, #dPanel a:has-text("Classic dashboard"), #dPanel a:has-text("Edit wording")').count()), 'old team links');
   });
   await check('Copy: copies the full link and shows "Copied" next to that button for 4 s', async () => {
     await page.click('#dPanel .clinks li[data-link="b"] [data-copy]');
@@ -200,19 +199,19 @@ try {
     const ls = await clientLinks();
     assert(ls.map(l => `${l[0]}=${l[4]}`).join(' ') === 'a=../plan.html?c=zz-test-2-qpqhx7 b=../messages.html?c=zz-test-2-qpqhx7', JSON.stringify(ls));
   });
-  await check('Details Dumas (classic only): one "Review page" link (the ?c= link they were sent) with Open + Copy, no A/B', async () => {
-    await page.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
-    const ls = await clientLinks();
-    assert(ls.length === 1 && ls[0][0] === 'c' && ls[0][1] === 'Review page' && ls[0][4] === '../?c=dumas-sanclemente-mo5cay' && ls[0][5] === new URL('../?c=dumas-sanclemente-mo5cay', ADMIN).href, JSON.stringify(ls));
-    assert(/Needs you\s*·?\s*6 requests to answer/.test(await page.innerText('#dPanel .dstat')), 'status line');
-    await page.click('#dPanel .clinks [data-copy]'); assert(await page.evaluate(() => navigator.clipboard.readText()) === ls[0][5], 'copy');
+  await check('Details Dumas (classic only): "No client link yet — create an A/B package in the Builder." instead of a review link; past answers still open items', async () => {
+    await page.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay`); await page.waitForSelector('#dPanel:not([hidden]) .nolinkbox');
+    assert(await page.innerText('#dPanel .nolinkbox') === 'No client link yet — create an A/B package in the Builder.', await page.innerText('#dPanel .nolinkbox'));
+    assert(!(await page.locator('#dPanel .clinks, #dPanel [data-copy]').count()), 'a link / Copy for a classic-only client');
+    assert(/Needs you\s*·?\s*6 requests to answer/.test(await page.innerText('#dPanel .dstat')) && await page.locator('#dPanel .oitem').count() === 6, 'status line + open items');
   });
   await check('Details Emery (no responses): grey "○ Not started · Links not opened yet"; Palm Beach is classic too', async () => {
     await page.goto(`${ADMIN}#/client/emery-law-9lp7do`); await page.waitForSelector('#dPanel:not([hidden]) .dstat');
     assert(/^○\s*Not started\s*·?\s*Links not opened yet$/.test((await page.innerText("#dPanel .dstat")).trim()), await page.innerText('#dPanel .dstat'));
     assert(/No responses yet/.test(await page.innerText('#dPanel')), 'last activity');
-    await page.goto(`${ADMIN}#/client/palm-beach-plastic-n9umxi`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
-    const ls = await clientLinks(); assert(ls.length === 1 && ls[0][4] === '../?c=palm-beach-plastic-n9umxi', JSON.stringify(ls));
+    assert(await page.innerText('#dPanel .nolinkbox') === 'No client link yet — create an A/B package in the Builder.', 'emery no link');
+    await page.goto(`${ADMIN}#/client/palm-beach-plastic-n9umxi`); await page.waitForSelector('#dPanel:not([hidden]) .nolinkbox');
+    assert(!(await page.locator('#dPanel .clinks').count()), 'palm beach link');
     await page.goto(`${ADMIN}#/client/mahdavi-law-mc1mar`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
   });
   await check('Details: Esc closes and returns to #/; a hash link opens Details straight away', async () => {
@@ -228,11 +227,125 @@ try {
     const p = lastPost('admin_edit'); assert(p && p.client === 'dumas-sanclemente-mo5cay' && p.automation === '' && p.field === 'client:name' && p.value === 'Dumas & Sanclemente, P.A.' && p.key === KEY && p.name === 'PJ', JSON.stringify(p));
     assert((await page.innerText('.crow[data-client="dumas-sanclemente-mo5cay"] .cname')).includes('DUMAS & SANCLEMENTE, P.A.'), 'home row name');
   });
-  await check('Details ⋯: Edit wording opens the team-only Edit wording page (same tab), never the public page', async () => {
+  await check('Details ⋯ = Rename client · Clear test responses… · Classic editor (old) (team-only edit.html, same tab): the only link to the classic editor', async () => {
     await page.click('[data-menu="dpMenu"]');
-    const a = page.locator('#dpMenu a'); assert((await a.getAttribute('href')) === 'edit.html?c=dumas-sanclemente-mo5cay' && !(await a.getAttribute('target')), 'edit link');
+    assert(await page.$$eval('#dpMenu [role="menuitem"]', e => e.map(x => x.textContent.trim()).join(' | ')) === 'Rename client | Clear test responses… | Classic editor (old)', 'menu items');
+    const a = page.locator('#dpMenu a'); assert((await a.getAttribute('href')) === 'edit.html?c=dumas-sanclemente-mo5cay' && !(await a.getAttribute('target')), 'classic editor link');
     await page.keyboard.press('Escape');
+    // nowhere else: home, Overview, Edit tab, Submissions (checked again after Submissions)
+    assert(!(await page.locator('a[href*="edit.html"]:not(#dpMenu a)').count()), 'another edit.html link');
   });
+  // ===== 2b) Edit tab (v1.6.0): Link B's wording, edited in the Review admin, shows on Link B (messages.html, real file)
+  const ZZ = 'zz-test-2-qpqhx7', ZZM = JSON.parse(await readFile(join(AR, 'data', `${ZZ}.messages.json`), 'utf8'));
+  const zzMsgs = ZZM.sections.flatMap(g => g.msgs);
+  const linkBText = async (code, want) => {   // open the real Link B page against the same mock Sheet; wait until `want` shows
+    const lb = await ctx.newPage();
+    try {
+      await lb.goto(`${ORIGIN}/automation-review/messages.html?c=${code}`);
+      await lb.waitForFunction(w => w.every(x => document.body.innerText.includes(x)), want, { timeout: 20000 });
+      return await lb.evaluate(() => document.body.innerText);
+    } finally { await lb.close(); }
+  };
+  const edToast = re => page.waitForFunction(r => new RegExp(r).test(document.getElementById('toast').textContent), re.source);
+  const openEdit = async (code, auto) => { await page.goto(`${ADMIN}#/client/${code}/edit${auto ? `/${auto}` : ''}`); await page.waitForSelector('#dPanel:not([hidden]) .dbody'); await page.waitForTimeout(50); };
+  await check('Edit tab: Link B wording only, "Preview as client" = Link A + Link B in a new tab, automation picker, wide panel, no client buttons', async () => {
+    await openEdit('mahdavi-law-mc1mar');
+    await page.waitForTimeout(300);   // width transition
+    assert(await page.$eval('#dPanel', e => e.classList.contains('wide') && e.getBoundingClientRect().width > 700), 'wide panel');
+    assert(await page.getAttribute('#dPanel .dtabs a[aria-current]', 'href') === '#/client/mahdavi-law-mc1mar/edit', 'Edit tab current');
+    const intro = await page.innerText('#dPanel .edintro');
+    assert(/Changes show on Link B · Review only as soon as you save/.test(intro) && /Link A, the plan page, doesn't change/.test(intro), intro);
+    assert(await page.$$eval('#dPanel [data-preview]', as => as.map(a => `${a.dataset.preview}=${a.getAttribute('href')}|${a.target}`).join(' ')) === 'a=../plans/mahdavi-law-mc1mar.html|_blank b=../messages.html?c=mahdavi-law-mc1mar|_blank', 'preview links');
+    const mm = JSON.parse(await readFile(join(AR, 'data', 'mahdavi-law-mc1mar.messages.json'), 'utf8')).sections.flatMap(g => g.msgs);
+    const autos = [...new Set(mm.map(m => m.id.slice(0, m.id.lastIndexOf('.'))))];
+    assert(JSON.stringify(await page.$$eval('#edAuto option', o => o.map(x => x.value))) === JSON.stringify(autos), 'automation picker = automations on Link B');
+    assert(await page.locator('#dPanel .edmsg').count() === mm.filter(m => m.id.startsWith(`${autos[0]}.`)).length, 'messages of the first automation');
+    await page.selectOption('#edAuto', autos[1]); await page.waitForTimeout(50);
+    assert(await page.locator('#dPanel .edmsg').count() === mm.filter(m => m.id.startsWith(`${autos[1]}.`)).length && page.url().includes('/edit'), 'switch automation');
+    const t = await page.innerText('#dPanel');
+    for (const re of [/Looks good/i, /Approve/i, /Change it/i, /Request a change/i, /Everything else looks good/i]) assert(!re.test(t), `client button text ${re}`);
+    assert(!(await page.locator('#dPanel input[type="password"], #dPanel [data-act="approve"], #dPanel a[href*="edit.html"]:not(#dpMenu a)').count()), 'client/classic controls');
+  });
+  await check('Edit tab: email subject + body → admin_edit step:<id>:email.subject / email.body (key + first name added by the server) → shows on Link B', async () => {
+    const m = zzMsgs.find(x => x.id === 'new-lead.s3'), n = posts.length;
+    await openEdit(ZZ, 'new-lead');
+    await page.click(`#dPanel [data-ed-open="${m.id}"]`); await page.waitForSelector('#edSubj');
+    assert(await page.inputValue('#edSubj') === m.subject && await page.inputValue('#edText') === m.text, 'form starts with the Link B wording');
+    await page.fill('#edSubj', 'We got your message, [First name]'); await page.fill('#edText', 'Hi [First name],\n\nThanks for reaching out. New wording from the Edit tab.');
+    await page.click('form[data-form="edmsg"] [type="submit"]'); await edToast(/Saved\. Link B shows the new wording/);
+    const p = posts.slice(n).filter(x => x.action === 'admin_edit');
+    assert(JSON.stringify(p.map(x => [x.client, x.automation, x.field, x.value, x.key === KEY, x.name])) === JSON.stringify([[ZZ, 'new-lead', 'step:s3:email.subject', 'We got your message, [First name]', true, 'PJ'], [ZZ, 'new-lead', 'step:s3:email.body', 'Hi [First name],\n\nThanks for reaching out. New wording from the Edit tab.', true, 'PJ']]), JSON.stringify(p));
+    assert(/^EDITED · \w{3} \d+ · PJ$/i.test(await page.innerText(`#dPanel .edmsg[data-msg="${m.id}"] .edtag`)), await page.innerText(`#dPanel .edmsg[data-msg="${m.id}"] .edtag`));
+    assert((await page.innerText(`#dPanel .edmsg[data-msg="${m.id}"] .edsubj`)).includes('We got your message'), 'list shows the new subject');
+    const t = await linkBText(ZZ, ['We got your message, [First name]', 'New wording from the Edit tab.']);
+    assert(/\bUpdated\b/.test(t) && !/Was:/.test(t), 'Link B: an edited message the client never responded to shows the new wording + an "Updated" tag, no "Was:" block');
+  });
+  await check('Edit tab: text message → admin_edit step:<id>:sms → shows on Link B; team alert text too', async () => {
+    const n = posts.length;
+    await openEdit(ZZ, 'consultation');
+    await page.click('#dPanel [data-ed-open="consultation.s6"]'); await page.waitForSelector('#edText');
+    assert(!(await page.locator('#edSubj').count()) && /Text message/i.test(await page.innerText('form[data-form="edmsg"] label')), 'a text has no subject box');
+    await page.fill('#edText', 'Hi [First name], see you tomorrow at [Time]. Reply C to confirm.');
+    await page.click('form[data-form="edmsg"] [type="submit"]'); await edToast(/Saved/);
+    await openEdit(ZZ, 'reply-alert');
+    await page.click('#dPanel [data-ed-open="reply-alert.s2"]'); await page.fill('#edText', 'Everyone on your team gets this text: a lead replied. Edited alert.');
+    await page.click('form[data-form="edmsg"] [type="submit"]'); await edToast(/Saved/);
+    const p = posts.slice(n).filter(x => x.action === 'admin_edit').map(x => `${x.automation}|${x.field}`);
+    assert(p.join(' ') === 'consultation|step:s6:sms reply-alert|step:s2:sms', p.join(' '));
+    await linkBText(ZZ, ['see you tomorrow at [Time]. Reply C to confirm.', 'a lead replied. Edited alert.']);
+  });
+  await check('Edit tab: a message the classic editor changed through "description" (step:<id>:body, strongest on Link B) is saved back to body, so the edit still shows', async () => {
+    gs.post({ action: 'admin_edit', key: KEY, client: ZZ, automation: 'new-lead', field: 'step:s4:body', value: 'Subject: Old classic subject\n\nOld classic body', name: 'PJ' });
+    await page.goto(ADMIN); await page.reload(); await page.waitForSelector('.crow[data-client]', { timeout: 20000 }); const n = posts.length;
+    await openEdit(ZZ, 'new-lead');
+    await page.click('#dPanel [data-ed-open="new-lead.s4"]');
+    assert(await page.inputValue('#edSubj') === 'Old classic subject' && await page.inputValue('#edText') === 'Old classic body', 'form = what Link B shows');
+    await page.fill('#edText', 'Body edited after a classic edit');
+    await page.click('form[data-form="edmsg"] [type="submit"]'); await edToast(/Saved/);
+    const p = posts.slice(n).filter(x => x.action === 'admin_edit');
+    assert(p.length === 1 && p[0].field === 'step:s4:body' && p[0].value === 'Subject: Old classic subject\n\nBody edited after a classic edit', JSON.stringify(p));
+    await linkBText(ZZ, ['Old classic subject', 'Body edited after a classic edit']);
+  });
+  await check('Edit tab: Cancel / Esc close without saving; one open form at a time (unsaved text is kept); Restore original; empty text refused', async () => {
+    await openEdit(ZZ, 'new-lead'); const n = posts.length;
+    await page.click('#dPanel [data-ed-open="new-lead.s5"]'); await page.fill('#edText', 'not saved');
+    await page.click('#dPanel [data-ed-open="new-lead.s3"]'); await edToast(/Save or cancel the message you're editing first/);
+    assert(await page.inputValue('#edText') === 'not saved' && await page.getAttribute('#dPanel .edmsg.on', 'data-msg') === 'new-lead.s5', 'kept the open form');
+    await page.click('[data-ed-cancel]'); assert(!(await page.locator('#edText').count()), 'cancel');
+    await page.click('#dPanel [data-ed-open="new-lead.s5"]'); await page.fill('#edText', 'x'); await page.keyboard.press('Escape');
+    assert(!(await page.locator('#edText').count()) && await page.isVisible('#dPanel'), 'Esc closes the form, not the panel');
+    await page.click('#dPanel [data-ed-open="new-lead.s5"]'); await page.fill('#edText', '   ');
+    await page.click('form[data-form="edmsg"] [type="submit"]'); assert(/Add the email body/.test(await page.innerText('#edErr')), 'empty refused');
+    await page.click('[data-ed-cancel]');
+    const m = zzMsgs.find(x => x.id === 'new-lead.s3');
+    await page.click('#dPanel [data-ed-open="new-lead.s3"]'); await page.click('[data-ed-restore]');
+    assert(await page.inputValue('#edSubj') === m.subject && await page.inputValue('#edText') === m.text, 'restore fills the original');
+    assert(posts.length === n, 'Restore saved something by itself');
+    await page.click('form[data-form="edmsg"] [type="submit"]'); await edToast(/Saved/);
+    const p = posts.slice(n).filter(x => x.action === 'admin_edit').map(x => x.field);
+    assert(p.join(' ') === 'step:s3:email.subject step:s3:email.body' && !(await page.locator('#dPanel .edmsg[data-msg="new-lead.s3"] .edtag').count()), `restore + save: ${p}`);
+    await page.click('#dPanel [data-ed-open="new-lead.s5"]'); await page.click('form[data-form="edmsg"] [type="submit"]'); await edToast(/No changes/);
+    assert(posts.length === n + 2, 'unchanged message saved');
+  });
+  await check('Edit tab: Start new version asks first, then admin_edit version = next version and re-saves the edited wording (Link B keeps it); Esc cancels', async () => {
+    await openEdit(ZZ, 'consultation'); const n = posts.length;
+    const v0 = String(DATA[ZZ].automations.find(a => a.id === 'consultation').version), v1 = v0.replace(/(\d+)$/, d => String(+d + 1));
+    assert(await page.innerText('#edVer') === `v${v0}`, await page.innerText('#edVer'));
+    await page.click('[data-ed-ver]'); assert(new RegExp(`Start version ${v1.replace('.', '\\.')}\\?`).test(await page.innerText('#dPanel .edconfirm')) && /\(1 edited message\)/.test(await page.innerText('#dPanel .edconfirm')), await page.innerText('#dPanel .edconfirm'));
+    await page.keyboard.press('Escape'); assert(!(await page.locator('#dPanel .edconfirm').count()) && posts.length === n, 'Esc cancels');
+    await page.click('[data-ed-ver]'); await page.click('[data-ed-ver-go]'); await edToast(new RegExp(`Version ${v1.replace('.', '\\.')} started`));
+    const p = posts.slice(n).filter(x => x.action === 'admin_edit').map(x => `${x.automation}|${x.field}|${x.value.slice(0, 12)}`);
+    assert(p.join(' ') === `consultation|version|${v1} consultation|step:s6:sms|Hi [First na`, p.join(' '));
+    assert(await page.innerText('#edVer') === `v${v1}`, 'version shown');
+    await linkBText(ZZ, ['see you tomorrow at [Time]. Reply C to confirm.']);
+  });
+  await check('Edit tab, classic-only client (Dumas): "No client link yet — create an A/B package in the Builder." and nothing to edit', async () => {
+    await openEdit('dumas-sanclemente-mo5cay');
+    assert(await page.innerText('#dPanel .nolinkbox') === 'No client link yet — create an A/B package in the Builder.', 'notice');
+    assert(!(await page.locator('#dPanel form, #dPanel [data-ed-open], #dPanel [data-preview]').count()), 'edit controls for a client without Link B');
+    await page.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay`); await page.waitForSelector('#dPanel:not([hidden]) .oitem');   // as the next check expects
+  });
+
   await check('Details → open item opens it in Submissions (row open, client filtered)', async () => {
     await page.click('#dPanel .oitem >> nth=0'); await page.waitForURL(/#\/subs\/dumas-sanclemente-mo5cay/);
     await page.waitForSelector('.sline.on'); assert(await page.locator('#dPanel').isHidden(), 'panel still open');
@@ -280,15 +393,24 @@ try {
     assert(shape(mine) === shape(theirs) && mine.client === 'dumas-sanclemente-mo5cay' && mine.id === id, `${JSON.stringify(mine)} vs ${JSON.stringify(theirs)}`);
     assert((await page.innerText(`[data-sub="${id}"] .tag`)).toUpperCase() === 'IN PROGRESS', 'tag after save');
   });
-  await check('Open row ⋯: History shows the status change; Open on the client\'s dashboard link', async () => {
+  await check('Open row ⋯: History shows the status change; no classic editor link (classic-only client: no Edit link either)', async () => {
     const id = ids.d0;
     if (!(await page.locator(`#so-${id}`).count())) await page.click(`[data-sub="${id}"]`);
     await page.click(`#so-${id} [data-menu]`); await page.click(`#so-${id} [data-hist]`);
     const h = await page.innerText(`#so-${id} .hist`); assert(/Sent by the client/.test(h) && /In progress · “On it today”/.test(h), h);
     await page.click(`#so-${id} [data-menu]`);
-    const href = await page.getAttribute(`#so-${id} .menu a`, 'href'); assert(/^edit\.html\?c=dumas-sanclemente-mo5cay&a=[\w-]+$/.test(href), href);
-    assert(/Open in Edit wording/.test(await page.innerText(`#so-${id} .menu a`)), 'label');
+    assert(!(await page.locator(`#so-${id} .menu a`).count()), 'a link in a classic-only client\'s row menu');
+    assert(await page.$$eval(`#so-${id} .menu [role="menuitem"]`, e => e.map(x => x.textContent.trim()).join(' | ')) === 'Hide history | Delete…', 'row menu');
     await page.keyboard.press('Escape');
+  });
+  await check('Submissions row ⋯ for a Link B client: "Edit wording (Link B)" opens the Edit tab on that automation (no classic editor link)', async () => {
+    await page.goto(`${ADMIN}#/subs/mahdavi-law-mc1mar`); await page.click('[data-subs-filter="waiting"]');
+    await page.click(`[data-sub="${ids.m0}"]`); await page.click(`#so-${ids.m0} [data-menu]`);
+    const a = page.locator(`#so-${ids.m0} .menu a`), auto = DATA['mahdavi-law-mc1mar'].automations[0].id;
+    assert(await a.innerText() === 'Edit wording (Link B)' && await a.getAttribute('href') === `#/client/mahdavi-law-mc1mar/edit/${auto}`, await a.getAttribute('href'));
+    await a.click(); await page.waitForSelector('#dPanel:not([hidden]) #edAuto');
+    assert(await page.inputValue('#edAuto') === auto, 'automation preselected');
+    await page.keyboard.press('Escape'); await page.goto(`${ADMIN}#/subs/dumas-sanclemente-mo5cay`); await page.click('[data-subs-filter="answer"]'); await page.waitForSelector('.sline');
   });
   await check('Delete asks twice (confirm, then delete via admin_delete); Esc cancels the first', async () => {
     const id = ids.d4;
@@ -303,12 +425,13 @@ try {
   await check('Approved request: no status menu (only the client approves); Open their review link', async () => {
     await page.click('[data-subs-filter="done"]'); await page.selectOption('#subsClient', 'boca-dental-e770de');
     await page.click(`[data-sub="${ids.b0}"]`); assert((await page.innerText(`#so-${ids.b0}`)).includes('Approved by the client') && !(await page.locator(`#so-${ids.b0} select`).count()), 'approved');
-    assert((await page.getAttribute('.gh .gopen', 'href')) === '../?c=boca-dental-e770de' && (await page.getAttribute('.gh .gopen', 'target')) === '_blank', 'open their review = the plain client link');
+    assert(await page.innerText('.gh .gopen') === 'No client link yet' && !(await page.locator('.gh a.gopen').count()), 'classic-only client: no review link');
     await page.keyboard.press('Escape'); assert(!(await page.locator(`#so-${ids.b0}`).count()), 'Esc closes the row');
   });
-  await check('Details ⋯ Clear all responses: type-to-confirm, then admin_delete with all of that client\'s ids', async () => {
+  await check('Details ⋯ Clear test responses: type-to-confirm, then admin_delete with all of that client\'s ids', async () => {
     await page.goto(`${ADMIN}#/client/zz-test-2-qpqhx7`); await page.waitForSelector('#dPanel:not([hidden])');
     await page.click('[data-menu="dpMenu"]'); await page.click('#dpMenu [data-dp="clear"]');
+    assert(/^Clear test responses$/i.test(await page.innerText('form[data-form="clear"] .lbl')), 'heading');
     assert(await page.isDisabled('#clrGo'), 'enabled before typing');
     await page.fill('#clrIn', 'zz test'); assert(await page.isDisabled('#clrGo'), 'wrong name enabled it');
     await page.fill('#clrIn', 'ZZ TEST 2'); await page.click('#clrGo'); await page.waitForFunction(() => /Cleared 2 responses/.test(document.getElementById('toast').textContent));
@@ -320,7 +443,7 @@ try {
     await page.click('#topMenu [data-act="reload"]'); await page.waitForFunction(() => /Refreshed/.test(document.getElementById('toast').textContent));
   });
 
-  // ===== 4) Edit wording (team only): every edit type the old classic "&admin" mode had
+  // ===== 4) Classic editor (old) (team only, until ~15 Dec 2026): every edit type the old classic "&admin" mode had
   const editPage = await ctx.newPage(); cur = editPage;
   editPage.on('pageerror', e => errs.push(`edit: ${e.message}`)); editPage.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(`edit: ${m.text()}`); });
   const BOCA = DATA['boca-dental-e770de'], BA = BOCA.automations[0];
@@ -332,11 +455,14 @@ try {
     await editPage.goto(`${EDIT}?c=boca-dental-e770de&a=${BA.id}`);
     await editPage.waitForSelector('#adminbar:not([hidden]) .adminbadge', { timeout: 20000 });
     const bar = await editPage.innerText('#adminbar');
-    assert(/Edit wording/.test(bar) && /Signed in as PJ Drozo/.test(bar) && /Sign out/.test(bar) && /Review admin/.test(bar), bar);
+    assert(/Classic editor \(old\)/.test(bar) && /Signed in as PJ Drozo/.test(bar) && /Sign out/.test(bar) && /Review admin/.test(bar), bar);
+    assert(await editPage.innerText('#oldBanner') === 'Old editor — use the Edit tab in Review admin. This page will be removed.', await editPage.innerText('#oldBanner'));
+    const bb = await editPage.$eval('#oldBanner', e => { const r = e.getBoundingClientRect(); return [r.top, r.height, getComputedStyle(e).color, getComputedStyle(e).backgroundColor]; });
+    assert(bb[0] === 0 && bb[1] > 20 && ratio(bb[2], bb[3]) >= 4.5, `banner at the top, readable: ${bb}`);
     assert(await editPage.getAttribute('#adminbar a.btn', 'href') === '/automation-review/admin/#/client/boca-dental-e770de', 'back link');
     assert(await editPage.locator('[data-admin="details"]').count() === 1, 'details edit button');
     assert(!(await editPage.locator('input[type="password"]').count()), 'password field');
-    assert(/Edit wording · /.test(await editPage.title()), await editPage.title());
+    assert(/^Classic editor \(old\) · /.test(await editPage.title()), await editPage.title());
   });
   await check('Edit wording: no client buttons (Looks good / Request a change / Edit the wording / overview correction / answers / Approve): only clients respond', async () => {
     const n = posts.length;
@@ -498,13 +624,53 @@ try {
     } finally { SIGNED.email = ME_EMAIL; await p3.close(); }
   });
   await check('server: no refused calls while the tools ran normally', async () => assert(!refused().filter(r => r.code !== 'not_lfmp').length, JSON.stringify(refused())));
-  await check('public index.html: no admin code path (no admin_ action, ar_admin_key, Team sign-in, password field, &admin, Submissions view)', async () => {
+  // ===== public classic link index.html?c=<code> (v1.6.0): Link A (hash kept) or "This review has moved"; never review content
+  const publicVisit = async (qs, until) => {
+    const p4 = await ctx.newPage(), reqs = [];
+    p4.on('request', r => { if (new URL(r.url()).pathname.startsWith('/automation-review/')) reqs.push(`${r.method()} ${new URL(r.url()).pathname}`); });
+    await p4.goto(`${ORIGIN}/automation-review/${qs}`); await until(p4);
+    return { p4, reqs };
+  };
+  const movedShown = p4 => p4.waitForFunction(() => !document.documentElement.classList.contains('checking') && /This review has moved/.test(document.body.innerText), null, { timeout: 10000 });
+  const MOVED = 'This review has moved\nYour LFMP team will send you the new link.\nLaw Firm Marketing Pros';
+  await check('public index.html: no admin code path and no review content (no data/<code>.json, no Sheet, no admin_ action, &admin / view=submissions ignored)', async () => {
     const src = await readFile(join(AR, 'index.html'), 'utf8');
-    for (const re of [/admin_/, /ar_admin_key/, /Team sign-in/, /type="password"/, /Admin login/, /params\.has\("admin"\)/, /view=submissions|"submissions"/, /data-admin/, /data-signin/]) assert(!re.test(src), `found ${re}`);
-    const p4 = await ctx.newPage(); const n = posts.length;
-    await p4.goto(`${ORIGIN}/automation-review/?c=boca-dental-e770de&admin&view=submissions`); await p4.waitForSelector('.hero h1');
-    assert(!(await p4.locator('#adminbar, [data-admin], [data-signin], input[type="password"], .subs').count()), 'admin UI on the public page');
-    assert(posts.length === n, 'the public page made an admin call'); await p4.close();
+    for (const re of [/admin_/, /ar_admin_key/, /Team sign-in/, /type="password"/, /Admin login/, /params\.has\("admin"\)/, /view=submissions|"submissions"/, /data-admin/, /data-signin/, /saveUrl|config\.js|REVIEW_CONFIG/, /\.json"\s*\)\s*\.then\(\s*r\s*=>\s*r\.json/]) assert(!re.test(src), `found ${re}`);
+    const n = posts.length, { p4, reqs } = await publicVisit('?c=boca-dental-e770de&admin&view=submissions', movedShown);
+    assert(!(await p4.locator('#adminbar, [data-admin], [data-signin], input, .subs, button').count()), 'admin UI on the public page');
+    assert(posts.length === n && !reqs.some(r => /config\.js|\/exec/.test(r)), 'the public page reached the backend');
+    assert(reqs.filter(r => /\/data\//.test(r)).every(r => r.startsWith('HEAD ')) && !reqs.some(r => r.endsWith('/data/boca-dental-e770de.json')), reqs.join(', '));
+    await p4.close();
+  });
+  await check('public classic link: Mahdavi + ZZ TEST 2 redirect to Link A with the #hash kept (Mahdavi through its plans/ page)', async () => {
+    for (const [code, final] of [['mahdavi-law-mc1mar', '/automation-review/plan.html?c=mahdavi-law-mc1mar#new-lead'], ['zz-test-2-qpqhx7', '/automation-review/plan.html?c=zz-test-2-qpqhx7#new-lead']]) {
+      const { p4, reqs } = await publicVisit(`?c=${code}&a=new-lead#new-lead`, p => p.waitForURL(/plan\.html/, { timeout: 10000 }));
+      await p4.waitForLoadState('load'); const u = new URL(p4.url());
+      assert(u.pathname + u.search + u.hash === final, `${code}: ${p4.url()}`);
+      assert(!reqs.some(r => r === `GET /automation-review/data/${code}.json`), `${code}: the classic page fetched review content: ${reqs.join(', ')}`);
+      await p4.close();
+    }
+    const { p4 } = await publicVisit('index.html?c=zz-test-2-qpqhx7', p => p.waitForURL(/plan\.html\?c=zz-test-2-qpqhx7$/, { timeout: 10000 })); await p4.close();
+  });
+  await check('public classic link: Dumas, Palm Beach (classic only), an unknown code and no code show only "This review has moved" (no data/<code>.json)', async () => {
+    for (const qs of ['?c=dumas-sanclemente-mo5cay', '?c=palm-beach-plastic-n9umxi&a=x#s2', '?c=nobody-zz9', '']) {
+      const { p4, reqs } = await publicVisit(qs, movedShown);
+      assert((await p4.innerText('body')).replace(/\n+/g, '\n').trim() === MOVED, `${qs}: ${JSON.stringify(await p4.innerText('body'))}`);
+      assert(new URL(p4.url()).pathname === '/automation-review/' && !reqs.some(r => /^GET \/automation-review\/data\//.test(r)), `${qs}: ${reqs.join(', ')}`);
+      assert(await p4.title() === 'This review has moved · Law Firm Marketing Pros', await p4.title());
+      await p4.close();
+    }
+  });
+  await check('public preview/ (retired): shows only "This review has moved", loads nothing; the old Hedayati copy is gone (404)', async () => {
+    for (const qs of ['preview/', 'preview/?c=hedayati-law-m90omb', 'preview/index.html']) {
+      const { p4, reqs } = await publicVisit(qs, p => p.waitForFunction(() => /This review has moved/.test(document.body.innerText)));
+      assert((await p4.innerText('body')).replace(/\n+/g, '\n').trim() === MOVED, `${qs}: ${await p4.innerText('body')}`);
+      assert(reqs.length === 1 && reqs[0].startsWith('GET /automation-review/preview/'), `${qs} loaded more than the page: ${reqs.join(', ')}`);
+      await p4.close();
+    }
+    for (const f of ['preview/data/hedayati-law-m90omb.json', 'preview/config.js', 'preview/assets/lfmp-logo.png']) { const r = await fetch(`${ORIGIN}/automation-review/${f}`); assert(r.status === 404, `${f}: ${r.status}`); }
+    const src = await readFile(join(AR, 'preview/index.html'), 'utf8');
+    assert(!/fetch\(|location\.|data\/|config\.js/.test(src), 'preview page code');
   });
   await check('no console or page errors', async () => assert(!errs.length, errs.slice(0, 3).join(' | ')));
   await ctx.close();
@@ -530,14 +696,24 @@ try {
       await p.check('#showTests'); await p.waitForSelector('.crow[data-client="zz-test-2-qpqhx7"]'); await shot(p, `home-tests_${w}_${scheme}`, w === 390);
       // Details: Mahdavi (A plans/ + B), ZZ TEST 2 (A + B, test client shown), Dumas (classic only); Copy → "Copied"
       for (const [code, name] of [['mahdavi-law-mc1mar', 'mahdavi'], ['zz-test-2-qpqhx7', 'zz-test-2'], ['dumas-sanclemente-mo5cay', 'dumas']]) {
-        await p.click(`.crow[data-client="${code}"] .cname`); await p.waitForSelector('#dPanel:not([hidden]) .clinks'); await p.waitForTimeout(100);
-        await p.$eval('#dPanel .clinks', el => el.scrollIntoView({ block: 'start' }));
-        await p.click('#dPanel .clinks li:first-child [data-copy]'); await p.waitForFunction(() => document.querySelector('#dPanel .clinks li:first-child .copied').textContent === 'Copied');
+        await p.click(`.crow[data-client="${code}"] .cname`); await p.waitForSelector('#dPanel:not([hidden]) #clTitle'); await p.waitForTimeout(100);
+        await p.$eval('#clTitle', el => el.scrollIntoView({ block: 'start' }));
+        if (name !== 'dumas') { await p.click('#dPanel .clinks li:first-child [data-copy]'); await p.waitForFunction(() => document.querySelector('#dPanel .clinks li:first-child .copied').textContent === 'Copied'); }
         await measure(`details ${name}`);
         const ov = await p.$$eval('#dPanel .clinks li, #dPanel .dhead', els => els.filter(e => e.scrollWidth > e.clientWidth + 1).length);
         assert(!ov, `details ${name}: ${ov} clipped link rows`);
         await shot(p, `details-${name}_${w}_${scheme}`); await p.keyboard.press('Escape'); await p.waitForSelector('#dPanel', { state: 'hidden' });
       }
+      // Edit tab: ZZ TEST 2 (an email open in its form, the new-version question), Dumas (no client link yet)
+      await p.goto(`${ADMIN}#/client/zz-test-2-qpqhx7/edit/new-lead`); await p.waitForSelector('#dPanel:not([hidden]) .edmsg');
+      await p.waitForTimeout(250); await measure('edit tab'); await shot(p, `edit-tab_${w}_${scheme}`);
+      await p.click('#dPanel [data-ed-open="new-lead.s3"]'); await p.waitForSelector('#edText'); await p.$eval('#dPanel .edmsg.on', el => el.scrollIntoView({ block: 'start' }));
+      await measure('edit tab form'); await shot(p, `edit-tab-form_${w}_${scheme}`);
+      const eov = await p.$$eval('#dPanel .edmsg, #dPanel .edbar, #dPanel .dtabs, #dPanel .edintro', els => els.filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.className));
+      assert(!eov.length, `edit tab clipped: ${eov}`);
+      await p.click('[data-ed-cancel]'); await p.click('[data-ed-ver]'); await p.waitForSelector('.edconfirm'); await shot(p, `edit-tab-version_${w}_${scheme}`); await p.click('[data-ed-ver-cancel]');
+      await p.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay/edit`); await p.waitForSelector('#dPanel:not([hidden]) .nolinkbox'); await shot(p, `edit-tab-nolink_${w}_${scheme}`);
+      await p.click('[data-menu="dpMenu"]'); await shot(p, `details-menu_${w}_${scheme}`); await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
       await p.uncheck('#showTests');
       await p.goto(`${ADMIN}#/subs`); await p.waitForSelector('.sline'); await p.click('.sline >> nth=1'); await p.waitForSelector('.sopen');
       await measure('submissions'); await shot(p, `submissions_${w}_${scheme}`, w === 390);
@@ -553,11 +729,13 @@ try {
       if (w === 390) await p.click('.node[data-step="s2"]');
       await p.waitForTimeout(150);
       const ew = await p.evaluate(() => [document.documentElement.scrollWidth, innerWidth]); assert(ew[0] <= ew[1] + 1, `edit page ${ew[0]}px wide in ${ew[1]}`);
-      await shot(p, `edit-wording_${w}_${scheme}`, w === 390);
-      // the public classic page, client view (no admin entry anywhere)
-      await p.goto(`${ORIGIN}/automation-review/?c=dumas-sanclemente-mo5cay`); await p.waitForFunction(() => /^Updated /.test(document.getElementById('updated')?.textContent || ''), null, { timeout: 20000 });
-      assert(!(await p.locator('[data-signin], #adminbar, [data-admin]').count()), 'admin entry on the public page');
-      await shot(p, `public-client-view_${w}_${scheme}`, w === 390);
+      await shot(p, `classic-editor_${w}_${scheme}`);
+      // the public classic link for a classic-only client: "This review has moved" (client-facing)
+      await p.goto(`${ORIGIN}/automation-review/?c=dumas-sanclemente-mo5cay`); await movedShown(p); await p.evaluate(() => document.fonts.ready);
+      const mv = await p.evaluate(() => { const c = getComputedStyle(document.querySelector('.card')), h = getComputedStyle(document.querySelector('h1')), t = getComputedStyle(document.querySelector('main p')); return [document.documentElement.scrollWidth, innerWidth, h.color, t.color, c.backgroundColor]; });
+      assert(mv[0] <= mv[1] + 1 && ratio(mv[2], mv[4]) >= 4.5 && ratio(mv[3], mv[4]) >= 4.5, `moved page: ${mv}`);
+      assert(!(await p.locator('[data-signin], #adminbar, [data-admin], input, button').count()), 'controls on the moved page');
+      await shot(p, `moved-page_${w}_${scheme}`);
       assert(!e2.length, e2.join(' | '));
     });
     await c.close();

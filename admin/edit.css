@@ -256,3 +256,7 @@ body.saving .actions button,body.saving form button[type=submit],body.saving [da
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .qanswer b{color:var(--ink)}
+
+/* v1.6.0: the classic editor is being retired */
+.oldbanner{position:sticky;top:0;z-index:30;background:#8a1c12;color:#fff;font-size:14.5px;line-height:1.4;padding:10px 16px;text-align:center}
+.oldbanner b{font-weight:700}

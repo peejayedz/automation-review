@@ -196,7 +196,7 @@ const clientKey = (params.get("c") || CFG.client || "").replace(/[^a-z0-9-]/gi, 
 const ST = { REQ: "Changes Requested", PROG: "In Progress", UPD: "Updated — Ready for Review", OK: "Approved" };
 const $ = s => document.querySelector(s);
 const docId = id => String(id).replace(/[^A-Za-z0-9_-]/g, "_");
-let C = null, MSGS = [], byId = {}, versions = {}, edits = {}, rows = [];
+let C = null, MSGS = [], byId = {}, versions = {}, edits = {}, editAt = {}, rows = [];
 const state = { reviews:{}, answers:{}, loaded:false, failed:false };
 const ui = { open:null, picks:{}, busy:false, bulk:null, dirty:new Set() };
 
@@ -268,13 +268,13 @@ async function saveMany(recs){ // one request (Apps Script v9 "approve_steps")
 
 /* ---------- LFMP wording updates made in the main dashboard ---------- */
 function applyContent(content, base){
-  versions = {}; edits = {};
+  versions = {}; edits = {}; editAt = {}; // editAt: when LFMP last edited each message's wording
   (base.automations || []).forEach(a => versions[a.id] = String(a.version || "1"));
   content.slice().sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp))).forEach(c => {
     const f = String(c.field || ""), v = c.value == null ? "" : String(c.value);
     if (f === "version"){ versions[c.automation] = v; Object.keys(edits).forEach(k => { if (k.startsWith(c.automation + ".")) delete edits[k]; }); return; }
     const m = f.match(/^step:([^:]+):(sms|body|email\.subject|email\.body)$/); if (!m) return;
-    const k = c.automation + "." + m[1]; edits[k] = edits[k] || {}; edits[k][m[2]] = v;
+    const k = c.automation + "." + m[1]; edits[k] = edits[k] || {}; edits[k][m[2]] = v; editAt[k] = String(c.timestamp);
   });
 }
 function updated(m){ // LFMP's updated wording, if any: {subject, text}
@@ -294,7 +294,7 @@ function derive(){
   MSGS.forEach(m => {
     const {a, s} = split(m.id), v = versions[a] || "1";
     const rs = rows.filter(r => r.automation === a && r.step === s && sameV(r.version, v) && ["approve","undo","change","copy"].includes(r.action)).sort(by);
-    if (!rs.length) return;
+    if (!rs.length){ const u0 = updated(m); if (u0) state.reviews[docId(m.id)] = {updatedText: u0.text, updatedSubject: u0.subject, fresh: true}; return; } // LFMP edited a message the client hasn't responded to yet (or since a new version): new wording + a small "Updated" tag, still to review
     const later = r => rs.some(x => x.action === "approve" && String(x.timestamp) > String(r.timestamp));
     const reqs = rs.filter(isReq);
     const open = reqs.filter(r => [ST.REQ, ST.PROG].includes(normStatus(r.status) || ST.REQ) && !later(r));
@@ -303,7 +303,8 @@ function derive(){
     if (open.length){ const r = open[open.length - 1];
       state.reviews[docId(m.id)] = Object.assign(base, {state: normStatus(r.status) === ST.PROG ? "prog" : "req", newText: r.new_copy || "", note: r.details || "", reply: r.lfmp_reply || "", by: r.name, at: r.timestamp}); return; }
     const last = rs[rs.length - 1];
-    if (last.action === "approve") state.reviews[docId(m.id)] = Object.assign(base, {state: "ok", by: last.name, at: last.timestamp});
+    if (last.action === "approve" && u && (editAt[m.id] || "") > String(last.timestamp)) state.reviews[docId(m.id)] = Object.assign(base, {fresh: true}); // LFMP edited it after the client's Looks good: reopen (new wording + "Updated" tag, to review again)
+    else if (last.action === "approve") state.reviews[docId(m.id)] = Object.assign(base, {state: "ok", by: last.name, at: last.timestamp});
     else if (isReq(last) && normStatus(last.status) === ST.UPD) state.reviews[docId(m.id)] = Object.assign(base, {state: "upd", reply: last.lfmp_reply || "", by: last.name, at: last.timestamp});
     else if (u && last.action !== "undo") state.reviews[docId(m.id)] = Object.assign(base, {state: "upd"});
   });
@@ -322,6 +323,7 @@ function currentSubject(m, r){ return (r && r.updatedSubject) ? r.updatedSubject
 function msgHTML(m){
   const r = state.reviews[docId(m.id)], st = r ? r.state : null;
   const tag = '<span class="kind ' + m.kind.toLowerCase() + '">' + esc(m.to || m.kind) + "</span>";
+  const updTag = r && r.fresh ? ' <span class="kind" title="' + esc(AGENCY_NAME) + ' updated this wording">Updated</span>' : ""; // an edited message the client hasn't responded to
   const dis = state.loaded && !state.failed ? "" : " disabled";
   let body = "", acts = "";
   if (st === "upd" && r.updatedText) body += '<p class="was">Was: ' + chips((m.subject ? "Subject: " + m.subject + " · " : "") + m.text).replace(/\n+/g, " ") + "</p>";
@@ -351,7 +353,7 @@ function msgHTML(m){
       '<div class="row"><button class="primary" data-act="save" data-id="' + m.id + '">Save my change</button><button class="ghost" data-act="cancel" data-id="' + m.id + '">Cancel</button></div></div>';
     acts = '<span class="st upd">Editing…</span>';
   }
-  return '<article class="msg' + (st ? " is-" + st : "") + '" id="m-' + docId(m.id) + '"><div class="when">' + esc(m.when) + tag + '</div><div class="body">' + body + '</div><div class="acts">' + acts + "</div></article>";
+  return '<article class="msg' + (st ? " is-" + st : "") + '" id="m-' + docId(m.id) + '"><div class="when">' + esc(m.when) + tag + updTag + '</div><div class="body">' + body + '</div><div class="acts">' + acts + "</div></article>";
 }
 function qHTML(q, i){
   const a = state.answers[q.id], pick = ui.picks[q.id] ?? (a ? a.choice : null);
@@ -459,7 +461,7 @@ function renderBrand(C){
   applyContent([], base); render();
   $("#approve-rest").addEventListener("click", async () => {
     if (ui.bulk || ui.busy) return;
-    const left = MSGS.filter(m => !state.reviews[docId(m.id)]); if (!left.length) return;
+    const left = MSGS.filter(m => !(state.reviews[docId(m.id)] || {}).state); if (!left.length) return;
     ui.bulk = true; const btn = $("#approve-rest"); btn.textContent = "Saving…"; render();
     try { const saved = await saveMany(left.map(m => rec(m, {action: "approve", type: "Everything else looks good"}))); rows.push(...saved); derive(); toast("Approved the rest. Thank you!"); }
     catch(e){ toast("Couldn’t save all of them. Try again."); }
