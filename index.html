@@ -66,15 +66,11 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .howto{font-size:13px;color:var(--muted);margin:10px 0 0;padding:0 0 0 18px}
 .glance{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
 .glance div{background:var(--paper);padding:12px 14px;font-size:14px}
-.glanceedit{border:1px dashed var(--team);border-radius:8px;padding:8px 10px;display:grid;gap:6px}
-.glanceedit legend{font-size:12px;font-weight:700;color:var(--team);padding:0 4px}
 .overview{margin:-10px 0 22px;display:grid;gap:10px}
 .ovbtn{justify-self:start;background:transparent;border:1px dashed var(--line);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
 .ovbtn:hover{color:var(--ink);border-color:var(--warn)}
 .ovform{max-width:720px}
 .ovhist{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0}
-.verlock{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
-.vbadge{font-weight:700;border:1px solid var(--line);border-radius:7px;padding:4px 10px;background:var(--paper)}
 .meta .updated{color:var(--ok);font-weight:600}
 .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .tool{font-weight:500;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer}
@@ -163,9 +159,8 @@ body.saving .actions button,body.saving form button[type=submit],body.saving [da
 .check input{margin-top:4px}
 .autopick{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .autopick label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.autopick select,.adminbar select{font-size:15px;font-weight:600;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);max-width:100%}
+.autopick select{font-size:15px;font-weight:600;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);max-width:100%}
 .autopick select{min-width:min(360px,100%)}
-.signin{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px;padding:0}
 [hidden]{display:none!important}
 .rs{font-weight:700}.rs.done{color:var(--ok)}.rs.prog{color:var(--warn)}.rs.open{color:var(--accent)}
 .hitem.isdone{border-color:var(--ok)}
@@ -174,75 +169,16 @@ body.saving .actions button,body.saving form button[type=submit],body.saving [da
 .hitem .stamps{font-size:12px;color:var(--muted);margin-top:4px}
 .tline{list-style:none;margin:6px 0 0;padding:0 0 0 10px;border-left:2px dotted var(--line);font-size:12.5px}
 .tline li{margin:3px 0}.tline .tl-when{color:var(--muted);margin-right:6px}
-.subsbtn{font-weight:700}
-.subsbtn .cnt{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:999px;background:var(--warn);color:#fff;font-size:12px;line-height:18px;text-align:center}
-.subs h1{font-family:var(--serif);font-size:30px;margin:6px 0 4px}
-.subs .sumrow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
-.subs .sumrow button{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;color:var(--ink);text-align:left}
-.subs .sumrow button b{display:block;font-size:20px}
-.subs .sumrow button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
-.subs .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-.subs .filters select,.subs .filters input{font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
-.subs .filters input{min-width:220px}
-.scard{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:grid;gap:6px;font-size:14px}
-.scard.st-req{border-left-color:var(--warn)} .scard.st-prog{border-left-color:var(--warn)} .scard.st-upd{border-left-color:var(--team)} .scard.st-ok{border-left-color:var(--ok)} .scard.k-answer{border-left-color:var(--accent)} .scard.k-approve_all{border-left-color:var(--ok)}
-.scard .shead{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.scard .where{font-size:12px;color:var(--muted);letter-spacing:.02em}
-.scard .where b{color:var(--ink)}
-.scard .stitle{font-weight:700;font-size:15px}
-.scard .copytxt{white-space:pre-line;background:var(--soft);border-radius:6px;padding:6px 8px}
-.scard .hadmin{margin-top:4px}
-.scard a.golink{font-size:13px}
-.srow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
-.cpick{position:relative;display:inline-block}
-.cpick>button{font-size:15px;font-weight:600;padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);cursor:pointer;max-width:100%}
-.cpick>button .lbl{font-weight:400;color:var(--muted);font-size:12px;margin-right:4px}
-.cpanel{position:absolute;z-index:50;top:calc(100% + 6px);left:0;width:min(360px,calc(100vw - 32px));background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:8px}
-.cpanel input{width:100%;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
-.cpanel .clist{max-height:min(340px,60vh);overflow:auto;margin-top:6px;display:grid;gap:2px}
-.cpanel .clist button{display:flex;align-items:center;gap:8px;justify-content:space-between;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:8px 10px;border-radius:8px;font-size:14px;cursor:pointer}
-.cpanel .clist button:hover,.cpanel .clist button:focus-visible,.cpanel .clist button.cur{background:var(--soft)}
-.cpanel .clist .cn{font-weight:600}.cpanel .clist .cc{font-size:11px;color:var(--muted);display:block;font-weight:400}
-.cpanel .clist .cnt{min-width:20px;padding:0 6px;border-radius:999px;background:var(--warn);color:#fff;font-size:12px;line-height:18px;text-align:center}
-.cpanel .cfoot{font-size:12px;color:var(--muted);padding:6px 4px 2px}
-.cren{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
-.cren input{font-size:15px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);min-width:min(280px,70vw)}
-.subs .none{padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
-.del{background:none;border:1px solid var(--line);color:var(--bad);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;cursor:pointer}
-.del.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .tools .upd{font-size:12px;color:var(--muted)}
 .btn.small{padding:5px 10px;font-size:13px}
-.adminbar{background:var(--team-soft);border-bottom:1px solid var(--line);font-size:13px}
-.adminbar .wrap{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-block:8px}
-.adminbar b{color:var(--team)}
-.adminbar input{width:220px;padding:5px 8px;font-size:13px}
-.adminbar{transition:background .4s}
-.adminbar.welcome{animation:welcome 3s ease-out}
-@keyframes welcome{0%{background:var(--ok);}25%{background:color-mix(in srgb,var(--ok) 35%,var(--team-soft));}100%{background:var(--team-soft);}}
-.adminbadge{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:var(--team);background:var(--paper);border:1px solid var(--team);border-radius:999px;padding:3px 11px}
-.pulse{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 var(--ok);animation:pulse 1.8s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 70%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
-.welcomemsg{font-weight:600;color:var(--ok);animation:fadein .4s ease-out}
-@keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
-.akmsg{font-weight:600}
-.akmsg.bad{color:var(--bad)}
-.shake{animation:shake .4s;border-color:var(--bad)!important}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
-.spin{display:inline-block;width:11px;height:11px;margin-right:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px}
-@keyframes spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion: reduce){.adminbar.welcome,.pulse,.shake,.spin,.welcomemsg{animation:none}}
-.adm{display:inline-flex;align-items:center;gap:4px;border:1px dashed var(--team);color:var(--team);background:transparent;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer}
-.admform{border:1px dashed var(--team);background:var(--team-soft)}
-.hadmin{display:grid;grid-template-columns:1fr 1.4fr auto;gap:6px;margin-top:6px}
-.hadmin select,.hadmin input{padding:5px 8px;font-size:13px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
 .okbanner{display:flex;gap:10px;align-items:center;background:var(--ok-soft);color:var(--ink);border:1px solid var(--ok);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:14px}
 .okbanner svg{width:22px;height:22px;color:var(--ok);flex:none}
 .node.isok .icon{background:var(--ok-soft);color:var(--ok)}
 .node.isok{border-color:var(--ok);background:linear-gradient(90deg,var(--ok-soft),var(--paper) 55%)}
 .node.isok .pill.approved{background:var(--ok);color:var(--paper)}
 .tabok{width:14px;height:14px;color:var(--ok);flex:none}
-.edited{font-size:11px;color:var(--team);font-weight:600;margin-left:6px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:9px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 .foot{margin:40px 0 30px;font-size:12px;color:var(--muted)}
@@ -269,11 +205,10 @@ body.saving .actions button,body.saving form button[type=submit],body.saving [da
 <div id="banner" class="banner" hidden></div>
 <header class="top"><div class="wrap topin">
   <div class="brandwrap"><span class="logochip"><img src="assets/lfmp-logo.png" alt="Law Firm Marketing Pros" width="826" height="242"></span><div class="brand"><b id="clientName">Automation Review</b><span id="clientSub">Law Firm Marketing Pros</span></div></div>
-  <div class="tools"><span class="upd" id="updated"></span><button class="btn small" id="refreshBtn" type="button" title="Load the latest changes from the Sheet">↻ Refresh</button><button class="btn small" id="signinBtn" type="button" data-signin>🔒 Admin login</button></div>
+  <div class="tools"><span class="upd" id="updated"></span><button class="btn small" id="refreshBtn" type="button" title="Load the latest changes from the Sheet">↻ Refresh</button></div>
 </div>
 <div class="wrap" style="padding-bottom:12px"><div class="autopick"><label for="autoSelect">Automation</label><select id="autoSelect"></select><span id="autoCount" class="hint"></span></div></div>
 </header>
-<div class="adminbar" id="adminbar" hidden><div class="wrap" id="adminbarIn"></div></div>
 
 <main class="wrap" id="app">
   <div class="empty">Loading your review…</div>
@@ -289,11 +224,10 @@ const params = new URLSearchParams(location.search);
 const clientKey = (params.get("c") || "").replace(/[^a-z0-9-]/gi, "");
 let autoId = params.get("a") || "";
 
+// Client view only. The team's edit controls (the old "&admin" mode) moved to the team site's Edit wording page
+// (lfmp-admin.pages.dev, behind Google sign-in) on 16 Nov 2026; this public page has no admin mode and no sign-in.
 let baseData = null, data = null, auto = null, responses = [], content = [], selected = null, openForm = null, chipChoice = {}, lastLoaded = null;
-let wantAdmin = params.has("admin"); let adminClients = []; let clientNames = {}; let pickOpen = false;
-let adminKey = ""; try { adminKey = localStorage.getItem("ar_admin_key") || ""; } catch(e){}
-let justSignedIn = false;
-let isAdmin = false, adminForm = null, rendered = false, loaded = false, loadFailed = false;
+let rendered = false, loaded = false, loadFailed = false;
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -331,52 +265,11 @@ async function loadAll(){
   return {rows: j.rows || [], content: j.content || [], log: j.log || []};
 }
 async function loadResponses(){ return (await loadAll()).rows; }
-async function postJSON(obj){
-  const res = await fetch(SAVE_URL, { method:"POST", body: JSON.stringify(obj) });
-  return res.json();
-}
-/* ---------- admin: content edits and request status ---------- */
-async function adminEdit(automation, field, value){
-  const who = getReviewer().name || "Admin";
-  if (!SAVE_URL){
-    const row = {timestamp:new Date().toISOString(), client:clientKey, automation, field, value, edited_by:who};
-    const all = (await loadAll()).content; all.push(row);
-    try { localStorage.setItem(demoKey + "_content", JSON.stringify(all)); } catch(e){}
-    content.push(row); return row;
-  }
-  const j = await postJSON({action:"admin_edit", key:adminKey, client:clientKey, automation, field, value, name:who});
-  if (!j.ok) throw new Error(j.error || "Could not save");
-  content.push(j.content); return j.content;
-}
-async function adminStatus(id, status, reply, client){
-  client = client || clientKey;
-  const who = getReviewer().name || "LFMP team", now = new Date().toISOString();
-  if (!SAVE_URL){
-    const key = "ar_demo_" + client; let rows = [];
-    try { rows = JSON.parse(localStorage.getItem(key) || "[]"); } catch(e){}
-    const r = rows.find(x => x.id === id); if (!r) return null;
-    const before = normStatus(r.status) || ST.REQ;
-    if (status !== before || reply !== String(r.lfmp_reply || "")){
-      r.status = status; r.lfmp_reply = reply; r.updated_at = now; r.updated_by = who;
-      let log = []; try { log = JSON.parse(localStorage.getItem(key + "_log") || "[]"); } catch(e){}
-      log.push({timestamp:now, client, automation:r.automation, version:r.version, request_id:id, step:r.step, event:"status", status, note:reply !== String(r.lfmp_reply||"") ? reply : reply, previous:before, revised:"", by:who});
-      try { localStorage.setItem(key + "_log", JSON.stringify(log)); } catch(e){}
-      if (client === clientKey) revlog = log;
-    }
-    try { localStorage.setItem(key, JSON.stringify(rows)); } catch(e){}
-    if (client === clientKey){ const i = responses.findIndex(x => x.id === id); if (i > -1) responses[i] = r; }
-    return r;
-  }
-  const j = await postJSON({action:"admin_status", key:adminKey, client, id, status, lfmp_reply:reply, name:who});
-  if (!j.ok) throw new Error(j.error || "Could not save");
-  if (client === clientKey){ const i = responses.findIndex(x => x.id === id); if (i > -1) responses[i] = j.row; }
-  return j.row;
-}
-// Rebuild the automations from the data file plus any admin edits (newest edit wins).
+// Rebuild the automations from the data file plus the team's edits (made on the team site; newest edit wins).
 function applyContent(){
   data = JSON.parse(JSON.stringify(baseData));
   content.slice().sort((a,b) => String(a.timestamp).localeCompare(String(b.timestamp))).forEach(c => {
-    if (String(c.field) === "client:name"){ if (String(c.value || "").trim()){ data.client.name = String(c.value).trim(); clientNames[clientKey] = data.client.name; } return; }
+    if (String(c.field) === "client:name"){ if (String(c.value || "").trim()){ data.client.name = String(c.value).trim(); } return; }
     const a = data.automations.find(x => x.id === c.automation); if (!a) return;
     const f = String(c.field || ""), v = c.value == null ? "" : String(c.value);
     if (f !== "version"){ a._edits = (a._edits || 0) + 1; if (!a._lastEdit || String(c.timestamp) > a._lastEdit) a._lastEdit = String(c.timestamp); }
@@ -459,117 +352,8 @@ const ICON = {
 ICON.chat = ICON.sms; // live chat replies use the text-message icon
 const TYPE = {sms:"Text message", chat:"Live chat message", email:"Email", call:"Phone call", vm:"Voicemail", team:"Team action", start:"Start", end:"End"};
 
-/* ---------- admin: all submissions (every client) ---------- */
-let view = params.get("view") === "submissions" ? "subs" : "review";
-let subs = null, subsLoading = false, subsF = { client: "all", status: "open", q: "" };
-const clientData = {}; // code -> data file (for automation names)
-async function loadSubs(){
-  subsLoading = true; render();
-  try {
-    if (!SAVE_URL){
-      const rows = [], log = [], clients = {};
-      for (let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i); const m = k && k.match(/^ar_demo_([a-z0-9-]+)$/i); if (!m) continue;
-        let rs = []; try { rs = JSON.parse(localStorage.getItem(k) || "[]"); } catch(e){}
-        let lg = []; try { lg = JSON.parse(localStorage.getItem(k + "_log") || "[]"); } catch(e){}
-        rs.forEach(r => { r.client = r.client || m[1]; rows.push(r); }); log.push(...lg); clients[m[1]] = m[1] === clientKey ? data.client.name : prettyClient(m[1]);
-      }
-      subs = { rows: normRows(rows), log, clients };
-    } else {
-      const j = await postJSON({action:"admin_all", key:adminKey, client:clientKey});
-      if (!j.ok) throw new Error(j.error || "Could not load");
-      subs = { rows: normRows(j.rows), log: j.log || [], clients: j.clients || {} }; Object.assign(clientNames, j.clients || {});
-    }
-    clientData[clientKey] = data;
-    const codes = [...new Set(subs.rows.map(r => r.client))].filter(c => !clientData[c]);
-    await Promise.all(codes.map(async c => { try { const r = await fetch("data/" + c + ".json?t=" + Date.now(), {cache:"no-store"}); if (r.ok) clientData[c] = await r.json(); } catch(e){} }));
-  } catch(e){ toast("Couldn't load submissions: " + e.message); }
-  subsLoading = false; render();
-}
-async function loadSubsQuiet(){
-  if (!isAdmin) return;
-  try {
-    if (!SAVE_URL){ const v = view; await loadSubs(); view = v; }
-    else { const j = await postJSON({action:"admin_all", key:adminKey, client:clientKey}); if (j.ok){ subs = { rows: normRows(j.rows), log: j.log || [], clients: j.clients || {} }; Object.assign(clientNames, j.clients || {}); } }
-  } catch(e){}
-  const q = $("#cpickQ") ? $("#cpickQ").value : ""; const hadFocus = document.activeElement && document.activeElement.id === "cpickQ";
-  renderAdminBar();
-  const i = $("#cpickQ"); if (i){ i.value = q; const l = $("#cpickList"); if (l) l.innerHTML = clientListHTML(q); if (hadFocus) i.focus(); }
-}
-const subKind = (r) => isReq(r) ? "req" : r.action;
-function subStatusKey(r, all){
-  if (!isReq(r)) return r.action;
-  const st = normStatus(r.status) || ST.REQ;
-  if ((st === ST.REQ || st === ST.PROG) && isReplaced(r, all.filter(x => x.client === r.client && x.automation === r.automation && sameV(x.version, r.version)))) return "ok";
-  return st === ST.OK ? "ok" : st === ST.UPD ? "upd" : st === ST.PROG ? "prog" : "req";
-}
-function autoName(c, a){ const d = clientData[c]; const x = d && d.automations && d.automations.find(y => y.id === a); return x ? x.name : a === "setup-questions" ? "Setup questions" : a; }
-function clientName(c){ return clientNames[c] || (subs && subs.clients[c]) || (clientData[c] && clientData[c].client && clientData[c].client.name) || prettyClient(c); }
-function subsCounts(){
-  const all = subs.rows, n = { open:0, req:0, prog:0, upd:0, ok:0, answer:0, approve_all:0, approve:0 };
-  all.filter(r => subsF.client === "all" || r.client === subsF.client).forEach(r => {
-    const k = subStatusKey(r, all); if (k in n) n[k]++; if (k === "req" || k === "prog") n.open++;
-  });
-  return n;
-}
-function subsHTML(){
-  if (!subs) return `<section class="subs"><div class="none">${subsLoading ? "Loading every client's submissions…" : "No submissions loaded yet."}</div></section>`;
-  const all = subs.rows, n = subsCounts(), q = subsF.q.toLowerCase();
-  const want = (r) => {
-    if (subsF.client !== "all" && r.client !== subsF.client) return false;
-    const k = subStatusKey(r, all);
-    if (subsF.status === "open" && !(k === "req" || k === "prog")) return false;
-    if (["req","prog","upd","ok","answer","approve_all","approve"].includes(subsF.status) && k !== subsF.status) return false;
-    if (subsF.status === "requests" && !isReq(r)) return false;
-    if (subsF.status === "everything" && r.action === "approve") return false;
-    if (q && ![r.details, r.new_copy, r.step_title, r.name, r.type, r.lfmp_reply, autoName(r.client, r.automation), clientName(r.client)].join(" ").toLowerCase().includes(q)) return false;
-    return true;
-  };
-  const list = all.filter(want).sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
-  const btn = (k, label, num) => `<button type="button" data-subs-status="${k}" aria-pressed="${subsF.status === k}"><b>${num}</b>${label}</button>`;
-  const clients = (Object.keys(subs.clients).length ? Object.keys(subs.clients) : [...new Set(all.map(r => r.client))]).sort((a, b) => clientName(a).localeCompare(clientName(b)));
-  const label = { req:"Changes requested", prog:"In progress", upd:"Updated · waiting for the client", ok:"Approved" };
-  const cards = list.map(r => {
-    const k = subStatusKey(r, all);
-    const kindTxt = r.action === "answer" ? "Answered a question" : r.action === "approve_all" ? "Approved the whole automation" : r.action === "approve" ? (r.type === "Everything else looks good" ? "Marked looks good (Everything else looks good)" : "Marked looks good") : r.action === "undo" ? "Took back \u201clooks good\u201d" : r.action === "copy" ? "Sent new wording" : (r.type || "Requested a change");
-    return `<article class="scard ${isReq(r) ? "st-" + k : "k-" + r.action}">
-      <div class="shead"><span class="where"><b>${esc(clientName(r.client))}</b> · ${esc(autoName(r.client, r.automation))}${r.version ? " · v" + esc(r.version) : ""}</span>${isReq(r) ? `<span class="pill ${k === "ok" ? "approved" : k === "upd" ? "updated" : k === "prog" ? "progress" : "changes"}">${label[k]}</span>` : ""}</div>
-      <div class="stitle">${esc(r.step_title || r.step || "")}</div>
-      <div>${esc(kindTxt)}${r.action === "answer" ? `: <b>${esc(r.details)}</b>` : ""}</div>
-      ${r.action !== "answer" && r.details ? `<div>${esc(r.details)}</div>` : ""}
-      ${r.new_copy ? `<div class="copytxt">${esc(r.new_copy)}</div>` : ""}
-      ${shotsHTML(r.attachments)}
-      ${r.lfmp_reply ? `<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>` : ""}
-      ${stampsHTML(r)}
-      ${isReq(r) ? timelineHTML(r, subs.log) : ""}
-      ${statusFormHTML(r, r.client)}
-      <div class="srow"><a class="golink" href="?c=${encodeURIComponent(r.client)}&a=${encodeURIComponent(r.automation)}&admin">Open this on the client's dashboard →</a><button class="del ${armed === "s:" + r.id ? "armed" : ""}" type="button" data-subdel="${esc(r.id)}" data-client="${esc(r.client)}">${armed === "s:" + r.id ? "Click again to delete for good" : "Delete"}</button></div>
-    </article>`;
-  }).join("");
-  return `<section class="subs">
-    <button class="btn small" type="button" data-subs-close>← Back to the review page</button>
-    <h1>Client submissions</h1>
-    <p class="hint" style="font-size:14px">Every change request, new wording, answer and approval from your clients, newest first. Update the status and reply here, and the client sees it on their dashboard straight away. Statuses: Changes Requested → In Progress → Updated (ready for the client) → Approved (only when the client approves).</p>
-    <div class="sumrow">${btn("open", "Open (needs work)", n.open)}${btn("upd", "Waiting for the client", n.upd)}${btn("ok", "Approved", n.ok)}${btn("answer", "Answers", n.answer)}${btn("approve_all", "Automations approved", n.approve_all)}${btn("approve", "Looks good clicks", n.approve)}${btn("everything", "Everything", all.filter(r => r.action !== "approve" && (subsF.client === "all" || r.client === subsF.client)).length)}</div>
-    <div class="filters"><label class="hint" for="subsClient">Client</label><select id="subsClient"><option value="all">All clients</option>${clients.map(c => `<option value="${esc(c)}" ${subsF.client === c ? "selected" : ""}>${esc(clientName(c))}</option>`).join("")}</select>
-      <input type="search" id="subsQ" placeholder="Search requests, names, steps…" value="${esc(subsF.q)}">
-      <button class="btn small" type="button" data-subs-reload>↻ Reload</button></div>
-    ${cards || `<div class="none">Nothing here${subsF.status === "open" ? ": no open requests" : ""}.</div>`}
-  </section>`;
-}
-
 /* ---------- render ---------- */
 function render(){
-  { const ap = document.querySelector(".autopick"); if (ap) ap.hidden = false; }
-  if (view === "subs" && isAdmin){
-    $("#clientName").textContent = "All clients · Submissions";
-    $("#clientSub").textContent = "Admin only · Powered by Law Firm Marketing Pros";
-    document.title = "Submissions · Automation Review";
-    const ap = document.querySelector(".autopick"); if (ap) ap.hidden = true;
-    $("#app").innerHTML = subsHTML();
-    renderAdminBar(); $("#signinBtn").hidden = true;
-    return;
-  }
   $("#clientName").textContent = data.client.name + " · Automation Review";
   $("#clientSub").textContent = "Powered by Law Firm Marketing Pros";
   document.title = auto.name + " · " + data.client.name;
@@ -589,8 +373,8 @@ function render(){
     <div>
       <div class="eyebrow">Automation ${data.automations.indexOf(auto)+1} of ${data.automations.length}</div>
       <h1>${esc(auto.name)}</h1>
-      <div class="meta">${asPill}<span>Version ${esc(auto.version)}</span><span>Sent ${esc(auto.sent)}</span>${auto._lastEdit ? `<span class="updated">Updated ${fmt(auto._lastEdit)}${isAdmin ? ` · ${auto._edits} edit${auto._edits===1?"":"s"} this round` : ""}</span>` : ""}${isAdmin?`<button class="adm" type="button" data-admin="details">✎ Edit name, summary, boxes</button>`:""}</div>
-      ${isAdmin && adminForm === "details" ? detailsFormHTML() : `<p class="lead">${esc(auto.summary)}</p>`}
+      <div class="meta">${asPill}<span>Version ${esc(auto.version)}</span><span>Sent ${esc(auto.sent)}</span>${auto._lastEdit ? `<span class="updated">Updated ${fmt(auto._lastEdit)}</span>` : ""}</div>
+      <p class="lead">${esc(auto.summary)}</p>
       ${approvedBanner()}
     </div>
     <div class="progress">
@@ -608,10 +392,8 @@ function render(){
   </div>
   ${questionsHTML()}
   ${approveHTML()}
-  <p class="foot">Your responses are saved as soon as you click, and the LFMP team sees them right away. You can come back to this page any time to see where each change stands.${isAdmin ? "" : ` <button class="signin" type="button" data-signin>Team sign-in</button>`}</p>`;
+  <p class="foot">Your responses are saved as soon as you click, and the LFMP team sees them right away. You can come back to this page any time to see where each change stands.</p>`;
   $("#app").innerHTML = html;
-  renderAdminBar();
-  $("#signinBtn").hidden = isAdmin;
   $("#updated").textContent = lastLoaded ? "Updated " + lastLoaded.toLocaleTimeString("en-US", {timeZone:"America/New_York", hour:"numeric", minute:"2-digit"}) + " ET" : "";
 }
 
@@ -692,10 +474,6 @@ document.addEventListener("paste", (e) => {
   if (!items.length) return;
   e.preventDefault(); items.forEach(i => addShot(i.getAsFile()));
 });
-function nextVersion(v){
-  const m = String(v || "1.0").match(/^(\d+)\.(\d+)$/);
-  return m ? m[1] + "." + (Number(m[2]) + 1) : (Number(v) ? (Number(v) + 0.1).toFixed(1) : String(v || "1") + ".1");
-}
 function histItemsHTML(list){
   return list.map(r => `
      <div class="hitem ${r.action} ${[ST.UPD, ST.OK].includes(normStatus(r.status))?"isdone":""} ${!sameV(r.version, auto.version)?"old":""}">
@@ -706,8 +484,8 @@ function histItemsHTML(list){
        ${shotsHTML(r.attachments)}
        ${r.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(r.lfmp_reply)}</div>`:""}
        ${isReq(r) ? stampsHTML(r) + timelineHTML(r, revlog) : ""}
-       ${isAdmin ? statusFormHTML(r) : ""}
-       ${isAdmin ? `<div style="margin-top:6px">${delBtn(r.id)}</div>` : ""}
+
+
      </div>`).join("");
 }
 let ovOpen = false, ovKind = null;
@@ -769,14 +547,7 @@ function inspectorHTML(){
   if (s.email){
     content += `<div class="email"><div class="subj"><b>Subject:</b> ${chips(s.email.subject)}</div><div class="body">${s.email.body ? chips(s.email.body) : `<span class="pendingtxt">${esc(s.email.pending||"")}</span>`}</div></div>`;
   }
-  if (s._edited && isAdmin) content += `<div class="edited">Edited on this page</div>`;
   if (s.note) content += `<div class="note"><b>Our note:</b> ${chips(s.note)}</div>`;
-  if (isAdmin && (s.sms || s.email)){
-    content += adminForm === "copy:" + s.id ? copyAdminFormHTML(s) : `<div style="margin-top:10px"><button class="adm" type="button" data-admin="copy:${esc(s.id)}">✎ Edit this ${s.sms ? "text" : "email"} (admin)</button></div>`;
-  }
-  if (isAdmin){
-    content += adminForm === "step:" + s.id ? stepAdminFormHTML(s) : `<div style="margin-top:8px"><button class="adm" type="button" data-admin="step:${esc(s.id)}">✎ Edit step title, timing, description, note (admin)</button></div>`;
-  }
 
   const hasCopy = !!(s.sms || (s.email && s.email.body));
   const locked = autoState(auto) === "approved";
@@ -804,47 +575,6 @@ function approvedBanner(){
   const a = rs[rs.length-1];
   return `<div class="okbanner">${CHECK}<span><b>Approved</b> by ${esc(a.name)} on ${fmt(a.timestamp)} · version ${esc(auto.version)}</span></div>`;
 }
-function detailsFormHTML(){
-  return `<form class="form admform" data-form="details">
-    <label for="ad-name">Automation name</label><input type="text" id="ad-name" value="${esc(auto.name)}">
-    <label for="ad-summary">Summary</label><textarea id="ad-summary" rows="3">${esc(auto.summary)}</textarea>
-    <label>Version</label>
-    <div class="verlock"><span class="vbadge">🔒 v${esc(auto.version)}</span><span class="hint">${auto._lastEdit ? `Last updated ${fmt(auto._lastEdit)} · ${auto._edits} edit${auto._edits===1?"":"s"} this round` : "No edits yet this round"}</span>
-      <button class="del ${armed==="newround"?"armed":""}" type="button" data-newround>${armed==="newround" ? `Click again to start v${esc(nextVersion(auto.version))}` : `Start new review round (v${esc(nextVersion(auto.version))})`}</button></div>
-    <fieldset class="glanceedit"><legend>Summary boxes</legend>${(auto.glance || []).map((g, i) => `<div class="row2"><div><label for="ag-l${i}">Box ${i+1} label</label><input type="text" id="ag-l${i}" value="${esc(g[0])}"></div><div><label for="ag-v${i}">Box ${i+1} text</label><textarea id="ag-v${i}" rows="2">${esc(g[1])}</textarea></div></div>`).join("")}</fieldset>
-    <span class="hint">The version is locked. Saving edits updates the "Updated" date without resetting the client's reviews. When you're ready for the client to re-review everything, start a new review round: all steps go back to "Needs review" and earlier responses stay in each step's history.</span>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save changes</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div>
-  </form>`;
-}
-function stepAdminFormHTML(s){
-  const timing = s.type === "start" ? "" : `<div class="row2"><div><label for="as-when">When (shown under the title)</label><input type="text" id="as-when" value="${esc(s.when||"")}"></div><div><label for="as-gap">Line between steps</label><input type="text" id="as-gap" value="${esc(s.gap||"")}"></div></div>`;
-  return `<form class="form admform" data-form="stepadmin">
-    <label for="as-title">Step title</label><input type="text" id="as-title" value="${esc(s.title||"")}">
-    ${timing}
-    <label for="as-body">Description</label><textarea id="as-body" rows="3">${esc(s.body||"")}</textarea>
-    <label for="as-note">Our note (leave empty to hide it)</label><textarea id="as-note" rows="3">${esc(s.note||"")}</textarea>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save step</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
-}
-function questionAdminFormHTML(q){
-  return `<form class="form admform" data-form="qadmin" data-qid="${esc(q.id)}">
-    <label for="aq-text">Question</label><input type="text" id="aq-text" value="${esc(q.text||"")}">
-    <label for="aq-why">Why we're asking</label><textarea id="aq-why" rows="2">${esc(q.why||"")}</textarea>
-    <label for="aq-opts">Answer buttons (one per line)</label><textarea id="aq-opts" rows="4">${esc((q.options||[]).join("\n"))}</textarea>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save question</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
-}
-function copyAdminFormHTML(s){
-  if (s.sms) return `<form class="form admform" data-form="copyadmin">
-    <label for="ac-sms">Text message</label><textarea id="ac-sms" rows="${Math.min(14, s.sms.split("\n").length + 4)}">${esc(s.sms)}</textarea>
-    <span class="hint">Write names as [First name], [Team member's first name], [Office phone].</span>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save text</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
-  const e = s.email || {};
-  return `<form class="form admform" data-form="copyadmin">
-    <label for="ac-subj">Subject</label><input type="text" id="ac-subj" value="${esc(e.subject||"")}">
-    <label for="ac-body">Email body</label><textarea id="ac-body" rows="10" placeholder="Paste the email wording from GHL">${esc(e.body||"")}</textarea>
-    <span class="hint">Write names as [First name], [Team member's signature], [Office text number].</span>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="submit">Save email</button><button class="btn" type="button" data-admin-cancel>Cancel</button></div></form>`;
-}
-let armed = null; // two-click confirm for deletes
 function statusTag(st){ st = normStatus(st) || ST.REQ;
   return st === ST.OK ? '<span class="rs done">✓ Approved</span>' : st === ST.UPD ? '<span class="rs upd">Updated · ready for review</span>' : st === ST.PROG ? '<span class="rs prog">In progress</span>' : '<span class="rs open">Changes requested</span>'; }
 function stampsHTML(r){
@@ -854,54 +584,6 @@ function timelineHTML(r, log){
   const ev = (log || []).filter(l => l.request_id === r.id && l.event !== "requested" && l.event !== "content").sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
   if (!ev.length) return "";
   return `<ol class="tline">${ev.map(l => `<li><span class="tl-when">${fmt(l.timestamp)}${l.by ? " · " + esc(l.by) : ""}</span>${l.event === "approved" ? esc(l.note || "Approved") : statusTag(l.status)}${l.event !== "approved" && l.note ? ` · “${esc(l.note)}”` : ""}</li>`).join("")}</ol>`;
-}
-function statusFormHTML(r, client){
-  if (!isReq(r)) return "";
-  const st = normStatus(r.status) || ST.REQ;
-  if (st === ST.OK) return `<div class="hint" style="margin-top:4px">✓ Approved by the client. Nothing more to do.</div>`;
-  return `<form class="hadmin" data-form="status" data-id="${esc(r.id)}"${client ? ` data-client="${esc(client)}"` : ""}>
-     <select aria-label="Status" name="status">${TEAM_ST.map(o => `<option value="${esc(o)}" ${st === o ? "selected" : ""}>${o === ST.UPD ? "Updated — ready for client review" : o}</option>`).join("")}</select>
-     <input type="text" name="reply" aria-label="Reply to client" placeholder="Reply shown to the client (what you changed)" value="${esc(r.lfmp_reply||"")}">
-     <button class="btn small" type="submit">Save</button></form>`;
-}
-function delBtn(id, label){ const on = armed === id; return `<button class="del ${on?"armed":""}" type="button" data-del="${esc(id)}">${on ? "Click again to delete" : (label || "Delete")}</button>`; }
-async function adminDelete(ids){
-  if (!SAVE_URL){ responses = responses.filter(r => !ids.includes(r.id)); try { localStorage.setItem(demoKey, JSON.stringify(responses)); } catch(e){} return; }
-  const j = await postJSON({action:"admin_delete", key:adminKey, client:clientKey, ids});
-  if (!j.ok) throw new Error(j.error || "Could not delete");
-  responses = responses.filter(r => !ids.includes(r.id));
-}
-function prettyClient(k){ if (clientNames[k]) return clientNames[k]; if (k === clientKey && data && data.client) return data.client.name; return String(k).replace(/-(?=[a-z0-9]*\d)[a-z0-9]{6}$/i, "").split("-").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" "); }
-async function ping(k){
-  if (!SAVE_URL) return {ok:true, clients:(window.__PREVIEW_CLIENTS ? Object.keys(window.__PREVIEW_CLIENTS) : [clientKey]), names:(window.__PREVIEW_CLIENTS || {})};
-  for (let i = 0; i < 2; i++){ // retry once: the first call after the script sits idle can fail
-    try { const j = await postJSON({action:"admin_ping", key:k, client:clientKey}); return j; } catch(e){}
-  }
-  return {ok:false};
-}
-/* client picker: type to filter, scales to any number of clients */
-function openCount(c){ if (!subs) return 0; return subs.rows.filter(r => r.client === c && ["req","prog"].includes(subStatusKey(r, subs.rows))).length; }
-function clientListHTML(q){
-  q = String(q || "").trim().toLowerCase();
-  const list = adminClients.map(c => ({ c, n: prettyClient(c) })).sort((a, b) => a.n.localeCompare(b.n))
-    .filter(x => !q || x.n.toLowerCase().includes(q) || x.c.toLowerCase().includes(q));
-  if (!list.length) return `<div class="cfoot">No client matches “${esc(q)}”.</div>`;
-  return list.map(x => { const k = openCount(x.c); return `<button type="button" data-cgo="${esc(x.c)}" class="${x.c === clientKey ? "cur" : ""}"><span><span class="cn">${x.c === clientKey ? "✓ " : ""}${esc(x.n)}</span><span class="cc">${esc(x.c)}</span></span>${k ? `<span class="cnt" title="${k} open request${k > 1 ? "s" : ""}">${k}</span>` : ""}</button>`; }).join("");
-}
-function clientPickHTML(){
-  return `<div class="cpick"><button type="button" id="cpickBtn" data-cpick aria-haspopup="listbox" aria-expanded="${pickOpen}"><span class="lbl">Client</span>${esc(prettyClient(clientKey))} ▾</button>${pickOpen ? `<div class="cpanel" role="dialog" aria-label="Choose a client">
-    <input type="search" id="cpickQ" placeholder="Search ${adminClients.length} clients…" autocomplete="off" aria-label="Search clients">
-    <div class="clist" id="cpickList">${clientListHTML("")}</div>
-    <div class="cfoot">${subs ? "Orange numbers = open change requests." : "Loading open request counts…"}</div></div>` : ""}</div>`;
-}
-function goClient(c){ if (!c || c === clientKey){ pickOpen = false; renderAdminBar(); return; } const u = new URL(location.href); u.search = "?c=" + encodeURIComponent(c) + (view === "subs" ? "&view=submissions" : ""); location.href = u.toString(); }
-function renderAdminBar(){
-  const bar = $("#adminbar"); if (!wantAdmin){ bar.hidden = true; return; }
-  bar.hidden = false;
-  bar.classList.toggle("welcome", isAdmin && justSignedIn);
-  $("#adminbarIn").innerHTML = isAdmin
-    ? `<span class="adminbadge"><i class="pulse" aria-hidden="true"></i>Admin mode on</span><button class="btn small subsbtn" type="button" data-subs-open>📥 Submissions${subs ? (() => { const c = subs.rows.filter(r => ["req","prog"].includes(subStatusKey(r, subs.rows))).length; return c ? `<span class="cnt">${c}</span>` : ""; })() : ""}</button>${justSignedIn ? `<span class="welcomemsg">✓ Signed in. You can now edit copy, statuses and replies.</span>` : ""}${adminForm === "clientname" ? `<form class="cren" data-form="clientname"><label for="cnameIn" class="hint">Client name</label><input type="text" id="cnameIn" value="${esc(data.client.name)}" maxlength="120" required><button class="btn small primary" type="submit">Save name</button><button class="btn small" type="button" data-admin-cancel>Cancel</button></form>` : `${adminClients.length ? clientPickHTML() : ""}<button class="adm" type="button" data-admin="clientname" title="Change how this client's name appears on their dashboard">✎ Rename client</button>`}<span>Edit names, versions and copy, update statuses, and delete test responses. Clients never see these controls.</span><button class="del ${armed==="clear"?"armed":""}" type="button" data-clear>${armed==="clear" ? "Click again to delete ALL responses on this automation" : "Clear all responses on this automation"}</button>${data && data.customPage ? `<a class="btn small" href="${esc(data.customPage)}?c=${encodeURIComponent(clientKey)}" target="_blank" rel="noopener" title="This client is sent to a custom review page">Client's review page ↗</a>` : ""}<button class="btn small" type="button" data-admin-exit>Sign out</button>`
-    : `<b>Team sign-in</b><form data-form="adminkey" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><label for="ak" class="hint">Password</label><input type="password" id="ak" autocomplete="current-password"><button class="btn small" type="submit">Sign in</button><button class="btn small" type="button" data-admin-close>Cancel</button><span id="akmsg" class="akmsg" role="status" aria-live="polite"></span></form>`;
 }
 function whoFields(p){
   p = p || "rv"; const r = getReviewer();
@@ -948,10 +630,10 @@ function questionsHTML(){
   return `<section class="section"><h2>${auto.questions.length} question${auto.questions.length>1?"s":""} for you</h2>
     <p class="hint" style="font-size:14px;margin:0">We found these while documenting the automation. Your answers decide whether we change anything before it goes live.</p>
     ${getReviewer().name ? "" : `<div class="form" id="q-who" style="max-width:560px">${whoFields("q")}</div>`}
-    <div class="qs">${auto.questions.map((q,i) => { const a = ans(q.id); if (isAdmin && adminForm === "q:" + q.id) return `<div class="q">${questionAdminFormHTML(q)}</div>`; return `<div class="q">
-      <p><b>${i+1}. ${esc(q.text)}</b></p><p class="hint">${esc(q.why)}</p>${isAdmin ? `<div><button class="adm" type="button" data-admin="q:${esc(q.id)}">✎ Edit question (admin)</button></div>` : ""}
+    <div class="qs">${auto.questions.map((q,i) => { const a = ans(q.id); return `<div class="q">
+      <p><b>${i+1}. ${esc(q.text)}</b></p><p class="hint">${esc(q.why)}</p>
       <div class="chips" role="group" aria-label="Answer ${i+1}">${q.options.map(o => `<button type="button" data-q="${esc(q.id)}" data-a="${esc(o)}" aria-pressed="${a&&a.details===o}">${esc(o)}</button>`).join("")}</div>
-      ${a?`<span class="hint">Saved · ${esc(a.name||"")} · ${fmt(a.timestamp)}</span>${a.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(a.lfmp_reply)}</div>`:""}${isAdmin ? `<div>${delBtn(a.id, "Delete answer")}</div>` : ""}`:""}
+      ${a?`<span class="hint">Saved · ${esc(a.name||"")} · ${fmt(a.timestamp)}</span>${a.lfmp_reply?`<div class="reply"><b>Reply from LFMP</b>${esc(a.lfmp_reply)}</div>`:""}`:""}
     </div>`; }).join("")}</div></section>`;
 }
 
@@ -959,7 +641,7 @@ function approveHTML(){
   const rs = cur().filter(r => r.action === "approve_all");
   if (rs.length){
     const a = rs[rs.length-1];
-    return `<section class="section"><h2>Approval</h2><div class="approveall done"><b>Approved by ${esc(a.name)} on ${fmt(a.timestamp)}</b><span>Version ${esc(auto.version)} of ${esc(auto.name)} is approved exactly as shown on this page. We'll turn it on and let you know when it's live.</span>${isAdmin ? `<div>${delBtn(a.id, "Delete this approval")}</div>` : ""}</div></section>`;
+    return `<section class="section"><h2>Approval</h2><div class="approveall done"><b>Approved by ${esc(a.name)} on ${fmt(a.timestamp)}</b><span>Version ${esc(auto.version)} of ${esc(auto.name)} is approved exactly as shown on this page. We'll turn it on and let you know when it's live.</span></div></section>`;
   }
   if (!loaded) return `<section class="section"><h2>Approve this automation</h2><div class="loadnote">${loadFailed ? "Couldn't load saved responses. Click ↻ Refresh at the top to try again." : "Loading saved responses…"}</div></section>`;
   const open = cur().filter(r => isOpenReq(r, cur())).length;
@@ -1020,71 +702,13 @@ async function submit(rec, okMsg, scope){
   }
 }
 
-document.addEventListener("change", (e) => { if (e.target.id === "subsClient"){ subsF.client = e.target.value; render(); } });
-document.addEventListener("input", (e) => { if (e.target.id === "cpickQ"){ const l = $("#cpickList"); if (l) l.innerHTML = clientListHTML(e.target.value); } });
-document.addEventListener("input", (e) => { if (e.target.id === "subsQ"){ subsF.q = e.target.value; const pos = e.target.selectionStart; render(); const i = $("#subsQ"); if (i){ i.focus(); i.setSelectionRange(pos, pos); } } });
-document.addEventListener("click", (e) => { if (pickOpen && !e.target.closest(".cpick")){ pickOpen = false; renderAdminBar(); } }, true);
-document.addEventListener("keydown", (e) => {
-  if (!pickOpen) return;
-  if (e.key === "Escape"){ pickOpen = false; renderAdminBar(); const b = $("#cpickBtn"); if (b) b.focus(); }
-  if (e.key === "Enter" && e.target.id === "cpickQ"){ e.preventDefault(); const f = document.querySelector("#cpickList [data-cgo]"); if (f) goClient(f.dataset.cgo); }
-  if (e.key === "ArrowDown" && (e.target.id === "cpickQ" || e.target.closest("#cpickList"))){ e.preventDefault(); const all = [...document.querySelectorAll("#cpickList [data-cgo]")]; const i = all.indexOf(document.activeElement); (all[i + 1] || all[0]) && (all[i + 1] || all[0]).focus(); }
-  if (e.key === "ArrowUp" && e.target.closest("#cpickList")){ e.preventDefault(); const all = [...document.querySelectorAll("#cpickList [data-cgo]")]; const i = all.indexOf(document.activeElement); i <= 0 ? $("#cpickQ").focus() : all[i - 1].focus(); }
-});
 document.addEventListener("click", async (e) => {
   const t = e.target.closest("button, a"); if (!t) return;
-  if (t.id === "refreshBtn"){ if (view === "subs" && isAdmin){ await loadSubs(); return; } await refresh(true); return; }
-  if (t.hasAttribute("data-cpick")){ pickOpen = !pickOpen; renderAdminBar(); if (pickOpen){ const i = $("#cpickQ"); if (i) i.focus(); if (!subs && !subsLoading) loadSubsQuiet(); } return; }
-  if (t.dataset.cgo){ goClient(t.dataset.cgo); return; }
-  if (t.hasAttribute("data-subs-open")){ view = "subs"; window.scrollTo(0, 0); if (!subs) await loadSubs(); else render(); return; }
-  if (t.hasAttribute("data-subs-close")){ view = "review"; render(); return; }
-  if (t.hasAttribute("data-subs-reload")){ await loadSubs(); return; }
-  if (t.dataset.subsStatus){ subsF.status = t.dataset.subsStatus; render(); return; }
+  if (t.id === "refreshBtn"){ await refresh(true); return; }
   if (t.dataset.mic){ startMic(t.dataset.mic); return; }
   if (t.dataset.unshot != null){ shots.splice(+t.dataset.unshot, 1); refreshTools(); return; }
   if (t.hasAttribute("data-cancel") || t.hasAttribute("data-ov-cancel") || t.dataset.step || t.dataset.act === "change" || t.dataset.act === "copy" || t.dataset.act === "ovchange") resetInputs();
-  if (t.dataset.subdel){
-    // v9: delete one submission from the Submissions view (any client). Two clicks to confirm.
-    const id = t.dataset.subdel, c = t.dataset.client, k = "s:" + id;
-    if (armed !== k){ armed = k; render(); setTimeout(() => { if (armed === k){ armed = null; render(); } }, 4000); return; }
-    armed = null; if (busy){ toast("Still saving, one moment…"); return; }
-    busy = true; toast("Deleting…");
-    try {
-      if (SAVE_URL){ const j = await postJSON({action:"admin_delete", key:adminKey, client:c, ids:[id]}); if (!j.ok || !j.deleted) throw new Error(j.error || "Not found"); }
-      if (subs) subs.rows = subs.rows.filter(r => r.id !== id);
-      responses = responses.filter(r => r.id !== id);
-      toast("Deleted");
-    } catch(err){ toast("Couldn't delete: " + err.message); } finally { busy = false; }
-    render(); return;
-  }
-  if (t.dataset.del){
-    const id = t.dataset.del;
-    if (armed !== id){ armed = id; render(); setTimeout(() => { if (armed === id){ armed = null; render(); } }, 4000); return; }
-    armed = null; if (busy){ toast("Still saving, one moment…"); return; }
-    busy = true; toast("Deleting…");
-    try { await adminDelete([id]); toast("Deleted"); } catch(err){ toast("Couldn't delete: " + err.message); } finally { busy = false; }
-    render(); return;
-  }
-  if (t.hasAttribute("data-newround")){
-    if (armed !== "newround"){ armed = "newround"; render(); setTimeout(() => { if (armed === "newround"){ armed = null; render(); } }, 5000); return; }
-    armed = null; const nv = nextVersion(auto.version);
-    await guarded(null, async () => { try { await adminEdit(auto.id, "version", nv); applyContent(); adminForm = null; unlockUI(); toast("New review round started · v" + nv); render(); } catch(err){ toast("Couldn't save: " + err.message); } });
-    return;
-  }
-  if (t.hasAttribute("data-clear")){
-    if (armed !== "clear"){ armed = "clear"; render(); setTimeout(() => { if (armed === "clear"){ armed = null; render(); } }, 5000); return; }
-    armed = null;
-    const ids = responses.filter(r => r.automation === auto.id).map(r => r.id);
-    if (!ids.length){ toast("Nothing to clear"); render(); return; }
-    try { await adminDelete(ids); toast("Cleared " + ids.length + " response" + (ids.length > 1 ? "s" : "")); } catch(err){ toast("Couldn't clear: " + err.message); }
-    render(); return;
-  }
-  if (t.dataset.admin){ adminForm = adminForm === t.dataset.admin ? null : t.dataset.admin; render(); return; }
-  if (t.hasAttribute("data-admin-cancel")){ adminForm = null; render(); return; }
-  if (t.hasAttribute("data-admin-exit")){ try { localStorage.removeItem("ar_admin_key"); } catch(e){} adminKey = ""; isAdmin = false; adminForm = null; const u = new URL(location.href); u.searchParams.delete("admin"); location.href = u.toString(); return; }
-  if (t.hasAttribute("data-signin")){ wantAdmin = true; renderAdminBar(); window.scrollTo(0, 0); const f = $("#ak"); if (f) f.focus(); return; }
-  if (t.hasAttribute("data-admin-close")){ wantAdmin = false; renderAdminBar(); return; }
-  if (t.dataset.auto){ e.preventDefault(); adminForm = null; autoId = t.dataset.auto; auto = data.automations.find(a=>a.id===autoId); selected = null; openForm = null; history.replaceState(null,"",t.getAttribute("href")); render(); window.scrollTo(0,0); return; }
+  if (t.dataset.auto){ e.preventDefault(); autoId = t.dataset.auto; auto = data.automations.find(a=>a.id===autoId); selected = null; openForm = null; history.replaceState(null,"",t.getAttribute("href")); render(); window.scrollTo(0,0); return; }
   if (t.dataset.step){ selected = selected === t.dataset.step && matchMedia("(max-width:980px)").matches ? null : t.dataset.step; openForm = null; render(); return; }
   if (t.dataset.act === "approve"){
     if (!getReviewer().name){ openForm = "who"; render(); const f = $("#rv-name"); if (f) f.focus(); return; }
@@ -1105,13 +729,10 @@ document.addEventListener("click", async (e) => {
 document.addEventListener("change", (e) => {
   if (e.target.matches && e.target.matches("[data-shot]")){ [...e.target.files].forEach(addShot); e.target.value = ""; return; }
   if (e.target.id === "autoSelect"){
-    adminForm = null; openForm = null; autoId = e.target.value; auto = data.automations.find(a => a.id === autoId);
+    openForm = null; autoId = e.target.value; auto = data.automations.find(a => a.id === autoId);
     selected = matchMedia("(max-width:980px)").matches ? null : (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
     const u = new URL(location.href); u.searchParams.set("a", autoId); history.replaceState(null, "", u.toString());
     render(); window.scrollTo(0, 0);
-  }
-  if (e.target.id === "clientSelect" && e.target.value && e.target.value !== clientKey){
-    const u = new URL(location.href); u.search = "?c=" + encodeURIComponent(e.target.value); location.href = u.toString();
   }
 });
 document.addEventListener("submit", async (e) => {
@@ -1119,86 +740,6 @@ document.addEventListener("submit", async (e) => {
   const f = e.target; const kind = f.dataset.form;
   const s = auto.steps.find(x=>x.id===selected);
   if (kind === "who"){ await approveStep(f); return; }
-  if (kind === "adminkey"){
-    const inp = $("#ak"); const k = inp.value.trim();
-    if (!k){ inp.focus(); return; }
-    const btn = f.querySelector("button[type=submit]"); const msg = $("#akmsg");
-    btn.disabled = true; inp.disabled = true; btn.innerHTML = '<span class="spin" aria-hidden="true"></span>Checking…';
-    if (msg){ msg.className = "akmsg"; msg.textContent = ""; }
-    const j = await ping(k);
-    if (!j.ok){
-      btn.disabled = false; inp.disabled = false; btn.textContent = "Sign in";
-      inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake");
-      inp.setAttribute("aria-invalid", "true"); inp.select(); inp.focus();
-      if (msg){ msg.className = "akmsg bad"; msg.textContent = "✕ That password didn't work. Check it and try again."; }
-      return;
-    }
-    adminClients = j.clients || []; Object.assign(clientNames, j.names || {});
-    adminKey = k; isAdmin = true; justSignedIn = true; try { localStorage.setItem("ar_admin_key", k); } catch(e){}
-    toast("✓ Signed in. Admin mode is on"); render();
-    if (params.get("view") === "submissions"){ view = "subs"; loadSubs(); }
-    setTimeout(() => { justSignedIn = false; renderAdminBar(); }, 4000);
-    return;
-  }
-  if (kind === "clientname"){
-    const v = $("#cnameIn").value.trim(); if (!v){ $("#cnameIn").focus(); return; }
-    if (v === data.client.name && (clientNames[clientKey] || v) === v){ adminForm = null; render(); toast("No changes"); return; }
-    await guarded(f, async () => { try { await adminEdit("", "client:name", v); applyContent(); clientNames[clientKey] = v; adminForm = null; unlockUI(); toast("Client name saved"); render(); }
-    catch(err){ toast("Couldn't save: " + err.message); } });
-    return;
-  }
-  if (kind === "details"){
-    const changes = [["name", $("#ad-name").value.trim()], ["summary", $("#ad-summary").value.trim()]]
-      .filter(([k, v]) => v && v !== String(auto[k]));
-    (auto.glance || []).forEach((g, i) => {
-      const l = $("#ag-l" + i).value.trim(), v = $("#ag-v" + i).value.trim();
-      if (l !== String(g[0])) changes.push(["glance:" + i + ":label", l]);
-      if (v !== String(g[1])) changes.push(["glance:" + i + ":value", v]);
-    });
-    if (!changes.length){ adminForm = null; render(); return; }
-    await guarded(f, async () => { try { for (const [k, v] of changes) await adminEdit(auto.id, k, v); applyContent(); adminForm = null; unlockUI(); toast("Saved"); render(); }
-    catch(err){ toast("Couldn't save: " + err.message); } });
-    return;
-  }
-  if (kind === "stepadmin"){
-    const val = (id) => { const el = $(id); return el ? el.value.trim() : null; };
-    const edits = [["title", val("#as-title")], ["when", val("#as-when")], ["gap", val("#as-gap")], ["body", val("#as-body")], ["note", val("#as-note")]]
-      .filter(([k, v]) => v !== null && v !== String(s[k] || ""));
-    if (!edits.length){ adminForm = null; render(); return; }
-    await guarded(f, async () => { try { for (const [k, v] of edits) await adminEdit(auto.id, "step:" + s.id + ":" + k, v); applyContent(); adminForm = null; unlockUI(); toast("Step saved"); render(); }
-    catch(err){ toast("Couldn't save: " + err.message); } });
-    return;
-  }
-  if (kind === "qadmin"){
-    const q = auto.questions.find(x => x.id === f.dataset.qid); if (!q) return;
-    const opts = $("#aq-opts").value.split("\n").map(x => x.trim()).filter(Boolean);
-    const edits = [["text", $("#aq-text").value.trim()], ["why", $("#aq-why").value.trim()], ["options", opts.join("\n")]]
-      .filter(([k, v]) => v !== (k === "options" ? (q.options || []).join("\n") : String(q[k] || "")));
-    if (!opts.length){ toast("Add at least one answer button"); return; }
-    if (!edits.length){ adminForm = null; render(); return; }
-    await guarded(f, async () => { try { for (const [k, v] of edits) await adminEdit(auto.id, "q:" + q.id + ":" + k, v); applyContent(); adminForm = null; unlockUI(); toast("Question saved"); render(); }
-    catch(err){ toast("Couldn't save: " + err.message); } });
-    return;
-  }
-  if (kind === "copyadmin"){
-    const edits = s.sms ? [["sms", $("#ac-sms").value.trim()]] : [["email.subject", $("#ac-subj").value.trim()], ["email.body", $("#ac-body").value.trim()]];
-    const cur0 = { "sms": s.sms, "email.subject": s.email && s.email.subject, "email.body": s.email && s.email.body };
-    const changes = edits.filter(([k, v]) => v !== String(cur0[k] || ""));
-    await guarded(f, async () => { try { for (const [k, v] of changes) await adminEdit(auto.id, "step:" + s.id + ":" + k, v); applyContent(); adminForm = null; unlockUI(); toast(changes.length ? "Copy saved" : "No changes"); render(); }
-    catch(err){ toast("Couldn't save: " + err.message); } });
-    return;
-  }
-  if (kind === "status"){
-    const stVal = f.elements.status.value, reply = f.elements.reply.value.trim();
-    if (stVal === ST.UPD && !reply){ toast("Add a short note so the client knows what changed"); f.elements.reply.focus(); return; }
-    await guarded(f, async () => { try {
-      const row = await adminStatus(f.dataset.id, stVal, reply, f.dataset.client);
-      if (row && subs){ const i = subs.rows.findIndex(x => x.id === row.id); if (i > -1) subs.rows[i] = Object.assign(subs.rows[i], row);
-        subs.log.push({timestamp:new Date().toISOString(), client:row.client, request_id:row.id, event:"status", status:stVal, note:reply, by:getReviewer().name || "LFMP team"}); }
-      unlockUI(); toast("Status saved"); render(); }
-    catch(err){ toast("Couldn't save: " + err.message); } });
-    return;
-  }
   if (kind === "ovchange"){
     const d = $("#ov-details").value.trim(); if (!d){ $("#ov-details").focus(); return; }
     const pressed = f.querySelector('[data-ovkind][aria-pressed="true"]'); const part = pressed ? pressed.dataset.ovkind : "The description";
@@ -1238,11 +779,6 @@ async function boot(){
   if (!clientKey){ $("#app").innerHTML = '<div class="empty">This review link is missing its client code. Please use the link LFMP sent you.</div>'; return; }
   const ok = await refresh(false);
   if (!ok) return;
-  if (adminKey){ // signed in before on this device
-    const j = await ping(adminKey);
-    if (j.ok){ isAdmin = true; wantAdmin = true; adminClients = j.clients || []; Object.assign(clientNames, j.names || {}); }
-  }
-  if (view === "subs"){ if (isAdmin) { await loadSubs(); return; } wantAdmin = true; view = "review"; }
   if (!matchMedia("(max-width:980px)").matches) selected = (reviewable().find(s => stepState(s.id) === "pending") || auto.steps[0]).id;
   render();
 }
@@ -1254,8 +790,8 @@ async function refresh(manual){
       const r = await fetch("data/" + clientKey + ".json?t=" + Date.now(), {cache:"no-store"});
       if (!r.ok) throw new Error("not found");
       baseData = await r.json();
-      // v9: a client with a custom review page (data file "customPage") is sent there. Signed-in admins, &admin and &classic keep this dashboard.
-      if (baseData.customPage && !rendered && !params.has("classic") && !params.has("admin") && !adminKey && params.get("view") !== "submissions"){
+      // v9: a client with a custom review page (data file "customPage") is sent there. &classic keeps this dashboard.
+      if (baseData.customPage && !rendered && !params.has("classic")){
         location.replace(baseData.customPage + (baseData.customPage.includes("?") ? "&" : "?") + "c=" + encodeURIComponent(clientKey)); return false;
       }
     } catch(e){

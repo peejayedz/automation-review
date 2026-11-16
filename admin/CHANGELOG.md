@@ -2,6 +2,33 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog here and are never changed by admin work.
 
+## v1.4.0 — 16 Nov 2026 (not yet deployed)
+- **Google sign-in only (no admin password, no review key in the browser):** `lfmp-login.js`, `lfmp-login.css` and `lfmp-lock.json` are removed. The shared `lfmp-session.js` (a byte-identical copy of the Builder's `page/lfmp-session.js`) replaces them. The page asks the team site's server who is signed in (`/api/me`). The top bar shows the Google name, and ⋯ has **Refresh · Sign out** (Cloudflare Access logout). "Add / Change review admin key" and Lock are gone.
+- **Admin actions go through the server:** `admin_ping/all/status/delete/edit` go to `/api/review` with the same fields as before, minus `key`. The server adds `REVIEW_ADMIN_KEY` and sets `name` to the signed-in person's first name.
+- **Client list:** `data/` and `plans/` are read through `/api/gh` (server allow-list rule A1, GitHub token on the server), so the old "GitHub is limiting requests" error is gone.
+- Old browser leftovers are wiped on every load: the vault, `ar_admin_key`, the lock markers and the old session.
+- **New team page: Edit wording** (`admin/edit.html` + `edit.js` + `edit.css`). It is the classic review page with its edit controls on, so every editing feature of the old public `&admin` mode is kept:
+  - name, summary and summary boxes, and a new review round (version)
+  - step title, timing, description and note; text and email copy; questions
+  - rename client, status + reply, delete, clear all responses on an automation
+  - the all-clients Submissions view and the client picker
+
+  The client's own buttons are not on this page: Looks good, Request a change, Edit the wording, overview corrections, question answers and Approve automation. Only clients respond and approve, on their own review page. The team page shows the client's answers and the approval status, and its code can't send a client response.
+  
+  Data comes from the public site, and saves go through `/api/review`. A client with a custom page isn't redirected here. On the public site the address shows the Moved page, as for the rest of `admin/`.
+- **Links:**
+  - Details ⋯ Edit wording → `edit.html?c=`.
+  - Submissions "Open their review" → the plain client link (Link A, else `?c=`) in a new tab.
+  - Row ⋯ "Open in Edit wording" → `edit.html?c=&a=`.
+  - "For the team: Classic dashboard ↗" → `?c=<code>&classic` (client view).
+- **Public `index.html` (client page): admin mode removed.**
+  - Removed: the header "🔒 Admin login" button, the admin bar with Team sign-in (password), the footer "Team sign-in" link, `ar_admin_key`, every `admin_*` call, the ✎ edit buttons and forms, status forms, delete/clear, the Submissions view, the client picker, and the admin-only CSS.
+  - `&admin` and `?view=submissions` are ignored, and the custom-page redirect now skips only for `&classic`.
+  - Client view checked unchanged: 76 views (every client, a 2nd automation, demo mode, `&admin`, `?view=submissions`; 1440/390, light/dark) have the same DOM before and after, apart from the three removed admin entry points.
+- Tests:
+  - `admin/tests/e2e.mjs` runs against the real team-site server (`api.mjs`) with a Cloudflare Access stand-in: 43 checks.
+  - `logic.test.mjs` reads `subStatusKey` from `edit.js` and checks that the client rules match between `index.html` and `edit.js` (6/6).
+
 ## v1.3.0 — 16 Nov 2026
 - **Team site only:** the admin runs only at https://lfmp-admin.pages.dev/automation-review/admin/ (Google sign-in). On the public site (`dashboard.lawfirmmarketingpros.com`, `peejayedz.github.io`) a first script in `index.html` sends the address to `moved.html` before anything else loads: the shared "Moved" screen with "Open LFMP tools →". `moved.html` is a byte-identical copy of the Builder's `admin-site/moved.html` and is not copied to the team site. The client pages (index.html, plan.html, messages.html, plans/, data/) are unchanged.
 - `lfmp-login.js` (shared): Forgot password names lfmp-admin.pages.dev.

@@ -51,17 +51,16 @@ Definition of done for one request:
 
 An **approve_all** row is the client's sign-off. It records who approved, which version and when. Publish in GHL only after that row exists.
 
-## Admin mode (edit on the page)
+## Team editing (Review admin + Edit wording, team site only)
 
-Open any review link with `&admin` on the end, e.g. `…/?c=boca-dental-e770de&admin`, and enter the admin key. On that device you can then:
+Since 16 Nov 2026 the public review page (`index.html`) has **no admin mode**: no `&admin`, no Team sign-in, no edit controls. `&admin` and `?view=submissions` are ignored and show the normal client view. The team works only on the team site, behind Google sign-in (`@lawfirmmarketingpros.com`):
 
-- Edit an automation's **name, summary and version**. Changing the version (1.0 → 1.1) starts a new review round.
-- Edit the **copy of any text or email** (subject and body), including pasting in email wording that isn't on the page yet.
-- Set a request's **status** (Open / In progress / Done) and write the **reply** the client sees, right under their request.
+- **Review admin:** `https://lfmp-admin.pages.dev/automation-review/admin/`. Shows every client, their submissions, status + reply, delete/clear, and rename client.
+- **Edit wording:** Review admin → a client's Details → ⋯ → Edit wording (`admin/edit.html?c=<code>`). This is the classic page with its edit controls on. You can edit an automation's **name, summary and summary boxes**, **start a new review round** (version 1.0 → 1.1), edit **step title, timing, description and note**, edit the **copy of any text or email**, edit **questions**, set **status + reply**, delete a response, and **clear all responses** on an automation. It also has the all-clients Submissions view and the client picker.
 
-Edits are saved to the **Content** tab of the Sheet and shown to everyone straight away. The data file in GitHub stays as the starting point, and the newest edit wins. Admin controls never show for clients. Click **Exit admin** to sign out on a shared computer.
+Edits are saved to the **Content** tab of the Sheet and shown to everyone straight away. The data file in GitHub stays as the starting point, and the newest edit wins. The browser never holds the admin key. The team site's server (`/api/review`, in the ghl-subaccount-builder repo) adds it, along with the signed-in person's first name.
 
-**One-time setup for admin mode:** in Apps Script, open **Project Settings › Script properties**, add `ADMIN_KEY` with a long random value, then redeploy (Deploy › Manage deployments › Edit › Version: New version). Never put the key in `Code.gs`, because that file is public in the repo.
+**`ADMIN_KEY`:** in Apps Script, open **Project Settings › Script properties** and set `ADMIN_KEY` to a long random value. Put the same value in the team site's Cloudflare secret `REVIEW_ADMIN_KEY`, then redeploy the Apps Script (Deploy › Manage deployments › Edit › Version: New version). Never put the key in `Code.gs`, because that file is public in the repo.
 
 ## Refresh
 

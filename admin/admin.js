@@ -1,21 +1,18 @@
-// Automation Review admin v1.3.0: Review home · Details panel · Submissions, behind the one LFMP login.
-// The client pages (index.html, plan.html, messages.html, plans/, data/) are NOT changed and never load this file.
-// Backend: the same Apps Script and the same admin actions the review page uses (admin_ping, admin_all, admin_status,
-// admin_delete, admin_edit), with the same fields. No Code.gs change. The admin key comes from the one-login vault.
-// While signed in, the key is also put where index.html looks for it (localStorage "ar_admin_key"), so "Edit wording" and
-// "Open their review" open the classic page in admin mode; every lock removes it (lfmp-login.js).
-import { createLogin } from './lfmp-login.js';
+// Automation Review admin v1.4.0: Review home · Details panel · Submissions, on the team site behind Google sign-in only.
+// The client pages (plan.html, messages.html, plans/, data/) never load this file; index.html has no admin mode since
+// v1.4.0 (its edit controls moved to edit.html, "Edit wording", team only).
+// Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
+// fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
+// first name. The browser never holds the key or a GitHub token (lfmp-session.js).
+import { startSession, api, ghFetch, signOut } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.3.0';   // versioned: admin.js needs this release's rules
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
-const AR_KEY = 'ar_admin_key', TESTS_KEY = 'ar-admin-tests';
-const { OWNER, REPO } = (() => {
-  if (location.hostname.endsWith('.github.io')) return { OWNER: location.hostname.split('.')[0], REPO: location.pathname.split('/')[1] || 'automation-review' };
-  return { OWNER: 'peejayedz', REPO: 'automation-review' };
-})();
-const LIST_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/data?ref=main`;
-const PLANS_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/plans?ref=main`;   // hand-made plans/<code>.html pages
+const TESTS_KEY = 'ar-admin-tests';
+const REPO_PATH = '/repos/peejayedz/automation-review';
+const LIST_PATH = `${REPO_PATH}/contents/data?ref=main`;
+const PLANS_PATH = `${REPO_PATH}/contents/plans?ref=main`;   // hand-made plans/<code>.html pages
 // v1.2.0: on the team-only admin site (lfmp-admin.pages.dev, behind Google sign-in) the client pages and data/ aren't
 // there, so data is read from, and every client link (A/B, ?c=, plans/) points at, the public site. Elsewhere: next door.
 const PUBLIC_BASE = 'https://dashboard.lawfirmmarketingpros.com/automation-review/';
@@ -27,9 +24,10 @@ const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
 };
-// Who is answering: the name the review page remembers on this device (as index.html does), else "LFMP team".
-const who = fallback => { try { return JSON.parse(store.get('ar_reviewer') || '{}').name || fallback; } catch { return fallback; } };
-function show(view) { for (const v of ['setupView', 'keyView', 'appView']) $(v).hidden = v !== view; }
+// Who is answering: the signed-in person's first name (the server records the same name).
+let ME = null;
+const who = fallback => ME?.first || fallback;
+function show(view) { for (const v of ['setupView', 'appView']) $(v).hidden = v !== view; }
 function toast(msg, ms = 2600) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, ms); }
 const fmtDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' }); };
 const fmtWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET`; };
@@ -48,27 +46,26 @@ applyTheme(store.get('lfmp-theme') || 'auto');
 function closeMenus() { for (const m of document.querySelectorAll('.menu:not([hidden])')) { m.hidden = true; document.querySelector(`[data-menu="${m.id}"]`)?.setAttribute('aria-expanded', 'false'); } }
 
 // ---------- backend ----------
+// Admin actions through the team site's server (no key here). A refusal or a network error is retried once: the first
+// call after the Apps Script sits idle can fail.
 async function post(obj) {
   let last;
-  for (let i = 0; i < 2; i++) {     // retry once: the first call after the script sits idle can fail
-    try { const r = await fetch(SAVE_URL, { method: 'POST', body: JSON.stringify(obj) }); return await r.json(); } catch (e) { last = e; }
+  for (let i = 0; i < 2; i++) {
+    try { return await api('review', obj); } catch (e) { last = e; if (e.status === 401 || e.status === 403) break; }
   }
-  throw new Error(`Couldn't reach the review backend (${last?.message || 'network error'}).`);
+  throw new Error(last?.code === 'network' || last?.code === 'upstream' ? `Couldn't reach the review backend (${last.message}).` : (last?.message || "Couldn't reach the review backend."));
 }
 async function listData() {
-  const gh = { cache: 'no-store', headers: { Accept: 'application/vnd.github+json' } };
   // plans/ is optional (most clients have none): any failure there just means "no plans/ page"
-  const [r, plans] = await Promise.all([fetch(LIST_URL, gh), fetch(PLANS_URL, gh).then(x => (x.ok ? x.json() : [])).catch(() => [])]);
-  if (!r.ok) throw new Error(r.status === 403 ? 'GitHub is limiting requests from this network for a few minutes. Try Refresh shortly.' : `Couldn't list review clients from GitHub (HTTP ${r.status}).`);
+  const [r, plans] = await Promise.all([ghFetch('GET', LIST_PATH), ghFetch('GET', PLANS_PATH).then(x => (x.ok ? x.json() : [])).catch(() => [])]);
+  if (!r.ok) throw new Error(r.status === 403 ? 'GitHub refused the client list (the team site\'s GitHub token may be missing a permission). Tell PJ.' : `Couldn't list review clients from GitHub (HTTP ${r.status}).`);
   const names = (await r.json()).map(f => f.name);
   const codes = names.filter(n => /^[a-z0-9-]+\.json$/.test(n)).map(n => n.slice(0, -5));
   const plansPage = new Set((Array.isArray(plans) ? plans : []).map(f => f.name).filter(n => /^[a-z0-9-]+\.html$/.test(n)).map(n => n.slice(0, -5)));
   return { codes, plansPage, plan: new Set(names.filter(n => n.endsWith('.plan.json')).map(n => n.slice(0, -10))), messages: new Set(names.filter(n => n.endsWith('.messages.json')).map(n => n.slice(0, -14))) };
 }
-const checkKey = async (key, code) => { const j = await post({ action: 'admin_ping', key, client: code }); return j && j.ok ? j : null; };
-
 // ---------- state ----------
-let login = null, adminKey = null, loadSeq = 0, busy = false;
+let loadSeq = 0, busy = false;
 const D = { codes: [], plan: new Set(), messages: new Set(), plansPage: new Set(), files: {},names: {}, renames: {}, rows: [], log: [], loaded: false, error: '' };
 const F = { home: 'all', q: '', tests: store.get(TESTS_KEY) === '1', status: 'answer', client: 'all', sq: '', type: 'all', open: null, more: new Set(), armed: null, rowMenu: null, history: null };
 // Same name the client page shows: a rename (Content tab, newest wins) > the data file's name > the Sheet tab name.
@@ -79,7 +76,10 @@ const clientsAll = () => [...new Set([...D.codes, ...D.rows.map(r => r.client)])
 const visibleClients = () => clientsAll().filter(c => F.tests || !isTest(c));
 const sumOf = c => L.summarize(c, D.files[c], D.rows);
 const reviewUrl = c => (D.files[c]?.customPage ? `${D.files[c].customPage}?c=${encodeURIComponent(c)}` : `${BASE}?c=${encodeURIComponent(c)}`);
-const classicUrl = (c, a) => `${BASE}?c=${encodeURIComponent(c)}${a ? `&a=${encodeURIComponent(a)}` : ''}&admin`;
+// Edit wording (team only, next to this page): the classic page with its edit controls, as "&admin" used to be.
+const editUrl = (c, a) => `edit.html?c=${encodeURIComponent(c)}${a ? `&a=${encodeURIComponent(a)}` : ''}`;
+// The plain classic dashboard (client view; &classic so a client with a custom page still shows it).
+const classicUrl = c => `${BASE}?c=${encodeURIComponent(c)}&classic`;
 // Client links, as on the Builder's Review card: A = plan + review (default; the hand-made plans/<code>.html page when the
 // client has one, else plan.html?c=), B = messages only (re-reviews). Clients without these pages have the classic ?c= link.
 const linkA = c => (D.plansPage.has(c) ? `${BASE}plans/${encodeURIComponent(c)}.html` : D.plan.has(c) ? `${BASE}plan.html?c=${encodeURIComponent(c)}` : null);
@@ -97,36 +97,15 @@ function route() {
 const go = h => { if (location.hash !== h) location.hash = h; else draw(); };
 addEventListener('hashchange', () => draw());
 
-// ---------- sign-in ----------
-async function unlocked({ vault }) {
-  closeMenus();
+// ---------- sign-in (Google, Cloudflare Access) ----------
+async function start() {
+  try { ME = await startSession(); }
+  catch (err) { if (err.status !== 401) { show('setupView'); $('setupMsg').textContent = err.message; } return; }   // 401: on the way to /signin/
+  $('meName').textContent = ME.name || ME.email; $('meName').title = ME.email;
+  $('meMenuName').textContent = ME.name || ''; $('meMenuEmail').textContent = ME.email;
   if (!SAVE_URL) { show('setupView'); $('setupMsg').textContent = 'The review pages have no backend set (config.js saveUrl is empty), so there is nothing to administer here.'; return; }
-  if (!vault.reviewKey) return askKey();
-  adminKey = vault.reviewKey; store.set(AR_KEY, adminKey);
   show('appView'); await load();
 }
-function askKey(why, { change = false } = {}) {
-  if (!change) { adminKey = null; store.set(AR_KEY, null); }
-  $('keyCancel').hidden = !change;
-  show('keyView'); $('keyErr').textContent = why || ''; $('keyIn').value = ''; $('keyIn').type = 'password'; $('keyEye').textContent = 'Show';
-  $('keyIn').focus();
-}
-function locked() { adminKey = null; closeMenus(); closeDetails(true); closeDialog(); $('screen').innerHTML = ''; D.loaded = false; D.rows = []; D.log = []; show(null); }
-$('keyEye').addEventListener('click', () => { const i = $('keyIn'), shown = i.type === 'text'; i.type = shown ? 'password' : 'text'; $('keyEye').textContent = shown ? 'Show' : 'Hide'; $('keyEye').setAttribute('aria-label', `${shown ? 'Show' : 'Hide'} key`); i.focus(); });
-$('keyForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const k = $('keyIn').value.trim(); if (!k) { $('keyErr').textContent = 'Paste the review admin key.'; return; }
-  $('keyGo').disabled = true; $('keyGo').textContent = 'Checking…'; $('keyErr').textContent = '';
-  try {
-    if (!D.codes.length) Object.assign(D, await listData());
-    if (!D.codes.length) throw new Error('No review clients found to check the key against.');
-    if (!(await checkKey(k, D.codes[0]))) { $('keyErr').textContent = "That key didn't work. Check it's the ADMIN_KEY from the Apps Script's Script properties."; return; }
-    await login.vaultSet({ reviewKey: k }); $('keyIn').value = '';
-    adminKey = k; store.set(AR_KEY, k);
-    show('appView'); toast('Review admin key saved'); await load();
-  } catch (err) { $('keyErr').textContent = err.message; }
-  finally { $('keyGo').disabled = false; $('keyGo').textContent = 'Check and save'; }
-});
 
 // ---------- load ----------
 async function load() {
@@ -135,11 +114,11 @@ async function load() {
   try {
     Object.assign(D, await listData());
     if (!D.codes.length) throw new Error('No review clients found in the repo.');
-    const ping = await checkKey(adminKey, D.codes[0]);
+    const ping = await post({ action: 'admin_ping', client: D.codes[0] });
     if (seq !== loadSeq) return;
-    if (!ping) { await login.vaultSet({ reviewKey: null }); return askKey('The saved review admin key no longer works (it was changed in Apps Script). Paste the new one.'); }
+    if (!ping?.ok) throw new Error(ping?.error ? `The review backend refused the team site's admin key (${ping.error}). Tell PJ: REVIEW_ADMIN_KEY in Cloudflare must match ADMIN_KEY in the Apps Script.` : "The review backend didn't answer.");
     const [all, files, content] = await Promise.all([
-      post({ action: 'admin_all', key: adminKey, client: D.codes[0] }),
+      post({ action: 'admin_all', client: D.codes[0] }),
       Promise.all(D.codes.map(c => fetch(`${BASE}data/${encodeURIComponent(c)}.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null))),
       // renames live in the Content tab: the same public read the client page makes (GET ?client=)
       Promise.all(D.codes.map(c => fetch(`${SAVE_URL}?client=${encodeURIComponent(c)}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null))),
@@ -171,7 +150,7 @@ function heroHtml(screen) {
   return head + strip + tabs;
 }
 function draw() {
-  if ($('appView').hidden || !adminKey) return;
+  if ($('appView').hidden || !ME) return;
   const r = route();
   if (D.error) { $('screen').innerHTML = `${heroHtml(r.screen)}<div class="errbox">${esc(D.error)} <button class="lnk" type="button" data-act="reload">Try again</button></div>`; return; }
   if (!D.loaded) return;
@@ -246,7 +225,7 @@ function openDetails(code) {
       <div class="dtools"><span class="menuwrap"><button class="btn icon iconbtn" type="button" data-menu="dpMenu" aria-haspopup="menu" aria-expanded="false" aria-label="More for ${esc(name)}">⋯</button>
         <div class="menu" id="dpMenu" role="menu" hidden>
           <button type="button" role="menuitem" data-dp="rename">Rename client</button>
-          <a role="menuitem" href="${esc(classicUrl(code))}">Edit wording (names, summary, version, steps)</a>
+          <a role="menuitem" href="${esc(editUrl(code))}">Edit wording (names, summary, version, steps)</a>
           <button type="button" role="menuitem" class="danger" data-dp="clear">Clear all responses…</button>
         </div></span>
       <button class="btn icon iconbtn" type="button" data-act="closedet" aria-label="Close details">✕</button></div></div>
@@ -316,7 +295,7 @@ function groupHtml(g) {
   const limit = F.more.has(g.c) ? g.rows.length : Math.max(4, openIdx + 1);
   const shown = g.rows.slice(0, limit), rest = g.rows.length - shown.length;
   return `<section class="grp" aria-label="${esc(nameOf(g.c))}">
-    <div class="gh"><h2 class="disp">${esc(nameOf(g.c))}</h2>${g.toAnswer ? `<span class="gcnt">${g.toAnswer} to answer</span>` : ''}<a class="lk gopen" href="${esc(classicUrl(g.c))}">Open their review ${EXT}</a></div>
+    <div class="gh"><h2 class="disp">${esc(nameOf(g.c))}</h2>${g.toAnswer ? `<span class="gcnt">${g.toAnswer} to answer</span>` : ''}<a class="lk gopen" href="${esc(homeLink(g.c))}" target="_blank" rel="noopener">Open their review ${EXT}</a></div>
     ${shown.map(r => { const k = L.statusKey(r, all), [t, c] = L.tagOf(r, k), open = F.open === r.id;
       return `<button type="button" class="sline${open ? ' on' : ''}" data-sub="${esc(r.id)}" aria-expanded="${open}"><span class="tag tg-${c}">${esc(t)}</span><span class="st2"><b>${esc(r.step_title || r.step || L.kindText(r))}</b><small>${esc(autoName(r.client, r.automation))}</small></span><span class="sdate">${esc(fmtDay(r.timestamp))}</span></button>${open ? openHtml(r, k) : ''}`; }).join('')}
     ${rest > 0 ? `<button type="button" class="smore" data-more="${esc(g.c)}">+ ${rest} more</button>` : ''}
@@ -342,7 +321,7 @@ function openHtml(r, k) {
   const menu = `<span class="menuwrap"><button class="btn icon iconbtn" type="button" data-menu="rm-${esc(r.id)}" aria-haspopup="menu" aria-expanded="false" aria-label="More for this response">⋯</button>
     <div class="menu" id="rm-${esc(r.id)}" role="menu" hidden>
       <button type="button" role="menuitem" data-hist="${esc(r.id)}">${F.history === r.id ? 'Hide history' : 'History'}</button>
-      <a role="menuitem" href="${esc(classicUrl(r.client, r.automation))}">Open on the client's dashboard</a>
+      <a role="menuitem" href="${esc(editUrl(r.client, r.automation))}">Open in Edit wording</a>
       <button type="button" role="menuitem" class="danger" data-subdel="${esc(r.id)}">Delete…</button>
     </div></span>`;
   return `<div class="sopen" id="so-${esc(r.id)}">
@@ -367,7 +346,7 @@ async function saveStatus(form) {
   const id = form.dataset.id, client = form.dataset.client, status = form.status.value, reply = form.reply.value.trim();
   const btn = form.querySelector('[type="submit"]'); busy = true; btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const j = await post({ action: 'admin_status', key: adminKey, client, id, status, lfmp_reply: reply, name: who('LFMP team') });
+    const j = await post({ action: 'admin_status', client, id, status, lfmp_reply: reply, name: who('LFMP team') });
     if (!j.ok) throw new Error(j.error || 'Could not save');
     const i = D.rows.findIndex(r => r.id === id);
     if (i > -1) D.rows[i] = { ...D.rows[i], ...(j.row || { status, lfmp_reply: reply }), status: L.normStatus((j.row || {}).status || status) };
@@ -381,21 +360,21 @@ async function deleteRow(id) {
   if (busy) { toast('Still saving, one moment…'); return; }
   busy = true; toast('Deleting…');
   try {
-    const j = await post({ action: 'admin_delete', key: adminKey, client: r.client, ids: [id] });
+    const j = await post({ action: 'admin_delete', client: r.client, ids: [id] });
     if (!j.ok || !j.deleted) throw new Error(j.error || 'Not found');
     D.rows = D.rows.filter(x => x.id !== id); F.open = null; F.armed = null; toast('Deleted');
   } catch (err) { toast(`Couldn't delete: ${err.message}`); }
   finally { busy = false; draw(); }
 }
 async function rename(code, value) {
-  const j = await post({ action: 'admin_edit', key: adminKey, client: code, automation: '', field: 'client:name', value, name: who('Admin') });
+  const j = await post({ action: 'admin_edit', client: code, automation: '', field: 'client:name', value, name: who('Admin') });
   if (!j.ok) throw new Error(j.error || 'Could not save');
   D.renames[code] = value;
 }
 async function clearResponses(code, autoId) {
   const ids = D.rows.filter(r => r.client === code && (!autoId || r.automation === autoId)).map(r => r.id);
   if (!ids.length) return 0;
-  const j = await post({ action: 'admin_delete', key: adminKey, client: code, ids });
+  const j = await post({ action: 'admin_delete', client: code, ids });
   if (!j.ok) throw new Error(j.error || 'Could not delete');
   D.rows = D.rows.filter(r => !ids.includes(r.id));
   return ids.length;
@@ -443,10 +422,8 @@ document.addEventListener('click', async e => {
   const row = e.target.closest('.crow'); if (row) { go(`#/client/${encodeURIComponent(row.dataset.client)}`); return; }
   const a = e.target.closest('[data-act]'); if (!a) return;
   closeMenus();
-  if (a.dataset.act === 'lock') login.lock('');
+  if (a.dataset.act === 'signout') signOut();
   else if (a.dataset.act === 'reload') { await load(); toast('Refreshed'); }
-  else if (a.dataset.act === 'changekey') askKey('Paste the new review admin key. The saved one stays until the new one is checked.', { change: true });
-  else if (a.dataset.act === 'keycancel') show('appView');
   else if (a.dataset.act === 'closedet') closeDetails();
 });
 document.addEventListener('keydown', e => {
@@ -471,7 +448,7 @@ document.addEventListener('change', e => {
   else if (e.target.id === 'subsType') { F.type = e.target.value; drawSubs(); }
 });
 document.addEventListener('submit', async e => {
-  const f = e.target.closest('form[data-form]'); if (!f || f.id === 'keyForm') return;
+  const f = e.target.closest('form[data-form]'); if (!f) return;
   e.preventDefault();
   if (f.dataset.form === 'status') return saveStatus(f);
   if (f.dataset.form === 'rename') {
@@ -491,6 +468,4 @@ document.addEventListener('submit', async e => {
 });
 
 // ---------- start ----------
-login = createLogin({ tool: 'review', onUnlock: unlocked, onLock: locked });
-// One message only: the page's own "file is missing" text (with the command formatted), or the other reason in its place.
-if (await login.start() === 'error') { show('setupView'); if (!/lfmp-lock\.json is missing/.test(login.error)) $('setupMsg').textContent = login.error; }
+await start();

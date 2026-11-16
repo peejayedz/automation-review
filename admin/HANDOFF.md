@@ -6,6 +6,7 @@ The repo README covers the client pages, the Apps Script and the Sheet. This fil
 
 | Area | State |
 |---|---|
+| v1.4.0 Google sign-in only + Edit wording page + public admin mode removed | **Built and tested locally, NOT pushed or deployed** (16 Nov 2026). e2e: 43/43 against the real team-site server; logic: 6/6; public page client view DOM-identical in 76 views. Goes live together with the Builder's `/api/` server (Pages Functions) once PJ has set the Cloudflare secrets. See CHANGELOG v1.4.0. |
 | Admin page v1.3.0 (team site only) | **Live** (commit ad1c997, 16 Nov 2026) only at `https://lfmp-admin.pages.dev/automation-review/admin/`: Cloudflare Pages in PJ's account, behind Access / Google sign-in, deployed by the Builder repo's `admin-site.yml`, which copies `admin/` without `tests/`, `HANDOFF.md` and `moved.html`, plus `config.js`. **After pushing admin files, run** `gh workflow run admin-site.yml -R peejayedz/ghl-subaccount-builder`. v1.2.0 (6a375b6): on the team site `BASE` = the public `dashboard.lawfirmmarketingpros.com/automation-review/` (data + every client link). v1.3.0: on the public site a first script in `index.html` sends visitors to `moved.html` (the shared Moved screen; byte-identical copy of the Builder's `admin-site/moved.html`); the admin never starts there (live check 16 Nov). Client pages byte-identical before/after. PJ signed in on the team site 16 Nov; all works. |
 | Admin page v1.1.3 (new address) | **Live** (commit 8bbc006, 16 Nov 2026) at `https://dashboard.lawfirmmarketingpros.com/automation-review/admin/` (old peejayedz.github.io links 301 there). Only the shared sign-in help text changed. On the new host the repo comes from the `peejayedz/automation-review` fallback in `admin.js`. Phase 6 will put `/automation-review/admin/` and `/automation-review/preview/` behind Cloudflare Access; the client pages stay public. `apps-script/Code.gs` `REVIEW_BASE_URL` changes at PJ's next Apps Script deploy. |
 | Admin page v1.1.2 (client links A/B, Not started) | **Live** (commit 141d2d4, 16 Nov 2026). Live check 32/32 (`assets/code/2026-11-16_review-admin-v112_live-check.mjs`: real data/ + plans/ listings, Mahdavi A = plans/ page and B both 200, ZZ TEST 2 A/B, Dumas + Palm Beach classic, Copy, Not started; plus the Builder/KPI one-login checks). Screenshots: `assets/images/2026-11-16_review-admin-v112_live/` (live) and `assets/images/2026-11-15_review-admin-v112/` (tests: Mahdavi, ZZ TEST 2 with tests shown, Dumas, 1440 + 390, light + dark). |
@@ -17,9 +18,9 @@ The repo README covers the client pages, the Apps Script and the Sheet. This fil
 
 ## How it fits together
 
-- **Files:** `index.html` (shell), `admin.js` (screens, actions), `review-logic.mjs` (pure rules, the same as index.html's), `admin.css`, plus the shared one-login files (`lfmp-login.js/.css`, `lfmp-ui.css`, `fonts/`, `lfmp-lock.json`). The shared files are byte-identical with the Builder's `page/` and leadpro-kpi `admin/`.
+- **Files:** `index.html` (shell), `admin.js` (screens, actions), `review-logic.mjs` (pure rules, the same as index.html's), `admin.css`, `edit.html` / `edit.js` / `edit.css` (Edit wording, v1.4.0), plus the shared files (`lfmp-session.js`, `lfmp-ui.css`, `fonts/`). The shared files are byte-identical with the Builder's `page/` and leadpro-kpi `admin/`.
 - **Backend:** the same Apps Script URL as the client pages (`../config.js`). Admin actions: `admin_ping` (check key + client list), `admin_all` (every response + log + Sheet tab names), `admin_status`, `admin_delete`, `admin_edit`. Plus the public `GET ?client=` for renames (Content tab). **No Code.gs change.**
-- **Key:** the review ADMIN_KEY sits in the one-login vault. While signed in it is also put in `localStorage.ar_admin_key`, where the classic page looks, so links into the classic page open in admin mode. Every lock removes it.
+- **Key (v1.4.0):** the review ADMIN_KEY is only on the team site's server (Cloudflare secret `REVIEW_ADMIN_KEY`; `/api/review` adds it and the signed-in person's first name). Nothing secret is in the browser, and the public classic page has no admin mode.
 - **Client list:** the `data/*.json` files from the GitHub API (public, unauthenticated) plus any client that has responses. Since v1.1.2 it also lists `plans/` (optional: any failure there just means no plans/ page).
 - **Client links (v1.1.2), same names and order as the Builder's Review card:** Link A · Plan + review = `plans/<code>.html` when the client has one (Mahdavi's hand-made page, which redirects to plan.html), else `plan.html?c=<code>` when `data/<code>.plan.json` exists. Link B · Review only = `messages.html?c=<code>` when `data/<code>.messages.json` exists. Clients with neither (classic only: Dumas, Palm Beach, Boca, Emery, Hedayati, Sralla) get one "Review page" row with the classic `?c=` link (or `customPage?c=`). Copy copies the full https link. The home row's Review page ↗ opens Link A, else the classic link. Classic dashboard (`?c=…&admin`) sits below, under "For the team".
 - **"Sent" mark:** not shown. Builder records keep `review.links.plan/messages` but no field for which link was sent (and this page can't read the private builder repo). If the Builder starts saving one, it needs a public place this page can read.
@@ -36,13 +37,13 @@ The repo README covers the client pages, the Apps Script and the Sheet. This fil
 | Client picker | Submissions client picker; Review home rows |
 | Search | Review home search (clients); Submissions search (requests) |
 | Rename client | Details → ⋯ → Rename client |
-| Edit names, summary, version, steps, copy | Details → ⋯ → Edit wording (classic page in edit mode, same tab) |
+| Edit names, summary, version, steps, copy, questions | Details → ⋯ → Edit wording (`edit.html`, team only since v1.4.0; the public page has no admin mode) |
 | Clear all responses on an automation | Details → ⋯ → Clear all responses… (every automation or one; type-to-confirm) |
 | Client's review page (custom page) | Home row: Review page ↗ (Link A, else the classic link). Details: Client links (A + B, or Review page) with Open ↗ + Copy |
-| Open this on the client's dashboard | Submissions → open a line → ⋯ → Open on the client's dashboard |
+| Open this on the client's dashboard | Submissions → open a line → ⋯ → Open in Edit wording |
 | History / timeline of a request | Submissions → open a line → ⋯ → History |
 | Reload | Top ⋯ → Refresh |
-| Sign out | Top ⋯ → Lock (locks all three tools) |
+| Sign out | Top ⋯ → Sign out (Google / Cloudflare Access logout, all three tools) |
 
 ## Tests
 
@@ -59,4 +60,4 @@ The repo README covers the client pages, the Apps Script and the Sheet. This fil
 ## Before pushing
 
 - Ask PJ first; another session may be working in this repo.
-- Commit `admin/` only. Check the client-file hash list: `git ls-files | grep -v ^admin/ | xargs shasum -a 256`, before and after.
+- Commit `admin/` only. Check the client-file hash list: `git ls-files | grep -v ^admin/ | xargs shasum -a 256`, before and after. (Exception v1.4.0: `index.html` and `README.md` change on purpose: the admin mode was removed. Client view checked DOM-identical.)

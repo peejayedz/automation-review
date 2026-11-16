@@ -4,16 +4,22 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import * as L from '../review-logic.mjs';
 
+// v1.4.0: the Submissions rule (subStatusKey) moved with the admin mode from index.html to admin/edit.js (Edit wording).
 const html = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
-const grab = (re, what) => { const m = html.match(re); if (!m) throw new Error(`index.html: ${what} not found`); return m[0]; };
+const editJs = await readFile(new URL('../edit.js', import.meta.url), 'utf8');
+const grab = (re, what, text = html, file = 'index.html') => { const m = text.match(re); if (!m) throw new Error(`${file}: ${what} not found`); return m[0]; };
 const src = [
   grab(/const ST = \{[^\n]*\};/, 'ST'),
   grab(/const isReq = [^\n]*;/, 'isReq'),
   grab(/function normStatus\(s\)\{[\s\S]*?\n\}/, 'normStatus'),
   grab(/const sameV = [^\n]*;/, 'sameV'),
   grab(/function isReplaced\(r, rs\)\{[\s\S]*?\n\}/, 'isReplaced'),
-  grab(/function subStatusKey\(r, all\)\{[\s\S]*?\n\}/, 'subStatusKey'),
+  grab(/function subStatusKey\(r, all\)\{[\s\S]*?\n\}/, 'subStatusKey', editJs, 'admin/edit.js'),
 ].join('\n') + '\nthis.X = { ST, isReq, normStatus, sameV, isReplaced, subStatusKey };';
+// edit.js keeps the same client rules as index.html (it is the classic page with its edit controls)
+for (const [re, what] of [[/const ST = \{[^\n]*\};/, 'ST'], [/const isReq = [^\n]*;/, 'isReq'], [/function normStatus\(s\)\{[\s\S]*?\n\}/, 'normStatus'], [/const sameV = [^\n]*;/, 'sameV'], [/function isReplaced\(r, rs\)\{[\s\S]*?\n\}/, 'isReplaced']]) {
+  if (grab(re, what) !== grab(re, what, editJs, 'admin/edit.js')) throw new Error(`${what} differs between index.html and admin/edit.js`);
+}
 const ctx = {}; vm.runInNewContext(src, ctx); const I = ctx.X;
 
 let pass = 0, fail = 0;
@@ -71,7 +77,7 @@ t('Submissions filters: To answer = req+prog · Waiting = upd · Done = approved
 t('test clients: ZZ… codes / names and names with "test"', () => {
   eq([L.isTestClient('zz-test-2-qpqhx7', 'ZZ TEST 2'), L.isTestClient('boca-dental-e770de', 'Boca Dental'), L.isTestClient('x', 'Acme Test Firm'), L.isTestClient('mahdavi-law-mc1mar', 'The Mahdavi Law Firm')], [true, false, true, false]);
 });
-t('wording matches index.html Submissions', () => {
+t('wording matches the Edit wording page\'s Submissions (formerly index.html)', () => {
   eq(L.kindText({ action: 'approve', type: 'Everything else looks good' }), 'Marked looks good (Everything else looks good)');
   eq(L.kindText({ action: 'copy' }), 'Sent new wording'); eq(L.kindText({ action: 'change', type: 'Change timing' }), 'Change timing');
   eq(L.prettyClient('boca-dental-e770de'), 'Boca Dental');

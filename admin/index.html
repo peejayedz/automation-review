@@ -11,32 +11,18 @@
 <script>try { var t = localStorage.getItem('lfmp-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
 <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="lfmp-ui.css?v=1.3.0">
-<link rel="stylesheet" href="admin.css?v=1.3.0">
-<link rel="stylesheet" href="lfmp-login.css?v=1.3.0">
+<link rel="stylesheet" href="lfmp-ui.css?v=1.4.0">
+<link rel="stylesheet" href="admin.css?v=1.4.0">
 <script src="../config.js"></script>
 </head>
 <body>
 
-<!-- The one login can't start (no lfmp-lock.json, or an old browser) -->
+<!-- Sign-in worked but the page can't run (no backend set, or the team site answered with an error) -->
 <div class="gate" id="setupView" hidden><div class="card">
   <div class="gatehead"><span class="mark" aria-hidden="true">LFMP</span><p class="ey">LFMP · Review admin</p></div>
-  <h1 class="disp">Sign-in <span class="g">not ready.</span></h1>
-  <p class="sub" id="setupMsg">The shared admin password file (lfmp-lock.json) is missing. In Terminal, in the leadpro-kpi folder, run <code class="mono">node scripts/set-shared-password.mjs</code>, then publish the three tools.</p>
-</div></div>
-
-<!-- One time: add the Automation Review admin key to the vault -->
-<div class="gate wide" id="keyView" hidden><div class="card">
-  <div class="gatehead"><span class="mark" aria-hidden="true">LFMP</span><p class="ey">LFMP · Review admin</p></div>
-  <div><h1 class="disp">Add the review <span class="g">admin key.</span></h1>
-    <p class="sub" id="keyWhy" style="margin-top:10px">One time per browser. The key is the ADMIN_KEY script property of the Automation Review Apps Script (in your password manager). It's saved here only, encrypted with the admin password, and turns admin mode on for you on every review page while you're signed in.</p></div>
-  <form id="keyForm" autocomplete="off" novalidate>
-    <label class="f" for="keyIn">Review admin key
-      <span class="pw"><input type="password" id="keyIn" autocomplete="off" spellcheck="false" required><button type="button" class="eye" id="keyEye" aria-controls="keyIn" aria-label="Show key">Show</button></span>
-    </label>
-    <p class="ferr" id="keyErr" role="alert"></p>
-    <div class="btnrow"><button class="btn p big" id="keyGo" type="submit">Check and save</button><button class="btn big" type="button" data-act="keycancel" id="keyCancel" hidden>Cancel</button><button class="btn big" type="button" data-act="lock">Lock</button></div>
-  </form>
+  <h1 class="disp">Review admin <span class="g">not ready.</span></h1>
+  <p class="sub" id="setupMsg">Loading…</p>
+  <div class="btnrow"><button class="btn big" type="button" data-act="signout">Sign out</button></div>
 </div></div>
 
 <!-- App -->
@@ -52,18 +38,19 @@
       </nav>
       <div class="topr">
         <div class="themeseg" id="themeSeg" role="group" aria-label="Theme"></div>
+        <span class="me" id="meName" aria-label="Signed in with Google"></span>
         <span class="menuwrap">
           <button class="btn icon iconbtn" type="button" data-menu="topMenu" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋯</button>
           <div class="menu" id="topMenu" role="menu" hidden>
+            <p class="menume" role="presentation"><b id="meMenuName"></b><span id="meMenuEmail"></span></p>
             <button type="button" role="menuitem" data-act="reload">Refresh</button>
-            <button type="button" role="menuitem" data-act="changekey">Change review admin key</button>
-            <button type="button" role="menuitem" data-act="lock">Lock</button>
+            <button type="button" role="menuitem" data-act="signout">Sign out</button>
           </div>
         </span>
       </div>
     </header>
     <main id="screen" aria-live="polite"></main>
-    <footer class="foot"><span>LFMP Automation Review admin · v1.3.0</span><span>Client pages never show these controls.</span></footer>
+    <footer class="foot"><span>LFMP Automation Review admin · v1.4.0</span><span>Client pages never show these controls.</span></footer>
   </div>
 </div>
 
@@ -72,6 +59,6 @@
 <div class="ovl" id="ovl" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-<script type="module" src="admin.js?v=1.3.0"></script>
+<script type="module" src="admin.js?v=1.4.0"></script>
 </body>
 </html>

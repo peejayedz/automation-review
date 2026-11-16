@@ -30,6 +30,11 @@ label.f input,label.f select{text-transform:none;letter-spacing:0;font-weight:40
 .topr{flex-wrap:wrap;justify-content:flex-end}
 .toolchip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border:1px solid var(--tool);color:var(--tool-ink);font:700 10.5px/1 var(--b);letter-spacing:.14em;text-transform:uppercase;flex:0 0 auto;margin-left:-14px}
 .nav a[aria-current="page"]{border-bottom-color:var(--tool)}
+.me{font:600 13px/1.2 var(--b);color:var(--ink);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me:empty{display:none}
+.menume{margin:0;padding:10px 16px 8px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;font:500 12px var(--b);color:var(--mut);max-width:280px}
+.menume b{font:700 14px var(--b);color:var(--ink)}
+.menume span{overflow:hidden;text-overflow:ellipsis}
 .themeseg{display:inline-flex;border:1px solid var(--line);min-height:38px}
 .themeseg button{border:0;background:transparent;padding:0 10px;font:700 11.5px/1 var(--b);letter-spacing:.12em;text-transform:uppercase;color:var(--mut);cursor:pointer}
 .themeseg button[aria-pressed="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--tool)}
@@ -190,6 +195,7 @@ label.f input,label.f select{text-transform:none;letter-spacing:0;font-weight:40
 @media (max-width:560px){
   .top{gap:12px 14px}
   .topr{margin-left:auto;gap:6px}
+  .me{display:none}   /* phone: the name is in the ⋯ menu (same as the Builder and Scorecards) */
   .themeseg button{padding:0 6px;font-size:10.5px;letter-spacing:.06em}
   .nav{gap:18px;order:3;width:100%}
   .toolchip{margin-left:-6px}
