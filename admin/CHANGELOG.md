@@ -2,6 +2,10 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog here and are never changed by admin work.
 
+## v1.3.0 — 16 Nov 2026
+- **Team site only:** the admin runs only at https://lfmp-admin.pages.dev/automation-review/admin/ (Google sign-in). On the public site (`dashboard.lawfirmmarketingpros.com`, `peejayedz.github.io`) a first script in `index.html` sends the address to `moved.html` before anything else loads: the shared "Moved" screen with "Open LFMP tools →". `moved.html` is a byte-identical copy of the Builder's `admin-site/moved.html` and is not copied to the team site. The client pages (index.html, plan.html, messages.html, plans/, data/) are unchanged.
+- `lfmp-login.js` (shared): Forgot password names lfmp-admin.pages.dev.
+
 ## v1.2.0 — 16 Nov 2026
 - **Team-only admin site:** the admin also runs from https://lfmp-admin.pages.dev/automation-review/admin/ (Cloudflare Pages in PJ's account, behind Google sign-in; deployed by the Builder repo's `admin-site.yml`, which copies `admin/` without `tests/` and `HANDOFF.md`, plus `config.js`). There, `BASE` = `https://dashboard.lawfirmmarketingpros.com/automation-review/`: client data (`data/<code>.json`) is read from the public site, and every client link (Link A/B, `?c=`, plans/, Copy) is the public client address, never the admin site. On github.io and in tests `BASE` is still `../`.
 

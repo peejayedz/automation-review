@@ -1,4 +1,4 @@
-/* Automation Review admin v1.2.0 (admin/ only; the client pages keep their own look). Shared look: lfmp-ui.css (same file as
+/* Automation Review admin v1.3.0 (admin/ only; the client pages keep their own look). Shared look: lfmp-ui.css (same file as
    the Builder and KPI admin, unchanged). Tool colour = teal: band, REVIEW chip, menu underline, headline accent, active filter.
    One gold main button per screen; status colours stay the same. Every text pair passes WCAG AA in light and dark. */
 :root{--tool:#1f7f7a;--tool-ink:#1b746f;--tool-on:#ffffff;--bg:#ecf4f2;--panel:#ffffff;--panel2:#f6faf9;--line:#d3e0dd}   /* text teal #1b746f: 4.98:1 on #ecf4f2 */
