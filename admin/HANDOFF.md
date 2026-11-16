@@ -6,6 +6,7 @@ The repo README covers the client pages, the Apps Script and the Sheet. This fil
 
 | Area | State |
 |---|---|
+| Admin page v1.1.3 (new address) | **Live** (commit 8bbc006, 16 Nov 2026) at `https://dashboard.lawfirmmarketingpros.com/automation-review/admin/` (old peejayedz.github.io links 301 there). Only the shared sign-in help text changed. On the new host the repo comes from the `peejayedz/automation-review` fallback in `admin.js`. Phase 6 will put `/automation-review/admin/` and `/automation-review/preview/` behind Cloudflare Access; the client pages stay public. `apps-script/Code.gs` `REVIEW_BASE_URL` changes at PJ's next Apps Script deploy. |
 | Admin page v1.1.2 (client links A/B, Not started) | **Live** (commit 141d2d4, 16 Nov 2026). Live check 32/32 (`assets/code/2026-11-16_review-admin-v112_live-check.mjs`: real data/ + plans/ listings, Mahdavi A = plans/ page and B both 200, ZZ TEST 2 A/B, Dumas + Palm Beach classic, Copy, Not started; plus the Builder/KPI one-login checks). Screenshots: `assets/images/2026-11-16_review-admin-v112_live/` (live) and `assets/images/2026-11-15_review-admin-v112/` (tests: Mahdavi, ZZ TEST 2 with tests shown, Dumas, 1440 + 390, light + dark). |
 | Admin page v1.1.1 (one login only) | **Live** (commit 8b67874, 15 Nov 2026), with Builder v1.3.0 and KPI admin v1.15.0. Live check 29/29 (`assets/code/2026-11-15_legacy-lock-removal_live-check.mjs`; screenshots `assets/images/2026-11-15_legacy-lock-removal_live/`). |
 | Admin page v1.1.0 (redesign) | Live 15 Nov 2026 (commit 407db7e). v1.0.0 (c5efbc8) before it. |
