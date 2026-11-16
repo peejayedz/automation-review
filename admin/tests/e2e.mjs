@@ -65,12 +65,17 @@ const DEPS = ACCESS.deps({
 const refused = () => DEPS.logs.filter(l => l.api === 'refused');
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); };
 let ORIGIN = '';
+let logouts = 0;   // this site's Access logout calls (Sign out)
+// The team-wide Access logout (lfmp.cloudflareaccess.com) answers by going to returnTo, as the real one does.
+const teamLogouts = [];
+const routeTeamLogout = page => page.route('https://lfmp.cloudflareaccess.com/cdn-cgi/access/logout*', r => { teamLogouts.push(r.request().url()); const back = new URL(r.request().url()).searchParams.get('returnTo'); return r.fulfill({ status: 200, contentType: 'text/html', body: `<script>location.replace(${JSON.stringify(back)})</script>` }); });
+const LAST = /^Last signed in (Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec), \d{1,2}:\d{2} (AM|PM)$/;
 const server = createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x'), p = decodeURIComponent(u.pathname);
   if (p.startsWith('/api/')) return ACCESS.serve(req, res, { env: ENV, deps: DEPS, email: SIGNED.email });
   let body = ''; for await (const c of req) body += c;
   if (p === '/signin/') return send(res, 200, '<!doctype html><title>Sign in</title><h1>Sign in with Google</h1>', 'text/html');
-  if (p === '/cdn-cgi/access/logout') return send(res, 200, '<!doctype html><title>Logged out</title><h1>Logged out</h1>', 'text/html');
+  if (p === '/cdn-cgi/access/logout') { logouts++; return send(res, 200, '<!doctype html><title>Logged out</title><h1>Logged out</h1>', 'text/html'); }
   if (p === '/automation-review/config.js') return send(res, 200, `window.REVIEW_CONFIG = { saveUrl: "${ORIGIN}/exec" };`, 'text/javascript');
   if (p === '/exec') { try { const d = req.method === 'POST' ? JSON.parse(body || '{}') : null; if (d) posts.push(d); return send(res, 200, d ? gs.post(d) : gs.get(Object.fromEntries(u.searchParams))); } catch (e) { return send(res, 200, { ok: false, error: e.message }); } }
   if (p.startsWith('/automation-review/')) {
@@ -308,9 +313,9 @@ try {
     await page.fill('#clrIn', 'ZZ TEST 2'); await page.click('#clrGo'); await page.waitForFunction(() => /Cleared 2 responses/.test(document.getElementById('toast').textContent));
     const p = lastPost('admin_delete'); assert(p.client === 'zz-test-2-qpqhx7' && p.ids.length === 2 && p.ids.includes(ids.z0) && p.ids.includes(ids.z1), JSON.stringify(p));
   });
-  await check('⋯ top menu: Refresh, Sign out (no key, no Lock)', async () => {
+  await check('⋯ top menu: Refresh, Team sign-ins, Sign out (no key, no Lock)', async () => {
     await page.keyboard.press('Escape');
-    await page.click('[data-menu="topMenu"]'); const items = await page.$$eval('#topMenu button', b => b.map(x => x.textContent)); assert(items.join('|') === 'Refresh|Sign out', items.join('|'));
+    await page.click('[data-menu="topMenu"]'); const items = await page.$$eval('#topMenu button', b => b.map(x => x.textContent)); assert(items.join('|') === 'Refresh|Team sign-ins|Sign out', items.join('|'));
     await page.click('#topMenu [data-act="reload"]'); await page.waitForFunction(() => /Refreshed/.test(document.getElementById('toast').textContent));
   });
 
@@ -441,14 +446,17 @@ try {
   });
   await editPage.goto(`${EDIT}?c=dumas-sanclemente-mo5cay`); await editPage.waitForSelector('#adminbar .adminbadge', { timeout: 20000 });
   await shot(editPage, 'edit-wording_1440_light');
-  await check('Edit wording: Sign out → Cloudflare Access logout', async () => {
-    await editPage.click('#adminbar [data-admin-exit]'); await editPage.waitForURL(/\/cdn-cgi\/access\/logout$/);
+  await check('Edit wording: Sign out → this site\'s + the team-wide Access logout → /signin/?out=1', async () => {
+    await routeTeamLogout(editPage); const before = logouts, n = teamLogouts.length;
+    await editPage.click('#adminbar [data-admin-exit]'); await editPage.waitForURL(/\/signin\/\?out=1$/);
+    assert(logouts > before && teamLogouts.length === n + 1 && new URL(teamLogouts.at(-1)).searchParams.get('returnTo') === `${ORIGIN}/signin/?out=1`, teamLogouts.at(-1));
   });
   await editPage.close(); cur = page;
 
   // ===== 5) Google-only sign-in
   await check('sign-in: name in the top bar; no password or key field on any page; the browser called only /api/ (never GitHub or a key)', async () => {
-    assert((await page.innerText('#meName')) === 'PJ Drozo' && (await page.getAttribute('#meName', 'title')) === ME_EMAIL, await page.innerText('#meName'));
+    assert((await page.innerText('#meName')) === 'PJ Drozo' && (await page.getAttribute('#meWho', 'title')) === ME_EMAIL, await page.innerText('#meName'));
+    assert(await page.isVisible('#meWho [data-act="signout"]'), 'a visible Sign out button next to the name');
     assert(!(await page.locator('input[type="password"], #keyView, #keyIn, #lfmpLogin').count()), 'password / key UI');
     assert(!directGh.length, `direct GitHub calls: ${directGh.join(' ')}`);
     assert(ghCalls.every(c => /^GET \/repos\/peejayedz\/automation-review\/contents\/(data|plans)\?ref=main$/.test(c)), ghCalls.join(' '));
@@ -459,6 +467,21 @@ try {
     await page.reload(); await page.waitForSelector('.crow[data-client]', { timeout: 20000 });
     const dump = await page.evaluate(() => JSON.stringify({ l: Object.fromEntries(Object.entries(localStorage)), s: Object.fromEntries(Object.entries(sessionStorage)) }));
     for (const bad of [KEY, TEST_TOKEN, 'lfmp-vault', 'ar_admin_key', 'lfmp-lock-at', 'lfmp-session']) assert(!dump.includes(bad), `${bad} in storage: ${dump}`);
+  });
+  await check('last sign-in under the name; ⋯ → Team sign-ins; top-bar Sign out → /signin/?out=1', async () => {
+    const p = await ctx.newPage(); cur = p;
+    await p.goto(ADMIN); await p.waitForSelector('#meWho [data-me-last]:not(:empty)');
+    ACCESS.signIn(ME_EMAIL); await p.reload(); await p.waitForFunction(() => /^Last signed in/.test(document.querySelector('#meWho [data-me-last]')?.textContent || ''), null, { timeout: 20000 });
+    assert(LAST.test(await p.innerText('#meWho [data-me-last]')), await p.innerText('#meWho [data-me-last]'));
+    await p.click('[data-menu="topMenu"]'); assert(LAST.test(await p.innerText('#topMenu [data-me-last]')), 'menu: last sign-in');
+    await p.click('#topMenu [data-act="signins"]'); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');
+    const row = await p.innerText('#lfmpSignins tbody tr');
+    assert(row.includes('PJ Drozo') && row.includes(ME_EMAIL) && Number(row.trim().split(/\s+/).pop()) >= 2 && await p.isHidden('#topMenu'), row);
+    await p.keyboard.press('Escape'); assert(!(await p.locator('#lfmpSignins[open]').count()), 'Esc closes it');
+    await routeTeamLogout(p); const before = logouts;
+    await p.click('#meWho [data-act="signout"]'); await p.waitForURL(/\/signin\/\?out=1$/);
+    assert(logouts > before && new URL(teamLogouts.at(-1)).searchParams.get('returnTo') === `${ORIGIN}/signin/?out=1`, teamLogouts.at(-1));
+    await p.close(); cur = page;
   });
   await check('sign-in: a non-LFMP Google account is refused (no data); signed out → /signin/?next=<this page>', async () => {
     const p3 = await ctx.newPage();
@@ -517,6 +540,12 @@ try {
       await p.uncheck('#showTests');
       await p.goto(`${ADMIN}#/subs`); await p.waitForSelector('.sline'); await p.click('.sline >> nth=1'); await p.waitForSelector('.sopen');
       await measure('submissions'); await shot(p, `submissions_${w}_${scheme}`, w === 390);
+      // the signed-in person: top bar (desktop) / ⋯ menu (phone), and ⋯ → Team sign-ins
+      if (w === 390) assert(await p.isHidden('#meWho'), 'phone: the name + Sign out live in the ⋯ menu');
+      else { assert(await p.isVisible('#meWho [data-act="signout"]') && /^(Last signed in|First sign-in)/.test(await p.innerText('#meWho [data-me-last]')), 'top bar: name, last sign-in, Sign out'); await p.locator('header.top').first().screenshot({ path: join(OUT, `topbar_${w}_${scheme}.png`) }); }
+      await p.click('[data-menu="topMenu"]'); await shot(p, `menu_${w}_${scheme}`);
+      await p.click('#topMenu [data-act="signins"]'); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');
+      await measure('team sign-ins'); await shot(p, `team-signins_${w}_${scheme}`); await p.keyboard.press('Escape');
       if (w === 390) { const sc = await p.evaluate(() => { const s = document.querySelector('.segscroll'); return [s.scrollWidth, s.clientWidth, getComputedStyle(s).overflowX]; }); assert(sc[2] === 'auto', `filters don't scroll sideways: ${sc}`); }
       // Edit wording (team page): the edit bar, an open step with its edit buttons; no sideways scroll
       await p.goto(`${EDIT}?c=dumas-sanclemente-mo5cay`); await p.waitForSelector('#adminbar .adminbadge', { timeout: 20000 });

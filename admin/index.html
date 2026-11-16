@@ -11,8 +11,8 @@
 <script>try { var t = localStorage.getItem('lfmp-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
 <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="lfmp-ui.css?v=1.4.0">
-<link rel="stylesheet" href="admin.css?v=1.4.0">
+<link rel="stylesheet" href="lfmp-ui.css?v=1.5.0">
+<link rel="stylesheet" href="admin.css?v=1.5.0">
 <script src="../config.js"></script>
 </head>
 <body>
@@ -38,19 +38,20 @@
       </nav>
       <div class="topr">
         <div class="themeseg" id="themeSeg" role="group" aria-label="Theme"></div>
-        <span class="me" id="meName" aria-label="Signed in with Google"></span>
+        <span class="me lfmp-who" id="meWho" title="Signed in with Google"><span class="lfmp-who-row"><b data-me id="meName"></b><button class="lfmp-out" type="button" data-act="signout">Sign out</button></span><small data-me-last></small></span>
         <span class="menuwrap">
           <button class="btn icon iconbtn" type="button" data-menu="topMenu" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋯</button>
           <div class="menu" id="topMenu" role="menu" hidden>
-            <p class="menume" role="presentation"><b id="meMenuName"></b><span id="meMenuEmail"></span></p>
+            <p class="menume" role="presentation"><b data-me id="meMenuName"></b><span data-me-email id="meMenuEmail"></span><small class="lfmp-last" data-me-last></small></p>
             <button type="button" role="menuitem" data-act="reload">Refresh</button>
+            <button type="button" role="menuitem" data-act="signins">Team sign-ins</button>
             <button type="button" role="menuitem" data-act="signout">Sign out</button>
           </div>
         </span>
       </div>
     </header>
     <main id="screen" aria-live="polite"></main>
-    <footer class="foot"><span>LFMP Automation Review admin · v1.4.0</span><span>Client pages never show these controls.</span></footer>
+    <footer class="foot"><span>LFMP Automation Review admin · v1.5.0</span><span>Client pages never show these controls.</span></footer>
   </div>
 </div>
 
@@ -59,6 +60,6 @@
 <div class="ovl" id="ovl" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-<script type="module" src="admin.js?v=1.4.0"></script>
+<script type="module" src="admin.js?v=1.5.0"></script>
 </body>
 </html>

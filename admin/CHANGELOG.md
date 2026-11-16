@@ -2,7 +2,13 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog here and are never changed by admin work.
 
-## v1.4.0 — 16 Nov 2026 (not yet deployed)
+## v1.5.0 — 17 Nov 2026
+- **Sign out** is a visible button next to your name in the top bar (phone: in ⋯). It ends the Google sign-in for all three tools (this site's and the team-wide Cloudflare Access logout) and lands on `/signin/`: "You've been signed out. See you next shift." Edit wording's Sign out does the same.
+- **Last signed in <day date, time>** under your name (your previous Google sign-in; recorded on the team site's server only, 90 days).
+- ⋯ → **Team sign-ins** (Refresh · Team sign-ins · Sign out): name, email, last sign-in, sign-ins in 30 days.
+- Shared `lfmp-session.js` / `lfmp-ui.css` updated (byte-identical with the Builder and the KPI admin).
+
+## v1.4.0 — 16 Nov 2026 (live 17 Nov)
 - **Google sign-in only (no admin password, no review key in the browser):** `lfmp-login.js`, `lfmp-login.css` and `lfmp-lock.json` are removed. The shared `lfmp-session.js` (a byte-identical copy of the Builder's `page/lfmp-session.js`) replaces them. The page asks the team site's server who is signed in (`/api/me`). The top bar shows the Google name, and ⋯ has **Refresh · Sign out** (Cloudflare Access logout). "Add / Change review admin key" and Lock are gone.
 - **Admin actions go through the server:** `admin_ping/all/status/delete/edit` go to `/api/review` with the same fields as before, minus `key`. The server adds `REVIEW_ADMIN_KEY` and sets `name` to the signed-in person's first name.
 - **Client list:** `data/` and `plans/` are read through `/api/gh` (server allow-list rule A1, GitHub token on the server), so the old "GitHub is limiting requests" error is gone.

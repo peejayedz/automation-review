@@ -4,7 +4,7 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut } from './lfmp-session.js';
+import { startSession, api, ghFetch, signOut, paintMe } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.3.0';   // versioned: admin.js needs this release's rules
 
 const CFG = window.REVIEW_CONFIG || {};
@@ -101,8 +101,7 @@ addEventListener('hashchange', () => draw());
 async function start() {
   try { ME = await startSession(); }
   catch (err) { if (err.status !== 401) { show('setupView'); $('setupMsg').textContent = err.message; } return; }   // 401: on the way to /signin/
-  $('meName').textContent = ME.name || ME.email; $('meName').title = ME.email;
-  $('meMenuName').textContent = ME.name || ''; $('meMenuEmail').textContent = ME.email;
+  paintMe(ME); $('meWho').title = ME.email;   // name, email, "Last signed in …" (lfmp-session.js)
   if (!SAVE_URL) { show('setupView'); $('setupMsg').textContent = 'The review pages have no backend set (config.js saveUrl is empty), so there is nothing to administer here.'; return; }
   show('appView'); await load();
 }
@@ -423,6 +422,7 @@ document.addEventListener('click', async e => {
   const a = e.target.closest('[data-act]'); if (!a) return;
   closeMenus();
   if (a.dataset.act === 'signout') signOut();
+  if (a.dataset.act === 'signins') closeMenus();   // the dialog itself is opened by lfmp-session.js
   else if (a.dataset.act === 'reload') { await load(); toast('Refreshed'); }
   else if (a.dataset.act === 'closedet') closeDetails();
 });
