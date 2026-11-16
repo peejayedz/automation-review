@@ -66,7 +66,8 @@ const refused = () => DEPS.logs.filter(l => l.api === 'refused');
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); };
 let ORIGIN = '';
 let logouts = 0;   // this site's Access logout calls (Sign out)
-// The team-wide Access logout (lfmp.cloudflareaccess.com) answers by going to returnTo, as the real one does.
+// The team-domain Access logout (lfmp.cloudflareaccess.com): Sign out must never call it (live it answers "Failed to
+// log out." right after the site's own logout). Recorded here so the tests can check that.
 const teamLogouts = [];
 const routeTeamLogout = page => page.route('https://lfmp.cloudflareaccess.com/cdn-cgi/access/logout*', r => { teamLogouts.push(r.request().url()); const back = new URL(r.request().url()).searchParams.get('returnTo'); return r.fulfill({ status: 200, contentType: 'text/html', body: `<script>location.replace(${JSON.stringify(back)})</script>` }); });
 const LAST = /^Last signed in (Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec), \d{1,2}:\d{2} (AM|PM)$/;
@@ -446,10 +447,10 @@ try {
   });
   await editPage.goto(`${EDIT}?c=dumas-sanclemente-mo5cay`); await editPage.waitForSelector('#adminbar .adminbadge', { timeout: 20000 });
   await shot(editPage, 'edit-wording_1440_light');
-  await check('Edit wording: Sign out → this site\'s + the team-wide Access logout → /signin/?out=1', async () => {
+  await check('Edit wording: Sign out → Access logout → /signin/?out=1 (never the team-domain logout)', async () => {
     await routeTeamLogout(editPage); const before = logouts, n = teamLogouts.length;
     await editPage.click('#adminbar [data-admin-exit]'); await editPage.waitForURL(/\/signin\/\?out=1$/);
-    assert(logouts > before && teamLogouts.length === n + 1 && new URL(teamLogouts.at(-1)).searchParams.get('returnTo') === `${ORIGIN}/signin/?out=1`, teamLogouts.at(-1));
+    assert(logouts > before && teamLogouts.length === n, teamLogouts.at(-1));
   });
   await editPage.close(); cur = page;
 
@@ -478,9 +479,9 @@ try {
     const row = await p.innerText('#lfmpSignins tbody tr');
     assert(row.includes('PJ Drozo') && row.includes(ME_EMAIL) && Number(row.trim().split(/\s+/).pop()) >= 2 && await p.isHidden('#topMenu'), row);
     await p.keyboard.press('Escape'); assert(!(await p.locator('#lfmpSignins[open]').count()), 'Esc closes it');
-    await routeTeamLogout(p); const before = logouts;
+    await routeTeamLogout(p); const before = logouts, n = teamLogouts.length;
     await p.click('#meWho [data-act="signout"]'); await p.waitForURL(/\/signin\/\?out=1$/);
-    assert(logouts > before && new URL(teamLogouts.at(-1)).searchParams.get('returnTo') === `${ORIGIN}/signin/?out=1`, teamLogouts.at(-1));
+    assert(logouts > before && teamLogouts.length === n, `team-domain logout called: ${teamLogouts.at(-1)}`);
     await p.close(); cur = page;
   });
   await check('sign-in: a non-LFMP Google account is refused (no data); signed out → /signin/?next=<this page>', async () => {

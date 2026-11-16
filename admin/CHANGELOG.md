@@ -3,7 +3,7 @@
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog here and are never changed by admin work.
 
 ## v1.5.0 — 17 Nov 2026
-- **Sign out** is a visible button next to your name in the top bar (phone: in ⋯). It ends the Google sign-in for all three tools (this site's and the team-wide Cloudflare Access logout) and lands on `/signin/`: "You've been signed out. See you next shift." Edit wording's Sign out does the same.
+- **Sign out** is a visible button next to your name in the top bar (phone: in ⋯). It ends the Google sign-in for all three tools (Cloudflare Access logout) and lands on `/signin/`: "You've been signed out. See you next shift." Edit wording's Sign out does the same.
 - **Last signed in <day date, time>** under your name (your previous Google sign-in; recorded on the team site's server only, 90 days).
 - ⋯ → **Team sign-ins** (Refresh · Team sign-ins · Sign out): name, email, last sign-in, sign-ins in 30 days.
 - Shared `lfmp-session.js` / `lfmp-ui.css` updated (byte-identical with the Builder and the KPI admin).
