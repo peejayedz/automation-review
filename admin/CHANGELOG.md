@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog here and are never changed by admin work.
 
+## v1.2.0 — 16 Nov 2026
+- **Team-only admin site:** the admin also runs from https://lfmp-admin.pages.dev/automation-review/admin/ (Cloudflare Pages in PJ's account, behind Google sign-in; deployed by the Builder repo's `admin-site.yml`, which copies `admin/` without `tests/` and `HANDOFF.md`, plus `config.js`). There, `BASE` = `https://dashboard.lawfirmmarketingpros.com/automation-review/`: client data (`data/<code>.json`) is read from the public site, and every client link (Link A/B, `?c=`, plans/, Copy) is the public client address, never the admin site. On github.io and in tests `BASE` is still `../`.
+
 ## v1.1.3 — 16 Nov 2026
 - **New address:** the admin moves to https://dashboard.lawfirmmarketingpros.com/automation-review/admin/ (behind Google sign-in via Cloudflare Access). Old peejayedz.github.io links redirect there. On the new host the repo comes from the existing fallback (`peejayedz/automation-review`), so the client list and plans load the same way.
 - `lfmp-login.js` (shared with the Builder and KPI admin): Forgot password names the new site for the saved password-manager login.

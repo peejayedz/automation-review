@@ -1,11 +1,11 @@
-// Automation Review admin v1.1.3: Review home · Details panel · Submissions, behind the one LFMP login.
+// Automation Review admin v1.2.0: Review home · Details panel · Submissions, behind the one LFMP login.
 // The client pages (index.html, plan.html, messages.html, plans/, data/) are NOT changed and never load this file.
 // Backend: the same Apps Script and the same admin actions the review page uses (admin_ping, admin_all, admin_status,
 // admin_delete, admin_edit), with the same fields. No Code.gs change. The admin key comes from the one-login vault.
 // While signed in, the key is also put where index.html looks for it (localStorage "ar_admin_key"), so "Edit wording" and
 // "Open their review" open the classic page in admin mode; every lock removes it (lfmp-login.js).
 import { createLogin } from './lfmp-login.js';
-import * as L from './review-logic.mjs?v=1.1.3';   // versioned: admin.js needs this release's rules
+import * as L from './review-logic.mjs?v=1.2.0';   // versioned: admin.js needs this release's rules
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -16,7 +16,10 @@ const { OWNER, REPO } = (() => {
 })();
 const LIST_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/data?ref=main`;
 const PLANS_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/plans?ref=main`;   // hand-made plans/<code>.html pages
-const BASE = '../';
+// v1.2.0: on the team-only admin site (lfmp-admin.pages.dev, behind Google sign-in) the client pages and data/ aren't
+// there, so data is read from, and every client link (A/B, ?c=, plans/) points at, the public site. Elsewhere: next door.
+const PUBLIC_BASE = 'https://dashboard.lawfirmmarketingpros.com/automation-review/';
+const BASE = /(^|\.)lfmp-admin\.pages\.dev$/.test(location.hostname) ? PUBLIC_BASE : '../';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
