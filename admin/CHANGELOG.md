@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## v1.6.1 — 17 Nov 2026: team Moved page restyled
+- **[internal]** The team's "We've moved." page at the old public admin address (`admin/moved.html`) has the new "Option C refined" look, matching the team sign-in page. It's a byte-identical copy of the Builder's `admin-site/moved.html`, and the wording and link are unchanged. The client-facing "This review has moved" page (`index.html`, `preview/`) is **not** touched.
+
 ## v1.6.0 — 17 Nov 2026: classic review page retired; Edit tab in the Review admin
 - **[client] Link B fix (`messages.html`, about 8 lines):** the team's wording edits now always reach the client. Before, Link B skipped every message the client hadn't responded to (or not since a new version), so the edit never showed, and a message the client had already approved kept "✓ Looks good" next to wording they never saw.
   - **Never responded:** the new wording, a small "Updated" tag next to Email/Text, normal ✓ Looks good / Change it; no "Was:" block.
