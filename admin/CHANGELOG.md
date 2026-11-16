@@ -2,6 +2,11 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog here and are never changed by admin work.
 
+## v1.1.3 — 16 Nov 2026
+- **New address:** the admin moves to https://dashboard.lawfirmmarketingpros.com/automation-review/admin/ (behind Google sign-in via Cloudflare Access). Old peejayedz.github.io links redirect there. On the new host the repo comes from the existing fallback (`peejayedz/automation-review`), so the client list and plans load the same way.
+- `lfmp-login.js` (shared with the Builder and KPI admin): Forgot password names the new site for the saved password-manager login.
+- Not changed: the client pages, and the Apps Script email links (`REVIEW_BASE_URL` in `apps-script/Code.gs` stays on the old address, which redirects; PJ changes it at the next Apps Script deploy).
+
 ## v1.1.2 — 15 Nov 2026
 - **Client links in Details:** the Links block is now "CLIENT LINKS (send to the client)", with the same names and order as the Builder's Review card. **Link A · Plan + review** ("Send this one first") is `plans/<code>.html` when the client has one (Mahdavi), else `plan.html?c=<code>`. **Link B · Review only** ("For re-reviews") is `messages.html?c=<code>`. Each row has Open ↗ and Copy (the full link; "Copied" shows next to the button for 4 s). Clients without A/B pages (classic only, e.g. Dumas, Palm Beach) get one "Review page" row with the `?c=` link they were sent. Below, smaller, "For the team": Classic dashboard ↗. No "Sent" mark: the Builder record doesn't say which link was sent.
 - **Home row Review page ↗** opens Link A when the client has one, else the classic `?c=` link.
