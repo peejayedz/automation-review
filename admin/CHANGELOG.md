@@ -2,6 +2,10 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.8.0 — 18 Nov 2026: loading mark + details slide (same in all three tools)
+- **[internal]** While the list loads: the LFMP blocks + "Loading reviews…" (summary empty until the data arrives), then the list fades in. After 20 s without an answer (or on a load error), the shared v2 error card (`loadErrorHtml`: rounded card, red dot, the message, "Try again" like Sign out); a late answer is ignored. Shared `admin/lfmp-session.js` + `admin/lfmp-ui.css`, byte-identical in the 3 repos.
+- **[internal]** Client details slide in from the right (0.50 s) with the list dimmed, and slide out (0.40 s) on ✕, Esc, ‹ Reviews or a click on the dim; a press while it moves finishes the move; another client swaps the content without a new slide. prefers-reduced-motion: no motion. Cache: `lfmp-ui.css?v=2.1.0`, `admin.css` / `admin.js?v=1.8.0`. No client page changed.
+
 ## Review admin v1.7.0 — 18 Nov 2026: redesign v2 (one shell for the three tools) — LIVE 17 Nov
 - **[internal]** Follow-up after the live check: Avatar initials (shared `lfmp-session.js` `initials()`, same file in all 3 repos): a one-word all-caps name of 2–3 letters is kept ("PJ" → "PJ"; live it showed "P" because the Google name is just "PJ"). Other names unchanged ("Pee Jay Edrozo" → "PJ", "Sam" → "S"). Shell test extended.
 - **[internal]** Layout and look only; same data, actions and permissions. `index.html` (`<html class="lfmp-v2">`) mounts the shared shell from `lfmp-session.js` / `lfmp-ui.css` (byte-identical in the Builder, KPI admin and here): top bar (LFMP · Clients / Scorecards / Reviews · name + Last signed in · avatar · Sign out), Me (theme, Show test clients, Refresh now, Team sign-ins, What's new, Install the app, Sign out — the same in all three tools) and, below 880px, the bottom tabs. No + button on Reviews.

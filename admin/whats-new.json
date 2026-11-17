@@ -2,6 +2,16 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.8.0",
+      "date": "Nov 18",
+      "title": "Smoother loading and details",
+      "items": [
+        { "type": "improved", "text": "While the list loads you see the LFMP blocks and \"Loading reviews…\", then the list fades in. After 20 seconds without an answer you get Try again." },
+        { "type": "improved", "text": "Client details slide in from the right and the list dims behind them; ✕, Esc, a click on the dim or ‹ Reviews slides them away again." },
+        { "type": "improved", "text": "If your device is set to reduce motion, nothing moves." }
+      ]
+    },
+    {
       "version": "1.7.0",
       "date": "Nov 18",
       "title": "One look for all three tools",

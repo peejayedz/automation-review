@@ -120,7 +120,8 @@ async function check(label, fn) { try { await fn(); results.push(1); console.log
 const assert = (c, m) => { if (!c) throw new Error(m); };
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 async function ctxFor({ width = 1440, height = 900, scheme = 'light' } = {}) {
-  const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme });
+  // Motion (Nov 2026): reduced motion, so the details panel opens/closes at once here; the slide is tested in ghl-subaccount-builder tests/e2e/motion.mjs.
+  const ctx = await browser.newContext({ reducedMotion: 'reduce', viewport: { width, height }, colorScheme: scheme });
   // The browser never talks to GitHub any more (the server does): any direct call fails the run.
   await ctx.route('https://api.github.com/**', r => { directGh.push(r.request().url()); return r.fulfill({ status: 599, body: '' }); });
   await ctx.route('https://fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
@@ -520,13 +521,13 @@ try {
     await page.fill('#clrIn', 'ZZ TEST 2'); await page.click('#clrGo'); await page.waitForFunction(() => /Cleared 2 responses/.test(document.getElementById('toast').textContent));
     const p = lastPost('admin_delete'); assert(p.client === 'zz-test-2-qpqhx7' && p.ids.length === 2 && p.ids.includes(ids.z0) && p.ids.includes(ids.z1), JSON.stringify(p));
   });
-  await check('Me (avatar): Theme · Show test clients · Refresh now (updated …) · Team sign-ins · What\'s new v1.7.0 · Install the app · Submissions · Sign out (no key, no Lock); Refresh works', async () => {
+  await check('Me (avatar): Theme · Show test clients · Refresh now (updated …) · Team sign-ins · What\'s new v<VERSION> · Install the app · Submissions · Sign out (no key, no Lock); Refresh works', async () => {
     await page.keyboard.press('Escape');
     await openMe(page);
     const items = await page.$$eval('.lv-pop .lv-mi', b => b.map(x => x.querySelector('span')?.textContent || x.textContent).map(s => s.trim()));
     assert(items.join('|') === "Theme|Show test clients|Refresh now|Team sign-ins|What's new|Install the app|Sign out", items.join('|'));   // Me is the same in all three tools
     assert(/^updated \d{1,2}:\d\d [AP]M$/.test(await page.innerText('.lv-pop [data-lv="refresh"] .lv-v')), await page.innerText('.lv-pop [data-lv="refresh"] .lv-v'));
-    assert(/v1\.7\.0/.test(await page.innerText('.lv-pop [data-lv="news"]')), 'version');
+    { const v = (await readFile(new URL('../admin.js', import.meta.url), 'utf8')).match(/VERSION = '([\d.]+)'/)[1]; assert((await page.innerText('.lv-pop [data-lv="news"]')).includes(`v${v}`), `version v${v}`); }   // the current admin.js VERSION
     assert(await page.locator('.lv-pop .lv-gl').count() === 2, 'Settings + Team only (no tool extras)');
     assert(!(await page.locator('.lv-pop input[type="password"]').count()), 'password');
     await page.click('.lv-pop [data-lv="refresh"]'); await page.waitForFunction(() => /Refreshed/.test(document.getElementById('toast').textContent));

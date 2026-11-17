@@ -7,9 +7,9 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON } from './lfmp-session.js';
+import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.6.0';   // versioned: admin.js needs this release's rules
-export const VERSION = '1.7.0';
+export const VERSION = '1.8.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -181,7 +181,10 @@ async function start() {
 // ---------- load ----------
 async function load() {
   const seq = ++loadSeq;
-  D.error = ''; if (!D.loaded) $('screen').innerHTML = `${headHtml(route().screen)}<div class="lv-list lv-empty loading">Loading review clients…</div>`;
+  const first = !D.loaded;
+  D.error = ''; if (first) $('screen').innerHTML = `${headHtml(route().screen)}${loadingHtml('reviews')}`;   // the LFMP blocks until the data arrives
+  // never spin forever: after 20 s show the error / Try again state (a late answer is then ignored)
+  const slow = setTimeout(() => { if (seq === loadSeq && !D.loaded) { loadSeq++; D.error = LOAD_SLOW_TEXT; draw(); } }, LOAD_LIMIT_MS);
   const sentP = loadSent();   // Builder records (Link A/B sent), alongside; never fails
   try {
     Object.assign(D, await listData());
@@ -213,7 +216,10 @@ async function load() {
     D.loaded = true;
     shell?.setUpdated(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));   // Me → Refresh now · updated 4:57 PM
   } catch (err) { if (seq !== loadSeq) return; D.error = err.message; }
+  finally { clearTimeout(slow); }
+  if (seq !== loadSeq) return;
   draw();
+  if (first && D.loaded) fadeIn($('screen').querySelector('.lv-list') || $('screen'));
 }
 
 // ---------- drawing ----------
@@ -227,7 +233,7 @@ function headHtml(screen) {
     return `<div class="lv-hrow subshead"><div><button type="button" class="lv-back" data-act="gohome"><span aria-hidden="true">‹</span>Reviews</button><h1 class="lv-h1 lv-d">Submissions</h1><div class="lv-sum">${n ? `${n} to answer` : 'Nothing to answer'}</div></div></div>`;
   }
   const cs = D.loaded ? visibleClients() : [], need = cs.filter(c => sumOf(c).state === 'need').length;
-  return pageHeadHtml({ title: 'Reviews', summary: D.loaded ? `${cs.length} client${cs.length === 1 ? '' : 's'} · ${need ? `${need} need${need === 1 ? 's' : ''} you` : 'nothing needs you'}` : 'Loading…',
+  return pageHeadHtml({ title: 'Reviews', summary: D.loaded ? `${cs.length} client${cs.length === 1 ? '' : 's'} · ${need ? `${need} need${need === 1 ? 's' : ''} you` : 'nothing needs you'}` : '',
     search: { id: 'homeQ', placeholder: `Search ${cs.length || ''} client${cs.length === 1 ? '' : 's'}`.replace('  ', ' '), value: F.q }, active: F.home,
     segs: [{ key: 'all', label: 'All' }, { key: 'need', label: `Needs you · ${need}`, red: need > 0 }, { key: 'wait', label: 'Waiting' }, { key: 'done', label: 'Done' }] });
 }
@@ -235,7 +241,7 @@ function draw() {
   if ($('appView').hidden || !ME) return;
   const r = route();
   shell?.setTitle(r.screen === 'subs' ? 'Submissions' : 'Reviews');
-  if (D.error) { $('screen').innerHTML = `${headHtml(r.screen)}<div class="errbox">${esc(D.error)} <button class="lnk" type="button" data-act="reload">Try again</button></div>`; return; }
+  if (D.error) { $('screen').innerHTML = `${headHtml(r.screen)}${loadErrorHtml(D.error, { attrs: 'data-act="reload"' })}`; return; }
   if (!D.loaded) return;
   if (r.screen === 'subs') { if (r.client && r.client !== F.client) F.client = r.client; drawSubs(); closeDetails(true); }
   else { drawHome(); if (r.details) openDetails(r.details, r.tab, r.auto); else closeDetails(true); }
@@ -311,6 +317,7 @@ function openDetails(code, tab = 'overview', auto = null) {
     <div class="dbody">${body}</div>`;
   const wasHidden = $('dPanel').hidden;
   $('dPanel').hidden = false; $('dpShade').hidden = false; document.body.classList.add('dp-open');
+  panelOpen($('dPanel'), $('dpShade'));   // slides in (shared shell); an open panel only swaps its content
   $('dPanel').classList.toggle('wide', tab === 'edit' && !dpMode);
   for (const r of document.querySelectorAll('.lv-row[data-client]')) r.classList.toggle('sel', r.dataset.client === code);
   if (wasHidden) $('dPanel').querySelector('[data-act="closedet"]').focus();
@@ -411,10 +418,12 @@ function clearHtml(code, name, autos) {
 }
 function closeDetails(silent) {
   if ($('dPanel').hidden) { dpCode = null; return; }
-  $('dPanel').hidden = true; $('dpShade').hidden = true; $('dPanel').innerHTML = ''; $('dPanel').classList.remove('wide'); document.body.classList.remove('dp-open');
+  document.body.classList.remove('dp-open');
   for (const r of document.querySelectorAll('.lv-row.sel')) r.classList.remove('sel');
   const back = dpReturn && document.body.contains(dpReturn) ? dpReturn : document.querySelector(`.lv-row[data-client="${CSS.escape(dpCode || '')}"]`);
   dpCode = null; dpMode = null; dpReturn = null; dpTab = 'overview'; E.open = null; E.ver = null;
+  // slides out, then hides (after dpCode is cleared: with reduced motion done() runs at once)
+  panelClose($('dPanel'), $('dpShade'), () => { if (dpCode) return; $('dPanel').hidden = true; $('dpShade').hidden = true; $('dPanel').innerHTML = ''; $('dPanel').classList.remove('wide'); });
   if (!silent && route().details) go('#/');
   back?.focus?.({ preventScroll: true });
 }
