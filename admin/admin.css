@@ -38,6 +38,12 @@ label.f input,label.f select{text-transform:none;letter-spacing:0;font-weight:40
 .lv-row.sel{background:color-mix(in srgb,var(--soft) 70%,transparent)}
 .sumlink{color:var(--ink);font-weight:600;text-decoration:none}   /* desktop summary: "· All submissions ›" */
 .sumlink:hover{text-decoration:underline;text-underline-offset:3px}
+.subsrow{display:none}   /* phone only: "All submissions ›" under the Reviews list (desktop has the summary link) */
+@media (max-width:879.98px){
+  .subsrow{display:block}
+  .subsrow .lv-row{color:var(--mut);font-size:15px;min-height:44px}
+  .subsrow .lv-chev{margin-left:auto}
+}
 .loading{color:var(--mut)}
 .errbox{border:1px solid var(--line);border-left:3px solid var(--red);padding:12px 14px;font-size:14px;background:var(--panel);margin:18px 0;border-radius:10px}
 .errbox::before{content:"✕";color:var(--red);font-weight:800;margin-right:7px}

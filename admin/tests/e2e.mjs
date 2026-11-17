@@ -806,7 +806,11 @@ try {
         const small = await p.$$eval('.lv-row, .lv-tab, .lv-seg button, .lv-search, .lv-ptop .lv-avbtn', els => els.filter(e => { const r = e.getBoundingClientRect(); const a = getComputedStyle(e, '::after'); const ah = a.content !== 'none' ? parseFloat(a.height) : 0; return Math.max(r.height, ah) < 44; }).map(e => e.className));
         assert(!small.length, `tap targets under 44 px: ${small.join(', ')}`);
         assert(await p.$eval('.lv-row .lv-chev', e => getComputedStyle(e).display !== 'none'), 'chevron on phone rows');
-      } else assert(await p.isVisible('.lv-top') && await p.isHidden('.lv-tabs'), 'desktop bars');
+        // phone: a muted "All submissions ›" row under the list opens Submissions (desktop: the summary link)
+        const sr = await p.$eval('.subsrow .lv-row', e => { const l = document.querySelector('#clist').getBoundingClientRect(), r = e.getBoundingClientRect(); return { t: e.innerText.replace(/\s+/g, ' ').trim(), below: r.top >= l.bottom, h: r.height, c: getComputedStyle(e).color, m: getComputedStyle(document.querySelector('.lv-sub, .lv-mt')).color }; });
+        assert(sr.t === 'All submissions ›' && sr.below && sr.h >= 44, `subs row ${JSON.stringify(sr)}`);
+        await p.click('.subsrow .lv-row'); await p.waitForURL(/#\/subs$/); await p.waitForSelector('.subshead'); await p.goBack(); await p.waitForSelector('#clist');
+      } else assert(await p.isVisible('.lv-top') && await p.isHidden('.lv-tabs') && await p.isHidden('.subsrow'), 'desktop bars, no phone submissions row');
       await setTests(p, true); await p.waitForSelector(ROW('zz-test-2-qpqhx7')); await shot(p, `home-tests_${w}_${scheme}`, w === 390);
       // Details: Mahdavi (A plans/ + B), ZZ TEST 2 (A + B, test client shown), Dumas (classic only); Copy → "Copied"
       for (const [code, name] of [['mahdavi-law-mc1mar', 'mahdavi'], ['zz-test-2-qpqhx7', 'zz-test-2'], ['dumas-sanclemente-mo5cay', 'dumas']]) {

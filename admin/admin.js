@@ -219,7 +219,7 @@ async function load() {
 // ---------- drawing ----------
 // v2 (redesign v2): title + summary (desktop) · search · filter "All · Needs you · n · Waiting · Done" · one list.
 // Submissions: its own screen, with "‹ Reviews" back to the list. Reached from the desktop summary line ("· All
-// submissions ›") and, on desktop and phone, from a client's Details → Open items. Nothing is added to the phone list.
+// submissions ›"), on a phone from the muted "All submissions ›" row under the list, and from a client's Details → Open items.
 const HOME_IN = { all: () => true, need: s => s.state === 'need', wait: s => s.state === 'wait' || s.state === 'new', done: s => s.state === 'ok' };
 function headHtml(screen) {
   if (screen === 'subs') {
@@ -279,7 +279,8 @@ function drawHome() {
   $('screen').innerHTML = `${headHtml('home')}
     ${list.length ? `<div class="lv-list" id="clist" style="--lv-cols:1.5fr 200px 260px 70px">${list.map(x => lvRow({ name: x.name, sub: rowSub(x), label: `${x.name}: open details`,
       attrs: `data-client="${esc(x.c)}"`, cells: [rowStatus(x), `<span class="lv-mt">${esc(linksText(x.c))}</span>`] })).join('')}</div>`
-      : `<div class="lv-list lv-empty">${empty}</div>`}`;
+      : `<div class="lv-list lv-empty">${empty}</div>`}
+    <div class="lv-list subsrow"><a class="lv-row" href="#/subs" aria-label="All submissions"><span class="lv-c0">All submissions</span><span class="lv-chev" aria-hidden="true">›</span></a></div>`;
   if (dpCode) $('screen').querySelector(`.lv-row[data-client="${CSS.escape(dpCode)}"]`)?.classList.add('sel');   // the open client stays marked
   // desktop only (the summary line is hidden on a phone): "7 clients · 2 need you · All submissions ›"
   $('screen').querySelector('[data-lv-sum]')?.insertAdjacentHTML('beforeend', ' · <a class="sumlink" href="#/subs">All submissions ›</a>');
