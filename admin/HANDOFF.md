@@ -2,7 +2,9 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
-## v1.7.0 Redesign v2 admin: BUILT 18 Nov 2026, NOT PUSHED (waiting for PJ's OK)
+## v1.7.0 Redesign v2 admin: LIVE 17 Nov 2026 (`45e80af` + `1484712` phone "All submissions ›" row)
+
+- **Live:** Pushed + team site deployed 17 Nov 2026 ~10:07 PM Manila (deploy run 44099661971, success). Live check on lfmp-admin.pages.dev, signed in, real data: Clients (2 test records), Scorecards (4 firms · all synced 10:07 PM) + bell top block (Sync every 30 min · last · next, Token keeper OK), Reviews (7 clients · 2 need you · All submissions ›); no sideways scroll, no console errors; the one-time "Update available" bar after the deploy cleared after one Refresh. Screenshots: `assets/images/2026-11-18_redesign-v2/live/`. Phone layout not seen live (Chrome window couldn't be resized and the site refuses framing); proven locally on real data with the same files (`…/real/`). **Follow-up, committed locally, NOT PUSHED:** avatar showed "P" live because the Google name is just "PJ"; shared `initials()` now keeps a one-word all-caps name of 2–3 letters ("PJ" → "PJ"); same file in all 3 repos.
 
 - The admin page uses the shared v2 shell (Builder HANDOFF v1.13.0): `admin/lfmp-session.js` + `admin/lfmp-ui.css` are byte-identical copies of the Builder's (copy, never edit); `admin/tests/shell.test.mjs` identical too. New `admin/whats-new.json` (What's new in Me).
 - Status words as the reference only: Needs you (red), Waiting (amber; "Links not opened yet" when nothing was opened), Approved (green, every automation approved) or Done (green).
