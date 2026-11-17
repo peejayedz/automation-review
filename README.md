@@ -61,7 +61,9 @@ An **approve_all** row is the client's sign-off. It records who approved, which 
 
 Edits are saved to the **Content** tab of the Sheet and shown to everyone straight away. The data file in GitHub stays as the starting point, and the newest edit wins. The browser never holds the admin key. The team site's server (`/api/review`, in the ghl-subaccount-builder repo) adds it, along with the signed-in person's first name.
 
-**`ADMIN_KEY`:** in Apps Script, open **Project Settings › Script properties** and set `ADMIN_KEY` to a long random value. Put the same value in the team site's Cloudflare secret `REVIEW_ADMIN_KEY`, then redeploy the Apps Script (Deploy › Manage deployments › Edit › Version: New version). Never put the key in `Code.gs`, because that file is public in the repo.
+**`ADMIN_KEY`:** in Apps Script, open **Project Settings › Script properties** and set `ADMIN_KEY` to a long random value. Put the same value in **two more places**: the team site's Cloudflare secret `REVIEW_ADMIN_KEY`, and the Sub-account Builder repo's GitHub secret `ADMIN_KEY` (`gh secret set ADMIN_KEY -R peejayedz/ghl-subaccount-builder`, used by Publish and the morning summary). Then redeploy the Apps Script (Deploy › Manage deployments › Edit › Version: New version). Never put the key in `Code.gs`, because that file is public in the repo.
+
+**Slack (Apps Script v11):** two separate script properties. `SLACK_WEBHOOK_URL` is the shared channel and works exactly as before: every new client response is posted there (v10's message). `SLACK_DM_WEBHOOK_URL` (new) is PJ's DM webhook. A client's change request, new wording or answer then sends PJ one DM: client, automation and message name, kind of request, up to 200 characters of what they wrote, and an "Open in Review admin" link. "Looks good" clicks and approvals send no instant DM; they're in the morning summary (Builder repo). No reviewer name, email or screenshot link is sent in the DM. Without `SLACK_DM_WEBHOOK_URL` the DM is skipped silently and saving works as normal. Check the DM with `testSlackDm` and the channel with `testSlack` in the Apps Script editor.
 
 ## Refresh
 

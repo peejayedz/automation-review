@@ -1,5 +1,17 @@
 /**
- * LFMP Automation Review: response + content storage (v10)
+ * LFMP Automation Review: response + content storage (v11)
+ *
+ * v11: Slack DM to PJ (NEW script property SLACK_DM_WEBHOOK_URL; not set = no DM, silently) only when a client asks
+ *     for a change, sends new wording or answers a question. The shared-channel post (SLACK_WEBHOOK_URL) is unchanged
+ *     from v10: every new client response still goes there, same text and links. "Looks good" clicks and approvals send no instant Slack DM (they're in the Builder's morning
+ *     summary). The DM has the client name, automation + message name, the kind of request, at most 200 characters of
+ *     what the client wrote and an "Open in Review admin" link. No reviewer name, email, screenshot link or Sheet link.
+ *     A missing webhook or Slack being down is logged and never stops the client's response from saving.
+ *     Team links in the email, the Slack DM and the To-do tab now open the Review admin's client details
+ *     (https://lfmp-admin.pages.dev/automation-review/admin/#/client/<code>) instead of the retired classic page.
+ *     REVIEW_BASE_URL is the new public address (dashboard.lawfirmmarketingpros.com/automation-review/).
+ *     ADMIN_KEY is rotated with this deploy: the same new value goes in Script properties, the team site's Cloudflare
+ *     secret REVIEW_ADMIN_KEY and the Builder repo's GitHub secret ADMIN_KEY (publish + morning summary).
  *
  * v10: "admin_register_client" (admin key): adds ONE new client to the CLIENTS script property, used by the Sub-account
  *     Builder's Publish. It only appends "code=Tab name"; existing entries are never replaced or reordered (the old value
@@ -51,6 +63,7 @@ const CLIENT_TABS = {
 };
 // Slack alerts: put a Slack incoming-webhook URL in Project Settings > Script properties as SLACK_WEBHOOK_URL.
 // Every new client response is then posted there. Leave it unset to turn Slack alerts off.
+// v11: PJ's DM webhook goes in SLACK_DM_WEBHOOK_URL (change requests, new wording and answers only). Unset = no DM.
 // Add a new client WITHOUT editing this file or redeploying: Project Settings > Script properties >
 // CLIENTS = comma-separated entries, each "code=Tab name", e.g. "acme-law-x1y2z3=Acme Law, other-firm-a1b2c3=Other Firm".
 // Who gets an email for each new client submission. Override in Script properties > NOTIFY_EMAIL
@@ -61,8 +74,12 @@ function notifyEmail_() {
   if (p.toLowerCase() === 'off') return '';
   return p || NOTIFY_EMAIL_DEFAULT;
 }
-// Link used in the notification email.
-const REVIEW_BASE_URL = 'https://peejayedz.github.io/automation-review/';
+// The client pages and data files (public). Used to read automation names for the Slack DM.
+// v11: the new address (peejayedz.github.io/automation-review/ redirects here since 16 Nov 2026).
+const REVIEW_BASE_URL = 'https://dashboard.lawfirmmarketingpros.com/automation-review/';
+// v11: the team's links (email, Slack, To-do tab) open the Review admin's client details (Google sign-in).
+const REVIEW_ADMIN_URL = 'https://lfmp-admin.pages.dev/automation-review/admin/';
+function adminLink_(client) { return REVIEW_ADMIN_URL + '#/client/' + encodeURIComponent(client); }
 // -----------------------------------------------------------------------
 
 const LEGACY_SHEET = 'Responses'; // the old single tab. Its rows all belonged to Boca Dental.
@@ -410,6 +427,7 @@ function doPost(e) {
     if (!(row.name === SMOKE_TEST_NAME && isAdmin_(d.key))) {
       try { notify_(row, approvedRevisions); } catch (err) { console.warn('Email alert failed: ' + err); }
       try { slack_(row); } catch (err) { console.warn('Slack alert failed: ' + err); }
+      try { slackDm_(row); } catch (err) { console.warn('Slack DM failed: ' + err); }
     }
     return json_({ ok: true, row: row });
   } finally {
@@ -458,7 +476,7 @@ function buildTodo() {
     sh.getDataRange().getValues().slice(1).forEach(r => { const o = toObj_(HEADERS, r); o._tab = tabName_(code); all.push(o); });
   });
   const when = ts => { const d = new Date(ts); return isNaN(d) ? '' : Utilities.formatDate(d, 'America/New_York', 'MMM d, h:mm a') + ' ET'; };
-  const link = r => REVIEW_BASE_URL + '?c=' + encodeURIComponent(r.client) + '&a=' + encodeURIComponent(r.automation);
+  const link = r => adminLink_(r.client); // v11: the Review admin (the classic page is retired)
   const what = r => [r.details, r.new_copy ? 'NEW WORDING:\n' + r.new_copy : '', r.attachments ? 'SCREENSHOTS:\n' + r.attachments : ''].filter(String).join('\n\n');
   const byTime = (a, b) => String(a.timestamp).localeCompare(String(b.timestamp));
 
@@ -481,7 +499,7 @@ function buildTodo() {
   let sh = ss.getSheetByName(TODO_SHEET);
   if (!sh) { sh = ss.insertSheet(TODO_SHEET, 0); }
   sh.clear(); sh.clearConditionalFormatRules();
-  const COLS = ['Status', 'Client', 'Automation', 'Step', 'Request', 'Details / new wording', 'Requested by', 'When', 'Version', 'LFMP reply', 'Review page'];
+  const COLS = ['Status', 'Client', 'Automation', 'Step', 'Request', 'Details / new wording', 'Requested by', 'When', 'Version', 'LFMP reply', 'Review admin'];
   const rows = [];
   const fmts = []; // [rowIndex, kind]
   const section = (title) => { rows.push([title].concat(Array(COLS.length - 1).fill(''))); fmts.push([rows.length, 'section']); };
@@ -555,8 +573,78 @@ const LABELS = {
   approve: 'marked a step as looks good', change: 'requested a change', copy: 'sent new wording',
   answer: 'answered a question', approve_all: 'APPROVED the automation', undo: 'took back a "looks good"'
 };
+// ---- v11: Slack DM to PJ ----------------------------------------------------
+// Only these send an instant DM. Approvals ("Looks good", whole automation), undo and the builder's smoke test don't.
+const SLACK_ACTIONS = { change: ':pencil2:', copy: ':memo:', answer: ':speech_balloon:' };
+const SLACK_WEBHOOK_RE = /^https:\/\/hooks\.slack\.com\/(services|triggers|workflows)\/[A-Za-z0-9_/-]{10,}$/;
+function slackEsc_(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function excerpt_(s, n) { const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1).replace(/\s+$/, '') + '…' : t; }
+/** Automation names from the client's public data file (cached 6 hours). Falls back to the id in words. */
+function automationName_(client, id) {
+  const pretty = String(id || '').split('-').map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
+  try {
+    const cache = CacheService.getScriptCache(), key = 'autonames_' + client;
+    let names = null;
+    const hit = cache.get(key);
+    if (hit) names = JSON.parse(hit);
+    else {
+      const r = UrlFetchApp.fetch(REVIEW_BASE_URL + 'data/' + encodeURIComponent(client) + '.json', { muteHttpExceptions: true });
+      if (r.getResponseCode() !== 200) return pretty;
+      names = {};
+      (JSON.parse(r.getContentText()).automations || []).forEach(a => { names[a.id] = a.name; });
+      cache.put(key, JSON.stringify(names), 21600);
+    }
+    return names[id] || pretty;
+  } catch (err) { return pretty; }
+}
+/** The DM text for one client response, or '' when this kind of response sends no DM. */
+function slackText_(row) {
+  const icon = SLACK_ACTIONS[row.action]; if (!icon) return '';
+  const client = displayNames_()[row.client] || tabName_(row.client);
+  const kind = row.action === 'answer' ? 'answered a question' : row.action === 'copy' ? 'sent new wording' : 'asked for a change';
+  const type = row.action === 'answer' ? 'Answer' : row.action === 'copy' ? 'New wording' : (row.type || 'Change request');
+  const said = excerpt_(row.action === 'copy' ? (row.new_copy || row.details) : row.details, 200);
+  const shots = String(row.attachments || '').split('\n').filter(Boolean).length;
+  return [
+    icon + ' *' + slackEsc_(client) + '* ' + kind,
+    '*' + slackEsc_(automationName_(row.client, row.automation)) + '*' + (row.step_title ? ' · ' + slackEsc_(clip_(row.step_title, 120)) : ''),
+    'Type: ' + slackEsc_(clip_(type, 80)) + (shots ? ' · ' + shots + ' screenshot' + (shots === 1 ? '' : 's') : ''),
+    said ? '> ' + slackEsc_(said) : '',
+    '<' + adminLink_(row.client) + '|Open in Review admin →>'
+  ].filter(Boolean).join('\n');
+}
+/** Posts text to PJ's DM webhook (SLACK_DM_WEBHOOK_URL). Not set: skipped silently. Never throws; never logs the URL. */
+function postSlackDm_(text) {
+  const url = String(PropertiesService.getScriptProperties().getProperty('SLACK_DM_WEBHOOK_URL') || '').trim();
+  if (!url) return false;
+  if (!SLACK_WEBHOOK_RE.test(url)) { console.log('Slack DM: not sent (SLACK_DM_WEBHOOK_URL is not a Slack webhook address)'); return false; }
+  try {
+    const r = UrlFetchApp.fetch(url, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      payload: JSON.stringify({ text: text, unfurl_links: false, unfurl_media: false }) });
+    const code = r.getResponseCode();
+    console.log(code >= 200 && code < 300 ? 'Slack DM: sent' : 'Slack DM: not sent (HTTP ' + code + ')');
+    return code >= 200 && code < 300;
+  } catch (err) { console.log('Slack DM: not sent (network error)'); return false; }
+}
+/** Sends PJ's DM for a new client response (change request, new wording or answer only). */
+function slackDm_(row) {
+  const text = slackText_(row);
+  if (text) postSlackDm_(text);
+}
+
+/** One-off test: run this from the Apps Script editor to check PJ's Slack DM works (sends a sample, saves nothing). */
+function testSlackDm() {
+  const ok = postSlackDm_([':white_check_mark: *Test alert from Automation Review*',
+    'Client request DMs are working. Change requests, new wording and answers will arrive here.',
+    '<' + REVIEW_ADMIN_URL + '|Open Review admin →>'].join('\n'));
+  if (!ok) throw new Error('Test DM not sent: check SLACK_DM_WEBHOOK_URL in Script properties (see the Executions log).');
+}
+
+// ---- Shared Slack channel (unchanged from v10) ------------------------------
+// Every new client response is posted to the SLACK_WEBHOOK_URL channel, exactly as before v11.
+const CHANNEL_REVIEW_URL = 'https://peejayedz.github.io/automation-review/'; // v10's link base, kept as it was
 function reviewLink_(row) {
-  return REVIEW_BASE_URL + '?c=' + encodeURIComponent(row.client) + '&a=' + encodeURIComponent(row.automation);
+  return CHANNEL_REVIEW_URL + '?c=' + encodeURIComponent(row.client) + '&a=' + encodeURIComponent(row.automation);
 }
 
 /** Posts a new response to Slack (incoming webhook in the SLACK_WEBHOOK_URL script property). */
@@ -597,7 +685,6 @@ function notify_(row, approvedRevisions) {
   if (row.action === 'approve' && !approvedRevisions.length) return;
   const client = displayNames_()[row.client] || tabName_(row.client);
   const what = row.action === 'approve' ? 'approved your revision' : LABELS[row.action];
-  const subs = REVIEW_BASE_URL + '?c=' + encodeURIComponent(row.client) + '&view=submissions';
   const body = [
     row.name + ' (' + client + ') ' + what + '.', '',
     'Client: ' + client,
@@ -609,8 +696,7 @@ function notify_(row, approvedRevisions) {
     approvedRevisions.length ? 'Approved request: ' + approvedRevisions.map(r => r.details || r.type || r.step_title).join(' | ') : '',
     row.attachments ? 'Screenshots:\n' + row.attachments : '',
     'Submitted: ' + fmtET_(row.timestamp), '',
-    'All submissions (sign in as admin): ' + subs,
-    'This step on the dashboard: ' + reviewLink_(row)
+    'Open in Review admin (Google sign-in): ' + adminLink_(row.client)
   ].filter(x => x !== null && x !== undefined && x !== false).filter((x, i, a) => x !== '' || (a[i - 1] !== '')).join('\n');
   MailApp.sendEmail(to, '[Automation Review] ' + client + ': ' + row.name + ' ' + what + (row.step_title ? ' · ' + clip_(row.step_title, 60) : ''), body);
 }
