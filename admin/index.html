@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="lfmp-v2">
 <head>
 <meta charset="utf-8">
 <script>/* The tool runs only on the team site (lfmp-admin.pages.dev, behind Google sign-in). On the public site (github.io, lawfirmmarketingpros.com) this address shows the "Moved" page instead. */ if (/(^|\.)(github\.io|lawfirmmarketingpros\.com)$/.test(location.hostname)) location.replace('moved.html' + location.search);</script>
@@ -7,12 +7,12 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <title>Review admin · LFMP</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2309100f'/%3E%3Crect x='3' y='3' width='26' height='26' fill='none' stroke='%233fb6b0' stroke-width='2'/%3E%3Cpath d='m9 16.5 4.5 4.5L23 11.5' fill='none' stroke='%233fb6b0' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230b0b0c'/%3E%3Crect x='3' y='3' width='26' height='26' fill='none' stroke='%23d9a64e' stroke-width='2'/%3E%3Cpath d='m9 16.5 4.5 4.5L23 11.5' fill='none' stroke='%23d9a64e' stroke-width='3'/%3E%3C/svg%3E">
 <script>try { var t = localStorage.getItem('lfmp-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
 <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="lfmp-ui.css?v=1.6.0">
-<link rel="stylesheet" href="admin.css?v=1.6.0">
+<link rel="stylesheet" href="lfmp-ui.css?v=2.0.0">
+<link rel="stylesheet" href="admin.css?v=1.7.0">
 <script src="../config.js"></script>
 </head>
 <body>
@@ -25,34 +25,10 @@
   <div class="btnrow"><button class="btn big" type="button" data-act="signout">Sign out</button></div>
 </div></div>
 
-<!-- App -->
+<!-- App. v2 (redesign v2): the top bar, the Me menu (theme, test clients, refresh, team sign-ins, what's new, install,
+     Submissions, sign out) and the phone's bottom tabs come from lfmp-session.js mountShell(), the same in all three tools. -->
 <div id="appView" hidden>
-  <div class="wrapx">
-    <header class="top">
-      <a class="mark" href="./" title="LFMP · Review admin">LFMP</a>
-      <span class="toolchip" aria-label="You are in: Review">Review</span>
-      <nav class="nav" aria-label="LFMP tools">
-        <a href="/ghl-subaccount-builder-page/">Clients</a>
-        <a href="/leadpro-kpi/admin/">KPI admin</a>
-        <a href="./" aria-current="page">Review</a>
-      </nav>
-      <div class="topr">
-        <div class="themeseg" id="themeSeg" role="group" aria-label="Theme"></div>
-        <span class="me lfmp-who" id="meWho" title="Signed in with Google"><span class="lfmp-who-row"><b data-me id="meName"></b><button class="lfmp-out" type="button" data-act="signout">Sign out</button></span><small data-me-last></small></span>
-        <span class="menuwrap">
-          <button class="btn icon iconbtn" type="button" data-menu="topMenu" aria-haspopup="menu" aria-expanded="false" aria-label="More">⋯</button>
-          <div class="menu" id="topMenu" role="menu" hidden>
-            <p class="menume" role="presentation"><b data-me id="meMenuName"></b><span data-me-email id="meMenuEmail"></span><small class="lfmp-last" data-me-last></small></p>
-            <button type="button" role="menuitem" data-act="reload">Refresh</button>
-            <button type="button" role="menuitem" data-act="signins">Team sign-ins</button>
-            <button type="button" role="menuitem" data-act="signout">Sign out</button>
-          </div>
-        </span>
-      </div>
-    </header>
-    <main id="screen" aria-live="polite"></main>
-    <footer class="foot"><span>LFMP Automation Review admin · v1.6.0</span><span>Client pages never show these controls.</span></footer>
-  </div>
+  <main class="lv-in" id="screen" aria-live="polite"></main>
 </div>
 
 <div class="dshade" id="dpShade" hidden></div>
@@ -60,6 +36,6 @@
 <div class="ovl" id="ovl" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-<script type="module" src="admin.js?v=1.6.0"></script>
+<script type="module" src="admin.js?v=1.7.0"></script>
 </body>
 </html>

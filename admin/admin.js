@@ -1,3 +1,5 @@
+// Automation Review admin v1.7.0 (redesign v2: the shared shell from lfmp-session.js mountShell — top bar, Me menu, bottom
+// tabs — and the shared list look; layout only, same data and actions as v1.6.0).
 // Automation Review admin v1.6.0: Review home · Details panel (Overview + Edit tab) · Submissions, on the team site behind
 // Google sign-in only. The client pages (plan.html, messages.html, plans/, data/) never load this file. Since v1.6.0 the
 // public index.html is only a redirect to Link A or a "This review has moved" page, and the team edits Link B's wording in
@@ -5,8 +7,9 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut, paintMe } from './lfmp-session.js';
+import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.6.0';   // versioned: admin.js needs this release's rules
+export const VERSION = '1.7.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -35,15 +38,32 @@ const fmtWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.to
 const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 const EXT = '<span aria-hidden="true">↗</span>';
 
-// ---------- theme ----------
-const THEMES = [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']];
-function applyTheme(mode) {
-  if (!THEMES.some(t => t[0] === mode)) mode = 'auto';
-  if (mode === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', mode);
-  store.set('lfmp-theme', mode === 'auto' ? null : mode);
-  $('themeSeg').innerHTML = THEMES.map(([k, l], i) => `${i ? '<span class="sep" aria-hidden="true">·</span>' : ''}<button type="button" data-theme-set="${k}" aria-pressed="${k === mode}" title="${k === 'auto' ? 'Follow this device\'s setting' : `Always ${l.toLowerCase()}`}">${l}</button>`).join('');
+// ---------- v2 shell: top bar, Me (theme Auto · Light · Dark saved as "lfmp-theme", Show test clients, Refresh now,
+// Team sign-ins, What's new, Install the app, Submissions, Sign out) and the phone's bottom tabs (lfmp-session.js) ----------
+let shell = null;
+// What's new (admin/whats-new.json, same format as the Builder's page/whats-new.json)
+const NEWS_SEEN = 'ar-news-seen';
+let newsData = null;
+const semverNewer = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
+const newsUnseen = () => semverNewer(VERSION, store.get(NEWS_SEEN) || '0.0.0');
+async function loadNews() {
+  if (newsData) return newsData;
+  try { const r = await fetch(`whats-new.json?t=${Date.now()}`, { cache: 'no-store' }); newsData = r.ok ? await r.json() : { versions: [] }; } catch { newsData = { versions: [] }; }
+  return newsData;
 }
-applyTheme(store.get('lfmp-theme') || 'auto');
+const NEWS_TYPE = { new: 'New', improved: 'Improved', fixed: 'Fixed' };
+async function openNews() {
+  let d = $('arNews');
+  if (!d) { d = document.createElement('dialog'); d.id = 'arNews'; d.className = 'lfmp-dlg'; d.setAttribute('aria-labelledby', 'arNewsT'); d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-lfmp-close]')) d.close(); }); document.body.append(d); }
+  const head = `<div class="lfmp-dlg-h"><div><h2 id="arNewsT">What's new</h2></div><button class="lfmp-out" type="button" data-lfmp-close>Close</button></div>`;
+  d.innerHTML = `${head}<p class="lfmp-dlg-b mut">Loading…</p>`;
+  if (!d.open) d.showModal();
+  const vs = (await loadNews()).versions || [];
+  d.innerHTML = `${head}<div class="lfmp-dlg-b arnews">${vs.length ? vs.map(v => `<section><p class="arnews-v"><b>v${esc(v.version)}</b> · ${esc(v.date || '')}</p><h3>${esc(v.title || '')}</h3><ul>${(v.items || []).map(i => `<li><span class="arnews-t">${esc(NEWS_TYPE[i.type] || i.type || '')}</span> ${esc(i.text)}</li>`).join('')}</ul></section>`).join('') : '<p class="mut">Nothing here yet.</p>'}</div>`;
+  d.querySelector('[data-lfmp-close]')?.focus();
+  store.set(NEWS_SEEN, VERSION); shell?.setNewsDot(false);
+}
+const toAnswer = () => (D.loaded ? D.rows.filter(r => L.isReq(r) && (F.tests || !isTest(r.client)) && ['req', 'prog'].includes(L.statusKey(r, D.rows))).length : 0);
 function closeMenus() { for (const m of document.querySelectorAll('.menu:not([hidden])')) { m.hidden = true; document.querySelector(`[data-menu="${m.id}"]`)?.setAttribute('aria-expanded', 'false'); } }
 
 // ---------- backend ----------
@@ -65,9 +85,50 @@ async function listData() {
   const plansPage = new Set((Array.isArray(plans) ? plans : []).map(f => f.name).filter(n => /^[a-z0-9-]+\.html$/.test(n)).map(n => n.slice(0, -5)));
   return { codes, plansPage, plan: new Set(names.filter(n => n.endsWith('.plan.json')).map(n => n.slice(0, -10))), messages: new Set(names.filter(n => n.endsWith('.messages.json')).map(n => n.slice(0, -14))) };
 }
+// ---------- "Link A sent · Nov 16" (v1.7.0, PJ): Copy on Link A / Link B counts as sent ----------
+// The Builder's client record (private repo, records/<id>.json) keeps the latest copy as review.linkSent
+// { link: 'A' | 'B', at, by }. Read through the team site exactly as the Builder reads it (allow-list B1); a Copy here
+// saves it the same way the Builder does (B2: GET → change → PUT with its sha, retried on 409/422). Any read failure
+// just means no "sent" line: the page works as before.
+const BREPO = '/repos/peejayedz/ghl-subaccount-builder';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const b64dec = b => new TextDecoder().decode(Uint8Array.from(atob(String(b).replace(/\s/g, '')), c => c.charCodeAt(0)));
+const b64enc = s => { let o = ''; for (const x of new TextEncoder().encode(s)) o += String.fromCharCode(x); return btoa(o); };
+async function loadSent() {
+  const out = {};
+  try {
+    const r = await ghFetch('GET', `${BREPO}/contents/records?ref=main`);
+    if (!r.ok) return out;
+    const files = (await r.json()).filter(f => f && f.type === 'file' && /^[a-z0-9-]{1,60}\.json$/.test(f.name));
+    const recs = await Promise.all(files.map(f => ghFetch('GET', `${BREPO}/contents/records/${f.name}?ref=main`, null, { raw: true })
+      .then(x => (x.ok ? x.text() : null)).then(t => (t ? JSON.parse(t) : null)).catch(() => null)));
+    for (const rec of recs) if (rec?.id && rec.review?.code) out[rec.review.code] = { id: rec.id, linkSent: rec.review.linkSent || null };
+  } catch { /* no sent info */ }
+  return out;
+}
+const sentDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };   // the viewer's time zone
+const sentText = c => { const s = D.sent[c]?.linkSent; return s && (s.link === 'A' || s.link === 'B') && sentDay(s.at) ? `Link ${s.link} sent · ${sentDay(s.at)}` : ''; };
+async function markSent(code, link) {
+  const rec = D.sent[code]; if (!rec || (link !== 'A' && link !== 'B')) return;   // no Builder record: just copied
+  const path = `${BREPO}/contents/records/${rec.id}.json`, by = ME?.name || ME?.email || 'unknown';
+  try {
+    for (let i = 0; ; i++) {
+      const g = await ghFetch('GET', `${path}?ref=main`);
+      if (!g.ok) throw new Error(`GitHub answered ${g.status}`);
+      const j = await g.json(), x = JSON.parse(b64dec(j.content));
+      const linkSent = { link, at: new Date().toISOString(), by };
+      x.review = { ...(x.review || {}), linkSent }; x.updatedAt = linkSent.at;
+      const p = await ghFetch('PUT', path, { message: `${x.businessName || code}: Link ${link} copied to send (${by})`, content: b64enc(`${JSON.stringify(x, null, 2)}\n`), sha: j.sha, branch: 'main' });
+      if (p.ok) { rec.linkSent = linkSent; if (route().screen === 'home') drawHome(); return; }
+      if ((p.status === 409 || p.status === 422) && i < 2) { await sleep(800); continue; }
+      throw new Error(`GitHub answered ${p.status}`);
+    }
+  } catch (err) { toast(`Link ${link} copied, but it couldn't be noted as sent: ${err.message}`); }
+}
+
 // ---------- state ----------
 let loadSeq = 0, busy = false;
-const D = { codes: [], plan: new Set(), messages: new Set(), plansPage: new Set(), files: {}, msgs: {}, content: {}, names: {}, renames: {}, rows: [], log: [], loaded: false, error: '' };
+const D = { codes: [], plan: new Set(), messages: new Set(), plansPage: new Set(), files: {}, msgs: {}, content: {}, names: {}, renames: {}, rows: [], log: [], sent: {}, loaded: false, error: '' };
 const F = { home: 'all', q: '', tests: store.get(TESTS_KEY) === '1', status: 'answer', client: 'all', sq: '', type: 'all', open: null, more: new Set(), armed: null, rowMenu: null, history: null };
 // Edit tab: chosen automation per client, the message whose form is open, "new version" armed
 const E = { auto: {}, open: null, ver: null };
@@ -105,15 +166,23 @@ addEventListener('hashchange', () => draw());
 async function start() {
   try { ME = await startSession(); }
   catch (err) { if (err.status !== 401) { show('setupView'); $('setupMsg').textContent = err.message; } return; }   // 401: on the way to /signin/
-  paintMe(ME); $('meWho').title = ME.email;   // name, email, "Last signed in …" (lfmp-session.js)
   if (!SAVE_URL) { show('setupView'); $('setupMsg').textContent = 'The review pages have no backend set (config.js saveUrl is empty), so there is nothing to administer here.'; return; }
+  shell = mountShell({
+    tool: 'review', me: ME, root: $('appView'), plus: null, bell: null, version: VERSION, newsDot: newsUnseen(),
+    showTests: { on: F.tests, label: 'Show test clients', onChange: on => { F.tests = on; store.set(TESTS_KEY, on ? '1' : null); draw(); } },
+    onRefresh: async () => { shell.closeMe(); await load(); toast('Refreshed'); },
+    onNews: () => openNews(),
+    onHome: () => { closeDetails(true); F.home = F.home || 'all'; go('#/'); window.scrollTo(0, 0); },
+  });
+  paintMe(ME);   // name, email, "Last signed in …" (lfmp-session.js)
   show('appView'); await load();
 }
 
 // ---------- load ----------
 async function load() {
   const seq = ++loadSeq;
-  D.error = ''; if (!D.loaded) $('screen').innerHTML = `${heroHtml(route().screen)}<div class="loading">Loading review clients…</div>`;
+  D.error = ''; if (!D.loaded) $('screen').innerHTML = `${headHtml(route().screen)}<div class="lv-list lv-empty loading">Loading review clients…</div>`;
+  const sentP = loadSent();   // Builder records (Link A/B sent), alongside; never fails
   try {
     Object.assign(D, await listData());
     if (!D.codes.length) throw new Error('No review clients found in the repo.');
@@ -139,28 +208,34 @@ async function load() {
     D.codes.forEach((c, i) => { const ren = (content[i]?.content || []).filter(x => String(x.field) === 'client:name' && String(x.value || '').trim()).sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp))).pop(); if (ren) D.renames[c] = String(ren.value).trim(); });
     D.rows = (all.rows || []).map(r => (L.isReq(r) ? { ...r, status: L.normStatus(r.status) || L.ST.REQ } : r));
     D.log = all.log || [];
+    D.sent = await sentP;
+    if (seq !== loadSeq) return;
     D.loaded = true;
+    shell?.setUpdated(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));   // Me → Refresh now · updated 4:57 PM
   } catch (err) { if (seq !== loadSeq) return; D.error = err.message; }
   draw();
 }
 
 // ---------- drawing ----------
-function heroHtml(screen) {
-  const n = D.loaded ? D.rows.filter(r => L.isReq(r) && (F.tests || !isTest(r.client)) && ['req', 'prog'].includes(L.statusKey(r, D.rows))).length : 0;
-  const head = screen === 'subs'
-    ? '<section class="hero"><div><p class="ey">LFMP · Automation review</p><h1 class="disp">Client <span class="g">submissions.</span></h1></div></section>'
-    : '<section class="hero"><div><p class="ey">LFMP · Automation review</p><h1 class="disp">Automation <span class="g">reviews.</span></h1></div></section>';
-  const strip = screen === 'subs' || !D.loaded ? '' : (() => {
-    const cs = visibleClients(), need = cs.filter(c => sumOf(c).state === 'need').length;
-    return `<div class="strip"><span>${cs.length} client${cs.length === 1 ? '' : 's'}</span>${need ? `<button class="stripbtn need" type="button" data-home-filter="need">${need} need${need === 1 ? 's' : ''} you ${ARROW}</button>` : '<span>Nothing needs you</span>'}</div>`;
-  })();
-  const tabs = `<nav class="tabs2" aria-label="Review admin sections"><a href="#/" ${screen === 'home' ? 'aria-current="page"' : ''}>Clients</a><a href="#/subs" ${screen === 'subs' ? 'aria-current="page"' : ''}>Submissions${n ? ` <b class="cnt" aria-label="${n} to answer">${n}</b>` : ''}</a></nav>`;
-  return head + strip + tabs;
+// v2 (redesign v2): title + summary (desktop) · search · filter "All · Needs you · n · Waiting · Done" · one list.
+// Submissions: its own screen, with "‹ Reviews" back to the list. Reached from the desktop summary line ("· All
+// submissions ›") and, on desktop and phone, from a client's Details → Open items. Nothing is added to the phone list.
+const HOME_IN = { all: () => true, need: s => s.state === 'need', wait: s => s.state === 'wait' || s.state === 'new', done: s => s.state === 'ok' };
+function headHtml(screen) {
+  if (screen === 'subs') {
+    const n = toAnswer();
+    return `<div class="lv-hrow subshead"><div><button type="button" class="lv-back" data-act="gohome"><span aria-hidden="true">‹</span>Reviews</button><h1 class="lv-h1 lv-d">Submissions</h1><div class="lv-sum">${n ? `${n} to answer` : 'Nothing to answer'}</div></div></div>`;
+  }
+  const cs = D.loaded ? visibleClients() : [], need = cs.filter(c => sumOf(c).state === 'need').length;
+  return pageHeadHtml({ title: 'Reviews', summary: D.loaded ? `${cs.length} client${cs.length === 1 ? '' : 's'} · ${need ? `${need} need${need === 1 ? 's' : ''} you` : 'nothing needs you'}` : 'Loading…',
+    search: { id: 'homeQ', placeholder: `Search ${cs.length || ''} client${cs.length === 1 ? '' : 's'}`.replace('  ', ' '), value: F.q }, active: F.home,
+    segs: [{ key: 'all', label: 'All' }, { key: 'need', label: `Needs you · ${need}`, red: need > 0 }, { key: 'wait', label: 'Waiting' }, { key: 'done', label: 'Done' }] });
 }
 function draw() {
   if ($('appView').hidden || !ME) return;
   const r = route();
-  if (D.error) { $('screen').innerHTML = `${heroHtml(r.screen)}<div class="errbox">${esc(D.error)} <button class="lnk" type="button" data-act="reload">Try again</button></div>`; return; }
+  shell?.setTitle(r.screen === 'subs' ? 'Submissions' : 'Reviews');
+  if (D.error) { $('screen').innerHTML = `${headHtml(r.screen)}<div class="errbox">${esc(D.error)} <button class="lnk" type="button" data-act="reload">Try again</button></div>`; return; }
   if (!D.loaded) return;
   if (r.screen === 'subs') { if (r.client && r.client !== F.client) F.client = r.client; drawSubs(); closeDetails(true); }
   else { drawHome(); if (r.details) openDetails(r.details, r.tab, r.auto); else closeDetails(true); }
@@ -174,29 +249,40 @@ function statusHtml(c, s, { details = false } = {}) {
     return `<span class="st need"><i aria-hidden="true">!</i>Needs you</span>${details ? `<span class="stsub">${n}</span>` : `<a class="stlink" href="#/client/${encodeURIComponent(c)}" data-row-stop>${n} ${ARROW}</a>`}`;
   }
   if (s.state === 'wait') return '<span class="st wait"><i aria-hidden="true">●</i>Waiting</span><span class="stsub">Waiting for the client</span>';
-  if (s.state === 'new') return '<span class="st new"><i aria-hidden="true">○</i>Not started</span><span class="stsub">Links not opened yet</span>';
-  return '<span class="st ok"><i aria-hidden="true">●</i>OK</span><span class="stsub">Nothing waiting</span>';
+  if (s.state === 'new') return '<span class="st wait new"><i aria-hidden="true">●</i>Waiting</span><span class="stsub">Links not opened yet</span>';
+  return `<span class="st ok"><i aria-hidden="true">●</i>${allApproved(s) ? 'Approved' : 'Done'}</span><span class="stsub">Nothing waiting</span>`;
 }
 
-// ----- 1) Review home -----
+// ----- 1) Review home (v2 list) -----
+// Row: name + sub-line · status dot + word · Link A/B · Open ›. The whole row opens Details (Review page ↗, Copy, Edit…).
+// Only the reference's words: Needs you (red) · Waiting (amber; also "Links not opened yet") · Approved / Done (green).
+const ROW_ST = { need: ['red', 'Needs you'], wait: ['amber', 'Waiting'], new: ['amber', 'Waiting'], ok: ['green', 'Done'] };
+const allApproved = s => s.autos > 0 && s.approved === s.autos;
+function linksText(c) { const A = linkA(c), B = linkB(c); return A && B ? 'Link A + B' : A ? 'Link A' : B ? 'Link B' : 'No client link yet'; }
+function rowSub(x) {
+  const s = x.s;
+  const what = s.state === 'need' ? `${s.open} request${s.open === 1 ? '' : 's'} to answer` : s.state === 'wait' ? sentText(x.c) || 'Waiting for the client'
+    : s.state === 'new' ? sentText(x.c) || 'Links not opened yet' : homeLink(x.c) ? linksText(x.c) : 'Nothing waiting';
+  return [isTest(x.c) ? 'Test' : '', what].filter(Boolean).join(' · ');
+}
+function rowStatus(x) {
+  const [tone, label] = ROW_ST[x.s.state];
+  return lvStatus(tone, x.s.state === 'ok' && allApproved(x.s) ? 'Approved' : label);
+}
 function drawHome() {
   const cs = visibleClients().map(c => ({ c, s: sumOf(c), name: nameOf(c) }));
-  const need = cs.filter(x => x.s.state === 'need').length, q = F.q.trim().toLowerCase();
-  const list = cs.filter(x => (F.home !== 'need' || x.s.state === 'need') && (!q || `${x.name} ${x.c}`.toLowerCase().includes(q)))
+  const q = F.q.trim().toLowerCase(), inF = HOME_IN[F.home] || HOME_IN.all;
+  const list = cs.filter(x => inF(x.s) && (!q || `${x.name} ${x.c}`.toLowerCase().includes(q)))
     .sort((a, b) => L.STATE_ORDER[a.s.state] - L.STATE_ORDER[b.s.state] || b.s.open - a.s.open || a.name.localeCompare(b.name));
-  const stat = x => statusHtml(x.c, x.s);
   const keepFocus = document.activeElement?.id === 'homeQ';
-  $('screen').innerHTML = `${heroHtml('home')}
-    <div class="toolbar">
-      <div class="seg" role="group" aria-label="Show"><button type="button" data-home-filter="all" aria-pressed="${F.home === 'all'}">All <span class="n">${cs.length}</span></button><button type="button" data-home-filter="need" aria-pressed="${F.home === 'need'}">Needs you <span class="n">${need}</span></button></div>
-      <label class="chk"><input type="checkbox" id="showTests" ${F.tests ? 'checked' : ''}> Show test clients</label>
-      <input type="search" id="homeQ" class="search" placeholder="Search clients…" aria-label="Search clients" value="${esc(F.q)}">
-    </div>
-    <div class="clist">${list.map(x => `<div class="crow" data-client="${esc(x.c)}" tabindex="0" role="link" aria-label="${esc(x.name)}: open details">
-        <div class="cname"><span class="disp">${esc(x.name)}</span>${isTest(x.c) ? '<span class="testtag">Test</span>' : ''}</div>
-        <div class="cstat">${stat(x)}</div>
-        <div class="cacts">${homeLink(x.c) ? `<a class="btn sm" href="${esc(homeLink(x.c))}" target="_blank" rel="noopener" data-row-stop aria-label="Open ${esc(x.name)}'s review page (new tab)">Review page ${EXT}</a>` : '<span class="nolink" title="Create an A/B package in the Builder">No client link yet</span>'}<a class="btn sm${x.s.state === 'need' ? ' p' : ''}" href="#/client/${encodeURIComponent(x.c)}" data-row-stop>Details ${ARROW}</a></div>
-      </div>`).join('') || `<div class="empty">${q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : 'No review clients yet.'}</div>`}</div>`;
+  const empty = q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : F.home === 'wait' ? 'Nothing is waiting for a client.' : F.home === 'done' ? 'No client is done yet.' : 'No review clients yet.';
+  $('screen').innerHTML = `${headHtml('home')}
+    ${list.length ? `<div class="lv-list" id="clist" style="--lv-cols:1.5fr 200px 260px 70px">${list.map(x => lvRow({ name: x.name, sub: rowSub(x), label: `${x.name}: open details`,
+      attrs: `data-client="${esc(x.c)}"`, cells: [rowStatus(x), `<span class="lv-mt">${esc(linksText(x.c))}</span>`] })).join('')}</div>`
+      : `<div class="lv-list lv-empty">${empty}</div>`}`;
+  if (dpCode) $('screen').querySelector(`.lv-row[data-client="${CSS.escape(dpCode)}"]`)?.classList.add('sel');   // the open client stays marked
+  // desktop only (the summary line is hidden on a phone): "7 clients · 2 need you · All submissions ›"
+  $('screen').querySelector('[data-lv-sum]')?.insertAdjacentHTML('beforeend', ' · <a class="sumlink" href="#/subs">All submissions ›</a>');
   if (keepFocus) { const i = $('homeQ'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
 }
 
@@ -219,13 +305,13 @@ function openDetails(code, tab = 'overview', auto = null) {
           <button type="button" role="menuitem" class="danger" data-dp="clear">Clear test responses…</button>
           <a role="menuitem" class="menuold" href="${esc(classicEditorUrl(code))}">Classic editor (old)</a>
         </div></span>
-      <button class="btn icon iconbtn" type="button" data-act="closedet" aria-label="Close details">✕</button></div></div>
+      <button class="btn icon iconbtn dclose" type="button" data-act="closedet" aria-label="Close details"><span class="x" aria-hidden="true">✕</span><span class="bk"><span aria-hidden="true">‹</span> Reviews</span></button></div></div>
     <nav class="dtabs" aria-label="Client details sections"><a href="#/client/${enc}" ${tab === 'overview' ? 'aria-current="page"' : ''}>Overview</a><a href="#/client/${enc}/edit" ${tab === 'edit' ? 'aria-current="page"' : ''}>Edit</a></nav>
     <div class="dbody">${body}</div>`;
   const wasHidden = $('dPanel').hidden;
   $('dPanel').hidden = false; $('dpShade').hidden = false; document.body.classList.add('dp-open');
   $('dPanel').classList.toggle('wide', tab === 'edit' && !dpMode);
-  for (const r of document.querySelectorAll('.crow')) r.classList.toggle('sel', r.dataset.client === code);
+  for (const r of document.querySelectorAll('.lv-row[data-client]')) r.classList.toggle('sel', r.dataset.client === code);
   if (wasHidden) $('dPanel').querySelector('[data-act="closedet"]').focus();
   else if (dpMode) $('dPanel').querySelector('input')?.focus();
 }
@@ -325,8 +411,8 @@ function clearHtml(code, name, autos) {
 function closeDetails(silent) {
   if ($('dPanel').hidden) { dpCode = null; return; }
   $('dPanel').hidden = true; $('dpShade').hidden = true; $('dPanel').innerHTML = ''; $('dPanel').classList.remove('wide'); document.body.classList.remove('dp-open');
-  for (const r of document.querySelectorAll('.crow.sel')) r.classList.remove('sel');
-  const back = dpReturn && document.body.contains(dpReturn) ? dpReturn : document.querySelector(`.crow[data-client="${CSS.escape(dpCode || '')}"]`);
+  for (const r of document.querySelectorAll('.lv-row.sel')) r.classList.remove('sel');
+  const back = dpReturn && document.body.contains(dpReturn) ? dpReturn : document.querySelector(`.lv-row[data-client="${CSS.escape(dpCode || '')}"]`);
   dpCode = null; dpMode = null; dpReturn = null; dpTab = 'overview'; E.open = null; E.ver = null;
   if (!silent && route().details) go('#/');
   back?.focus?.({ preventScroll: true });
@@ -350,14 +436,16 @@ function drawSubs() {
   const groups = [...new Set(list.map(r => r.client))].map(c => ({ c, rows: list.filter(r => r.client === c), toAnswer: all.filter(r => r.client === c && L.isReq(r) && ['req', 'prog'].includes(L.statusKey(r, all))).length }))
     .sort((a, b) => b.toAnswer - a.toAnswer || nameOf(a.c).localeCompare(nameOf(b.c)));
   const keep = document.activeElement?.id;
-  $('screen').innerHTML = `${heroHtml('subs')}
-    <div class="toolbar subsbar">
-      <div class="segscroll"><div class="seg" role="group" aria-label="Show">${L.FILTERS.map(([k, l]) => `<button type="button" data-subs-filter="${k}" aria-pressed="${F.status === k}">${l} <span class="n">${counts[k]}</span></button>`).join('')}</div></div>
-      <select id="subsClient" aria-label="Client"><option value="all">All clients</option>${clients.map(c => `<option value="${esc(c)}" ${F.client === c ? 'selected' : ''}>${esc(nameOf(c))}</option>`).join('')}</select>
-      ${F.status === 'everything' ? `<select id="subsType" aria-label="Type">${L.TYPES.map(([k, l]) => `<option value="${k}" ${F.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}
-      <input type="search" id="subsQ" class="search" placeholder="Search…" aria-label="Search submissions" value="${esc(F.sq)}">
+  $('screen').innerHTML = `${headHtml('subs')}
+    <div class="subsbar">
+      <div class="segscroll"><div class="lv-seg" role="group" aria-label="Show">${L.FILTERS.map(([k, l]) => `<button type="button" class="lv-hit" data-subs-filter="${k}" aria-pressed="${F.status === k}">${l} · ${counts[k]}</button>`).join('')}</div></div>
+      <div class="subsf">
+        <select id="subsClient" aria-label="Client"><option value="all">All clients</option>${clients.map(c => `<option value="${esc(c)}" ${F.client === c ? 'selected' : ''}>${esc(nameOf(c))}</option>`).join('')}</select>
+        ${F.status === 'everything' ? `<select id="subsType" aria-label="Type">${L.TYPES.map(([k, l]) => `<option value="${k}" ${F.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}
+        <label class="lv-search lv-hit">${SEARCH_ICON}<input type="search" id="subsQ" placeholder="Search submissions" aria-label="Search submissions" value="${esc(F.sq)}"></label>
+      </div>
     </div>
-    ${groups.map(g => groupHtml(g)).join('') || `<div class="empty">${F.status === 'answer' ? 'Nothing to answer.' : F.status === 'waiting' ? 'Nothing waiting for a client.' : 'Nothing here.'}${q ? ' Try another search.' : ''}</div>`}`;
+    ${groups.map(g => groupHtml(g)).join('') || `<div class="lv-list lv-empty">${F.status === 'answer' ? 'Nothing to answer.' : F.status === 'waiting' ? 'Nothing waiting for a client.' : 'Nothing here.'}${q ? ' Try another search.' : ''}</div>`}`;
   if (keep === 'subsQ') { const i = $('subsQ'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
   if (F.open) $('screen').querySelector(`[data-sub="${CSS.escape(F.open)}"]`)?.scrollIntoView({ block: 'nearest' });
 }
@@ -497,6 +585,9 @@ async function copyLink(btn) {
   const note = btn.parentElement.querySelector('.copied'), ok = await copyText(btn.dataset.copy);
   note.textContent = ok ? 'Copied' : "Couldn't copy"; note.classList.toggle('bad', !ok);
   clearTimeout(note.t); note.t = setTimeout(() => { note.textContent = ''; }, 4000);
+  // v1.7.0: a copied Link A / B counts as sent (saved on the client's Builder record, if it has one)
+  const k = btn.closest('li[data-link]')?.dataset.link;
+  if (ok && dpCode && (k === 'a' || k === 'b')) await markSent(dpCode, k.toUpperCase());
 }
 
 // Unsaved wording in the open message form?
@@ -514,10 +605,9 @@ document.addEventListener('click', async e => {
   const m = e.target.closest('[data-menu]');
   if (m) { const menu = $(m.dataset.menu); const open = menu.hidden; closeMenus(); menu.hidden = !open; m.setAttribute('aria-expanded', String(open)); if (open) menu.querySelector('button,a')?.focus(); return; }
   if (!e.target.closest('.menu')) closeMenus();
-  const t = e.target.closest('[data-theme-set]'); if (t) { applyTheme(t.dataset.themeSet); return; }
   const cp = e.target.closest('[data-copy]'); if (cp) { copyLink(cp); return; }
   if (e.target.closest('#dpShade')) { closeDetails(); return; }
-  const hf = e.target.closest('[data-home-filter]'); if (hf) { F.home = hf.dataset.homeFilter; if (route().screen !== 'home') go('#/'); else drawHome(); return; }
+  const hf = e.target.closest('[data-home-filter], [data-lv-seg]'); if (hf) { F.home = hf.dataset.homeFilter || hf.dataset.lvSeg; if (route().screen !== 'home') go('#/'); else drawHome(); return; }
   const sf = e.target.closest('[data-subs-filter]'); if (sf) { F.status = sf.dataset.subsFilter; F.open = null; F.more.clear(); drawSubs(); return; }
   const more = e.target.closest('[data-more]'); if (more) { F.more.add(more.dataset.more); drawSubs(); return; }
   const line = e.target.closest('[data-sub]'); if (line) { F.open = F.open === line.dataset.sub ? null : line.dataset.sub; F.armed = null; F.history = null; drawSubs(); if (F.open) $('screen').querySelector(`#so-${CSS.escape(F.open)} select, #so-${CSS.escape(F.open)} .iconbtn`)?.focus(); return; }
@@ -540,13 +630,13 @@ document.addEventListener('click', async e => {
   const dp = e.target.closest('[data-dp]');
   if (dp) { closeMenus(); dpMode = dp.dataset.dp === 'back' ? null : dp.dataset.dp; openDetails(dpCode, dpTab); return; }
   if (e.target.closest('[data-row-stop]')) return;      // links inside a row work as links
-  const row = e.target.closest('.crow'); if (row) { go(`#/client/${encodeURIComponent(row.dataset.client)}`); return; }
+  const row = e.target.closest('.lv-row[data-client]'); if (row) { go(`#/client/${encodeURIComponent(row.dataset.client)}`); return; }   // the whole row opens Details
   const a = e.target.closest('[data-act]'); if (!a) return;
   closeMenus();
-  if (a.dataset.act === 'signout') signOut();
-  if (a.dataset.act === 'signins') closeMenus();   // the dialog itself is opened by lfmp-session.js
+  if (a.dataset.act === 'signout') signOut();   // the "not ready" screen (the shell's Me has its own Sign out)
   else if (a.dataset.act === 'reload') { await load(); toast('Refreshed'); }
   else if (a.dataset.act === 'closedet') closeDetails();
+  else if (a.dataset.act === 'gohome') go('#/');
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
@@ -563,7 +653,7 @@ document.addEventListener('keydown', e => {
     if (F.open && route().screen === 'subs') { const id = F.open; F.open = null; drawSubs(); $('screen').querySelector(`[data-sub="${CSS.escape(id)}"]`)?.focus(); }
     return;
   }
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.classList?.contains('crow')) { e.preventDefault(); go(`#/client/${encodeURIComponent(e.target.dataset.client)}`); }
+  // Enter / Space on a list row: the shell clicks it (lfmp-session.js), which opens Details
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'homeQ') { F.q = e.target.value; drawHome(); }
@@ -571,8 +661,7 @@ document.addEventListener('input', e => {
   else if (e.target.id === 'clrIn') { $('clrGo').disabled = e.target.value.trim().toLowerCase() !== nameOf(dpCode).trim().toLowerCase(); }
 });
 document.addEventListener('change', e => {
-  if (e.target.id === 'showTests') { F.tests = e.target.checked; store.set(TESTS_KEY, F.tests ? '1' : null); draw(); }
-  else if (e.target.id === 'subsClient') { F.client = e.target.value; F.open = null; F.more.clear(); go(F.client === 'all' ? '#/subs' : `#/subs/${encodeURIComponent(F.client)}`); }
+  if (e.target.id === 'subsClient') { F.client = e.target.value; F.open = null; F.more.clear(); go(F.client === 'all' ? '#/subs' : `#/subs/${encodeURIComponent(F.client)}`); }
   else if (e.target.id === 'subsType') { F.type = e.target.value; drawSubs(); }
   else if (e.target.id === 'edAuto') { E.auto[dpCode] = e.target.value; E.open = null; E.ver = null; openDetails(dpCode, 'edit'); $('edAuto')?.focus(); }
 });

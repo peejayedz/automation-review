@@ -1,7 +1,7 @@
-// Review admin v1.4.0 in Chromium, against the REAL team-site server (ghl-subaccount-builder/admin-site/lib/api.mjs) with a
+// Review admin v1.7.0 (redesign v2 shell: top bar, Me, bottom tabs, shared list) in Chromium, against the REAL team-site server (ghl-subaccount-builder/admin-site/lib/api.mjs) with a
 // stand-in for Cloudflare Access (test-access.mjs) and the real Code.gs in a mock (tests/mock/apps-script.mjs):
 // Google-only sign-in (name + Sign out, no password or key anywhere, nothing secret in browser storage, signed out →
-// /signin/?next=…, non-LFMP account refused), home, Details (client links, Copy, Not started), Submissions, every admin
+// /signin/?next=…, non-LFMP account refused), home, Details (client links, Copy, links not opened yet), Submissions, every admin
 // action through /api/review (the server adds the key and the first name), the new Edit wording page (every edit type),
 // the public index.html without any admin code path, light/dark at 1440 and 390, AA contrast, no sideways scroll.
 // Needs the sibling repo ../ghl-subaccount-builder (playwright-core, the Code.gs mock, the server). Writes nothing in any repo.
@@ -52,10 +52,35 @@ function seed() {
 let { gs, ids } = seed();
 const posts = [];       // every POST that reached the Apps Script (admin actions arrive through the server)
 const ghCalls = [];     // every GitHub call the server made
+// v1.7.0: the Builder's client records (private repo) carry review.linkSent ("Link A sent · Nov 16"). Mahdavi has a record
+// (Link A sent 16 Nov, 15:00 UTC = 16 Nov in every US/Asia time zone); ZZ TEST 2 and the classic clients have none; one
+// record has no review package. BREC.fail = 'read' | 'put' makes GitHub answer 500.
+const BREC = { fail: null, puts: [], files: {
+  'mahdavi-law-firm-ab12cd': { sha: 'a'.repeat(40), rec: { id: 'mahdavi-law-firm-ab12cd', businessName: 'The Mahdavi Law Firm', status: 'ready', review: { status: 'linked', code: 'mahdavi-law-mc1mar', linkSent: { link: 'A', at: '2026-11-16T15:00:00Z', by: 'PJ Drozo' } } } },
+  'no-review-ef34gh': { sha: 'b'.repeat(40), rec: { id: 'no-review-ef34gh', businessName: 'No Review Firm', status: 'ready' } },
+} };
+const B_RECS = '/repos/peejayedz/ghl-subaccount-builder/contents/records';
+function builderGh(method, path, body, headers) {
+  if (BREC.fail === 'read' && method === 'GET') return { status: 500, body: { message: 'Server Error' } };
+  if (method === 'GET' && path === `${B_RECS}?ref=main`) return { body: Object.keys(BREC.files).map(id => ({ name: `${id}.json`, type: 'file' })) };
+  const m = path.match(/^\/repos\/peejayedz\/ghl-subaccount-builder\/contents\/records\/([a-z0-9-]+)\.json(\?ref=main)?$/);
+  const f = m && BREC.files[m[1]];
+  if (!f) return { status: 404, body: { message: 'Not Found' } };
+  if (method === 'GET') return /raw/.test(headers.Accept || '') ? { body: JSON.stringify(f.rec), type: 'text/plain' } : { body: { sha: f.sha, content: Buffer.from(JSON.stringify(f.rec)).toString('base64') } };
+  if (method === 'PUT') {
+    if (BREC.fail === 'put') return { status: 500, body: { message: 'Server Error' } };
+    if (body.sha !== f.sha) return { status: 409, body: { message: 'sha mismatch' } };
+    f.rec = JSON.parse(Buffer.from(body.content, 'base64').toString('utf8')); f.sha = (Number.parseInt(f.sha.slice(0, 8), 16) + 1).toString(16).padStart(8, '0') + f.sha.slice(8);
+    BREC.puts.push({ id: m[1], message: body.message, linkSent: f.rec.review?.linkSent });
+    return { status: 200, body: { content: { sha: f.sha } } };
+  }
+  return { status: 404, body: { message: 'Not Found' } };
+}
 const ENV = ACCESS.env();
 const DEPS = ACCESS.deps({
-  github: (method, path) => {
+  github: (method, path, body, headers = {}) => {
     ghCalls.push(`${method} ${path}`);
+    if (path.startsWith('/repos/peejayedz/ghl-subaccount-builder/')) return builderGh(method, path, body, headers);
     if (method === 'GET' && path === '/repos/peejayedz/automation-review/contents/data?ref=main') return { body: LIST.map(name => ({ name, type: 'file' })) };
     if (method === 'GET' && path === '/repos/peejayedz/automation-review/contents/plans?ref=main') return { body: PLANS.map(name => ({ name, type: 'file' })) };
     return { status: 404, body: { message: 'Not Found' } };
@@ -107,7 +132,17 @@ const directGh = [];
 // Signed in with Google (Access) = just open the page: no password, no key.
 async function signIn(page) {
   await page.goto(ADMIN);
-  await page.waitForSelector('.crow[data-client]', { timeout: 20000 });
+  await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
+}
+// v1.7.0 (redesign v2): the shared shell. Me = the avatar (desktop popover / phone screen); test clients live there.
+const ROW = c => `.lv-row[data-client="${c}"]`;
+const meBtn = async p => ((await p.isVisible('[data-lv-top] [data-lv="me"]')) ? '[data-lv-top] [data-lv="me"]' : '[data-lv-ptop] [data-lv="me"]');
+async function openMe(p) { await p.click(await meBtn(p)); await p.waitForSelector('.lv-pop:not([hidden]) .lv-mi, [data-lv-me]:not([hidden]) .lv-mi'); }
+async function setTests(p, on) {
+  await openMe(p);
+  const tg = p.locator('[data-lv="tests"]:visible');
+  if ((await tg.getAttribute('aria-checked')) !== String(on)) await tg.click();
+  await p.keyboard.press('Escape');
 }
 const EDIT = `${ADMIN}edit.html`;
 const shot = (page, name, full = false) => page.screenshot({ path: join(OUT, `${name}.png`), fullPage: full });
@@ -121,45 +156,69 @@ try {
   await signIn(page);
 
   // ===== 1) home
-  await check('home: top line = N clients / N need you → (test clients hidden by default)', async () => {
-    const strip = await page.innerText('.strip');
+  await check('v2 shell: top bar LFMP · Clients / Scorecards / Reviews (Reviews current), no + and no bell on Reviews, name + Last signed in + Sign out', async () => {
+    assert(await page.isVisible('.lv-top') && await page.isHidden('.lv-tabs') && await page.isHidden('.lv-ptop'), 'desktop: one top bar, no phone bar / tabs');
+    assert(await page.$$eval('.lv-nav a', as => as.map(a => `${a.textContent}${a.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews*', 'nav');
+    assert(!(await page.locator('[data-lv="plus"], .lv-bell, .top, .toolchip, .hero, .strip, .foot, #themeSeg, #topMenu').count()), 'a + / bell / old header piece');
+    assert(await page.innerText('.lv-who [data-me]') === 'PJ Drozo' && await page.isVisible('.lv-so'), 'name + Sign out');
+    assert(await page.$eval('html', h => h.classList.contains('lfmp-v2')), 'lfmp-v2');
+  });
+  await check('home: title, "N clients · 2 need you", search "Search N clients", filter All · Needs you · 2 (red) · Waiting · Done (test clients hidden by default)', async () => {
     const real = CODES.filter(c => !/^zz-/.test(c)).length;
-    assert(strip.includes(`${real} CLIENTS`) && /2 NEED YOU/.test(strip), strip);
-    assert(!(await page.locator('.crow[data-client="zz-test-2-qpqhx7"]').count()), 'ZZ shown');
-    assert(!(await page.locator('.bell, #loadedAt').count()), 'bell / loaded line on the home');
+    assert(await page.innerText('.lv-h1') === 'REVIEWS' || await page.$eval('.lv-h1', e => e.textContent) === 'Reviews', 'title');
+    assert(await page.innerText('[data-lv-sum]') === `${real} clients · 2 need you · All submissions ›`, await page.innerText('[data-lv-sum]'));
+    assert(await page.getAttribute('#homeQ', 'placeholder') === `Search ${real} clients`, await page.getAttribute('#homeQ', 'placeholder'));
+    assert(await page.$$eval('.lv-seg button', bs => bs.map(b => b.querySelector('.lv-d').textContent).join('|')) === 'All|Needs you · 2|Waiting|Done', 'filter labels');
+    assert(await page.locator('[data-lv-seg="need"] .lv-red').count() === 1, 'Needs you red when n > 0');
+    assert(!(await page.locator(ROW('zz-test-2-qpqhx7')).count()), 'ZZ shown');
   });
-  await check('home: statuses follow the rule (Needs you / Waiting / Not started / OK), Details gold only when needed', async () => {
-    const rows = await page.$$eval('.crow', rs => rs.map(r => [r.dataset.client, r.querySelector('.cstat').innerText.replace(/\s+/g, ' ').trim(), r.querySelector('.cacts .btn.p') ? 'gold' : '']));
+  await check('home: only the reference words (Needs you red / Waiting amber, incl. links not opened yet / Approved or Done green) with the sub-line', async () => {
+    const rows = await page.$$eval('.lv-row[data-client]', rs => rs.map(r => [r.dataset.client, r.querySelector('.lv-c:not(.lv-pr) .lv-st').className.replace('lv-st ', ''), r.querySelector('.lv-c:not(.lv-pr) .lv-st').textContent, r.querySelector('.lv-mt').textContent]));
     const get = c => rows.find(r => r[0] === c);
-    assert(rows[0][0] === 'dumas-sanclemente-mo5cay' && /Needs you 6 requests to answer/.test(rows[0][1]) && rows[0][2] === 'gold', JSON.stringify(rows[0]));
-    assert(/Needs you 1 request to answer/.test(get('palm-beach-plastic-n9umxi')[1]), 'palm');
-    assert(/Waiting Waiting for the client/.test(get('mahdavi-law-mc1mar')[1]) && !get('mahdavi-law-mc1mar')[2], 'mahdavi');
-    assert(/OK Nothing waiting/.test(get('boca-dental-e770de')[1]), `boca (replaced request + approval): ${get('boca-dental-e770de')[1]}`);
-    // no responses at all (Emery, Hedayati, Sralla in the seed) → grey "○ Not started · Links not opened yet", never "OK"
-    for (const c of ['emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(/○\s*Not started\s*Links not opened yet$/.test(get(c)[1]) && !get(c)[2], `${c}: ${get(c)[1]}`);
-    assert(await page.$eval('.crow[data-client="emery-law-9lp7do"] .st', e => e.classList.contains('new')), 'not started is grey (.st.new)');
+    assert(rows[0][0] === 'dumas-sanclemente-mo5cay' && rows[0].slice(1).join('|') === 'red|Needs you|6 requests to answer', JSON.stringify(rows[0]));
+    assert(get('palm-beach-plastic-n9umxi').slice(1).join('|') === 'red|Needs you|1 request to answer', 'palm');
+    assert(get('mahdavi-law-mc1mar').slice(1).join('|') === 'amber|Waiting|Link A sent · Nov 16', `mahdavi (Builder record: Link A sent 16 Nov): ${get('mahdavi-law-mc1mar')}`);
+    // Boca: one automation approved, not all → green "Done" (all approved = "Approved", see ZZ below)
+    const bocaAll = DATA['boca-dental-e770de'].automations.length === 1;
+    assert(get('boca-dental-e770de').slice(1).join('|') === `green|${bocaAll ? 'Approved' : 'Done'}|Nothing waiting`, `boca (replaced request + approval): ${get('boca-dental-e770de')}`);
+    // no responses at all (Emery, Hedayati, Sralla in the seed) → amber "Waiting · Links not opened yet", never Done
+    for (const c of ['emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(get(c).slice(1).join('|') === 'amber|Waiting|Links not opened yet', `${c}: ${get(c)}`);
+    const words = new Set(rows.map(r => r[2])); assert([...words].every(w => ['Needs you', 'Waiting', 'Approved', 'Done'].includes(w)), [...words].join(','));
   });
-  await check('home order: Needs you, then Waiting, then Not started, then OK', async () => {
-    const order = await page.$$eval('.crow .st', s => s.map(x => x.className.replace('st ', '')));
-    const rank = { need: 0, wait: 1, new: 2, ok: 3 };
-    assert(order.every((k, i) => !i || rank[order[i - 1]] <= rank[k]), order.join(','));
-    assert(order.join(',') === 'need,need,wait,new,new,new,ok', order.join(','));
+  await check('Link sent (v1.7.0): read from the Builder records through the team site (list + raw record files); no record → today\'s text; records unreadable → today\'s text, no error', async () => {
+    assert(ghCalls.includes(`GET ${B_RECS}?ref=main`) && ghCalls.includes(`GET ${B_RECS}/mahdavi-law-firm-ab12cd.json?ref=main`), ghCalls.join(' '));
+    BREC.fail = 'read';
+    try {
+      await page.reload(); await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
+      assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`) === 'Waiting for the client', await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`));
+      assert(!(await page.locator('.errbox').count()), 'an error banner');
+    } finally { BREC.fail = null; }
+    await page.reload(); await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
+    assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`) === 'Link A sent · Nov 16', 'back after a reload');
   });
-  await check('home: Needs you filter (also from the top line), Show test clients, search', async () => {
-    await page.click('.strip .stripbtn'); assert(await page.locator('.crow').count() === 2, 'needs-you filter from strip');
-    await page.click('[data-home-filter="all"]');
-    await page.check('#showTests'); await page.waitForSelector('.crow[data-client="zz-test-2-qpqhx7"] .testtag');
-    await page.uncheck('#showTests');
-    await page.fill('#homeQ', 'palm'); assert(await page.locator('.crow').count() === 1, 'search'); await page.fill('#homeQ', '');
+  await check('home order: Needs you, then Waiting (for the client, then links not opened yet), then Done', async () => {
+    const order = await page.$$eval('.lv-row[data-client] .lv-c:not(.lv-pr) .lv-st', s => s.map(x => x.className.replace('lv-st ', '')));
+    assert(order.join(',') === 'red,red,amber,amber,amber,amber,green', order.join(','));
   });
-  await check('home: Review page ↗ = Link A (plans/ page for Mahdavi), new tab; classic-only clients show "No client link yet" (no ?c= link anywhere); row click = Details', async () => {
-    assert(await page.getAttribute('.crow[data-client="mahdavi-law-mc1mar"] .cacts a:first-child', 'href') === '../plans/mahdavi-law-mc1mar.html' && await page.getAttribute('.crow[data-client="mahdavi-law-mc1mar"] .cacts a:first-child', 'target') === '_blank', 'mahdavi home link');
-    for (const c of ['dumas-sanclemente-mo5cay', 'palm-beach-plastic-n9umxi', 'boca-dental-e770de', 'emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) {
-      assert(await page.innerText(`.crow[data-client="${c}"] .cacts .nolink`) === 'No client link yet' && await page.locator(`.crow[data-client="${c}"] .cacts a`).count() === 1, c);
-    }
+  await check('home: filters Needs you / Waiting / Done, Show test clients (Me), search', async () => {
+    await page.click('[data-lv-seg="need"]'); assert(await page.locator('.lv-row[data-client]').count() === 2, 'needs you');
+    await page.click('[data-lv-seg="wait"]'); assert(await page.locator('.lv-row[data-client]').count() === 4, 'waiting = waiting for the client + not started');
+    await page.click('[data-lv-seg="done"]'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'done');
+    assert(await page.getAttribute('[data-lv-seg="done"]', 'aria-pressed') === 'true', 'pressed');
+    await page.click('[data-lv-seg="all"]');
+    await setTests(page, true); await page.waitForSelector(`${ROW('zz-test-2-qpqhx7')} .lv-mt:text-matches("^Test · ")`);
+    await setTests(page, false); await page.waitForSelector(ROW('zz-test-2-qpqhx7'), { state: 'detached' });
+    await page.fill('#homeQ', 'palm'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'search'); await page.fill('#homeQ', '');
+  });
+  await check('home: Link A/B column (Mahdavi "Link A + B", classic-only "No client link yet"), no ?c= classic link anywhere; row click = Details', async () => {
+    const lk = c => page.innerText(`${ROW(c)} .lv-c:not(.lv-pr) .lv-mt`);
+    assert(await lk('mahdavi-law-mc1mar') === 'Link A + B', await lk('mahdavi-law-mc1mar'));
+    for (const c of ['dumas-sanclemente-mo5cay', 'palm-beach-plastic-n9umxi', 'boca-dental-e770de', 'emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(await lk(c) === 'No client link yet', c);
     assert(!(await page.$$eval('a[href]', as => as.filter(a => /[?&]c=/.test(a.getAttribute('href')) && !/(plan|messages)\.html\?c=/.test(a.getAttribute('href'))).length)), 'a classic ?c= link on the home');
-    await page.click('.crow[data-client="mahdavi-law-mc1mar"] .cname'); await page.waitForSelector('#dPanel:not([hidden])');
+    assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-op`) === 'Open ›', 'Open ›');
+    await page.click(`${ROW('mahdavi-law-mc1mar')} .lv-nm`); await page.waitForSelector('#dPanel:not([hidden])');
     assert(page.url().endsWith('#/client/mahdavi-law-mc1mar'), page.url());
+    assert(await page.$eval(ROW('mahdavi-law-mc1mar'), r => r.classList.contains('sel')), 'open row marked');
   });
   await shot(page, 'home_1440_light');
 
@@ -194,10 +253,33 @@ try {
     await page.click('#dPanel .clinks li[data-link="a"] [data-copy]');
     assert(await page.evaluate(() => navigator.clipboard.readText()) === new URL('../plans/mahdavi-law-mc1mar.html', ADMIN).href, 'clipboard A');
   });
-  await check('Details ZZ TEST 2 (Builder package): Link A = plan.html?c=, Link B = messages.html?c=', async () => {
+  await check('Copy = sent (v1.7.0): Copy on Link B, then Link A saves review.linkSent on the client\'s Builder record (B, then A; sha-checked PUT, commit message as the Builder\'s) and the row repaints', async () => {
+    await page.waitForFunction(() => true); await page.waitForTimeout(300);
+    const mine = BREC.puts.filter(p => p.id === 'mahdavi-law-firm-ab12cd');
+    assert(mine.length === 2 && mine[0].linkSent.link === 'B' && mine[1].linkSent.link === 'A', JSON.stringify(mine));
+    assert(mine.every(p => /^The Mahdavi Law Firm: Link [AB] copied to send \(PJ Drozo\)/.test(p.message) && p.linkSent.by === 'PJ Drozo' && Date.now() - Date.parse(p.linkSent.at) < 60e3), JSON.stringify(mine));
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    await page.waitForFunction(t => document.querySelector('.lv-row[data-client="mahdavi-law-mc1mar"] .lv-mt')?.textContent === t, `Link A sent · ${today}`, { timeout: 5000 });
+    assert(BREC.files['mahdavi-law-firm-ab12cd'].rec.review.code === 'mahdavi-law-mc1mar' && BREC.files['mahdavi-law-firm-ab12cd'].rec.review.status === 'linked', 'the rest of the record kept');
+  });
+  await check('Copy = sent: the save failing shows "Link B copied, but it couldn\'t be noted as sent: …" (the copy itself worked)', async () => {
+    BREC.fail = 'put';
+    try {
+      await page.click('#dPanel .clinks li[data-link="b"] [data-copy]');
+      await page.waitForFunction(() => /^Link B copied, but it couldn't be noted as sent: /.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
+      assert(await page.evaluate(() => navigator.clipboard.readText()) === new URL('../messages.html?c=mahdavi-law-mc1mar', ADMIN).href, 'copied anyway');
+    } finally { BREC.fail = null; }
+  });
+  await check('Details ZZ TEST 2 (Builder package): Link A = plan.html?c=, Link B = messages.html?c=; no Builder record → Copy just copies (nothing saved, no error)', async () => {
     await page.goto(`${ADMIN}#/client/zz-test-2-qpqhx7`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
     const ls = await clientLinks();
     assert(ls.map(l => `${l[0]}=${l[4]}`).join(' ') === 'a=../plan.html?c=zz-test-2-qpqhx7 b=../messages.html?c=zz-test-2-qpqhx7', JSON.stringify(ls));
+    const n = BREC.puts.length, ghN = ghCalls.length;
+    await page.evaluate(() => { document.getElementById('toast').textContent = ''; });   // the previous check's toast
+    await page.click('#dPanel .clinks li[data-link="b"] [data-copy]'); await page.waitForTimeout(400);
+    assert(await page.innerText('#dPanel .clinks li[data-link="b"] .copied') === 'Copied' && BREC.puts.length === n, `saved for a client without a record: ${JSON.stringify(BREC.puts.slice(n))}`);
+    assert(!ghCalls.slice(ghN).some(c => /ghl-subaccount-builder/.test(c)), ghCalls.slice(ghN).join(' '));
+    assert(!/couldn't be noted/.test(await page.innerText('#toast')), 'an error toast');
   });
   await check('Details Dumas (classic only): "No client link yet — create an A/B package in the Builder." instead of a review link; past answers still open items', async () => {
     await page.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay`); await page.waitForSelector('#dPanel:not([hidden]) .nolinkbox');
@@ -205,9 +287,9 @@ try {
     assert(!(await page.locator('#dPanel .clinks, #dPanel [data-copy]').count()), 'a link / Copy for a classic-only client');
     assert(/Needs you\s*·?\s*6 requests to answer/.test(await page.innerText('#dPanel .dstat')) && await page.locator('#dPanel .oitem').count() === 6, 'status line + open items');
   });
-  await check('Details Emery (no responses): grey "○ Not started · Links not opened yet"; Palm Beach is classic too', async () => {
+  await check('Details Emery (no responses): amber "● Waiting · Links not opened yet"; Palm Beach is classic too', async () => {
     await page.goto(`${ADMIN}#/client/emery-law-9lp7do`); await page.waitForSelector('#dPanel:not([hidden]) .dstat');
-    assert(/^○\s*Not started\s*·?\s*Links not opened yet$/.test((await page.innerText("#dPanel .dstat")).trim()), await page.innerText('#dPanel .dstat'));
+    assert(/^●\s*Waiting\s*·?\s*Links not opened yet$/.test((await page.innerText("#dPanel .dstat")).trim()), await page.innerText('#dPanel .dstat'));
     assert(/No responses yet/.test(await page.innerText('#dPanel')), 'last activity');
     assert(await page.innerText('#dPanel .nolinkbox') === 'No client link yet — create an A/B package in the Builder.', 'emery no link');
     await page.goto(`${ADMIN}#/client/palm-beach-plastic-n9umxi`); await page.waitForSelector('#dPanel:not([hidden]) .nolinkbox');
@@ -225,7 +307,7 @@ try {
     await page.fill('#renIn', 'Dumas & Sanclemente, P.A.'); await page.click('form[data-form="rename"] [type="submit"]');
     await page.waitForFunction(() => document.querySelector('#dpTitle')?.textContent === 'Dumas & Sanclemente, P.A.');
     const p = lastPost('admin_edit'); assert(p && p.client === 'dumas-sanclemente-mo5cay' && p.automation === '' && p.field === 'client:name' && p.value === 'Dumas & Sanclemente, P.A.' && p.key === KEY && p.name === 'PJ', JSON.stringify(p));
-    assert((await page.innerText('.crow[data-client="dumas-sanclemente-mo5cay"] .cname')).includes('DUMAS & SANCLEMENTE, P.A.'), 'home row name');
+    assert((await page.innerText(`${ROW('dumas-sanclemente-mo5cay')} .lv-nm`)) === 'Dumas & Sanclemente, P.A.', 'home row name');
   });
   await check('Details ⋯ = Rename client · Clear test responses… · Classic editor (old) (team-only edit.html, same tab): the only link to the classic editor', async () => {
     await page.click('[data-menu="dpMenu"]');
@@ -296,7 +378,7 @@ try {
   });
   await check('Edit tab: a message the classic editor changed through "description" (step:<id>:body, strongest on Link B) is saved back to body, so the edit still shows', async () => {
     gs.post({ action: 'admin_edit', key: KEY, client: ZZ, automation: 'new-lead', field: 'step:s4:body', value: 'Subject: Old classic subject\n\nOld classic body', name: 'PJ' });
-    await page.goto(ADMIN); await page.reload(); await page.waitForSelector('.crow[data-client]', { timeout: 20000 }); const n = posts.length;
+    await page.goto(ADMIN); await page.reload(); await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 }); const n = posts.length;
     await openEdit(ZZ, 'new-lead');
     await page.click('#dPanel [data-ed-open="new-lead.s4"]');
     assert(await page.inputValue('#edSubj') === 'Old classic subject' && await page.inputValue('#edText') === 'Old classic body', 'form = what Link B shows');
@@ -356,7 +438,8 @@ try {
   await check('Submissions: filters To answer · Waiting for client · Done · Everything with counts; client picker; search', async () => {
     await page.selectOption('#subsClient', 'all'); await page.waitForURL(/#\/subs$/);
     const counts = await page.$$eval('[data-subs-filter]', bs => bs.map(b => b.innerText.replace(/\s+/g, ' ').trim()));
-    assert(counts.join('|') === 'TO ANSWER 7|WAITING FOR CLIENT 1|DONE 2|EVERYTHING 13', counts.join('|'));
+    assert(counts.join('|') === 'To answer · 7|Waiting for client · 1|Done · 2|Everything · 13', counts.join('|'));
+    assert(await page.innerText('.subshead .lv-sum') === '7 to answer' && await page.isVisible('.subshead [data-act="gohome"]'), 'Submissions head: N to answer + ‹ Reviews');
     assert(await page.locator('.grp').count() === 2 && (await page.locator('.grp >> nth=0').innerText()).includes('6 to answer'), 'groups');
     await page.fill('#subsQ', 'Thanks for claiming'); assert(await page.locator('.sline').count() === 1, 'search'); await page.fill('#subsQ', '');
     await page.click('[data-subs-filter="waiting"]'); assert((await page.innerText('.grp')).includes('Text 1: Missed you'), 'waiting');
@@ -437,10 +520,32 @@ try {
     await page.fill('#clrIn', 'ZZ TEST 2'); await page.click('#clrGo'); await page.waitForFunction(() => /Cleared 2 responses/.test(document.getElementById('toast').textContent));
     const p = lastPost('admin_delete'); assert(p.client === 'zz-test-2-qpqhx7' && p.ids.length === 2 && p.ids.includes(ids.z0) && p.ids.includes(ids.z1), JSON.stringify(p));
   });
-  await check('⋯ top menu: Refresh, Team sign-ins, Sign out (no key, no Lock)', async () => {
+  await check('Me (avatar): Theme · Show test clients · Refresh now (updated …) · Team sign-ins · What\'s new v1.7.0 · Install the app · Submissions · Sign out (no key, no Lock); Refresh works', async () => {
     await page.keyboard.press('Escape');
-    await page.click('[data-menu="topMenu"]'); const items = await page.$$eval('#topMenu button', b => b.map(x => x.textContent)); assert(items.join('|') === 'Refresh|Team sign-ins|Sign out', items.join('|'));
-    await page.click('#topMenu [data-act="reload"]'); await page.waitForFunction(() => /Refreshed/.test(document.getElementById('toast').textContent));
+    await openMe(page);
+    const items = await page.$$eval('.lv-pop .lv-mi', b => b.map(x => x.querySelector('span')?.textContent || x.textContent).map(s => s.trim()));
+    assert(items.join('|') === "Theme|Show test clients|Refresh now|Team sign-ins|What's new|Install the app|Sign out", items.join('|'));   // Me is the same in all three tools
+    assert(/^updated \d{1,2}:\d\d [AP]M$/.test(await page.innerText('.lv-pop [data-lv="refresh"] .lv-v')), await page.innerText('.lv-pop [data-lv="refresh"] .lv-v'));
+    assert(/v1\.7\.0/.test(await page.innerText('.lv-pop [data-lv="news"]')), 'version');
+    assert(await page.locator('.lv-pop .lv-gl').count() === 2, 'Settings + Team only (no tool extras)');
+    assert(!(await page.locator('.lv-pop input[type="password"]').count()), 'password');
+    await page.click('.lv-pop [data-lv="refresh"]'); await page.waitForFunction(() => /Refreshed/.test(document.getElementById('toast').textContent));
+  });
+  await check('Me → What\'s new opens (v1.7.0 card) and clears the dot; Me → Submissions opens Submissions; Theme Dark/Auto', async () => {
+    await page.evaluate(() => localStorage.removeItem('ar-news-seen')); await page.reload(); await page.waitForSelector('.lv-row[data-client]');
+    assert(!(await page.locator('.lv-av [data-lv-dot], .lv-av .lv-dot').count()), 'no dot on the avatar');
+    await openMe(page); assert(await page.locator('.lv-pop [data-lv="news"] .lv-ndot').count() === 1, 'unseen dot on What\'s new');
+    await page.click('.lv-pop [data-lv="news"]'); await page.waitForSelector('#arNews[open] .arnews section');
+    assert(/v1\.7\.0/.test(await page.innerText('#arNews')) && /One look for all three tools/.test(await page.innerText('#arNews')), await page.innerText('#arNews'));
+    await page.keyboard.press('Escape'); await openMe(page); assert(!(await page.locator('.lv-pop [data-lv="news"] .lv-ndot').count()), 'dot cleared'); await page.keyboard.press('Escape');
+    // Submissions (desktop): the summary line ends "· All submissions ›"
+    assert(/ · All submissions ›$/.test(await page.innerText('[data-lv-sum]')), await page.innerText('[data-lv-sum]'));
+    await page.click('[data-lv-sum] .sumlink'); await page.waitForURL(/#\/subs$/); await page.waitForSelector('.grp');
+    await page.click('.subshead [data-act="gohome"]'); await page.waitForSelector('.lv-row[data-client]');
+    await openMe(page); await page.click('.lv-pop [data-lv="theme"][data-v="dark"]');
+    assert(await page.getAttribute('html', 'data-theme') === 'dark' && await page.evaluate(() => localStorage.getItem('lfmp-theme')) === 'dark', 'dark');
+    await page.click('.lv-pop [data-lv="theme"][data-v="auto"]'); assert(!(await page.getAttribute('html', 'data-theme')), 'auto');
+    await page.keyboard.press('Escape');
   });
 
   // ===== 4) Classic editor (old) (team only, until ~15 Dec 2026): every edit type the old classic "&admin" mode had
@@ -582,31 +687,31 @@ try {
 
   // ===== 5) Google-only sign-in
   await check('sign-in: name in the top bar; no password or key field on any page; the browser called only /api/ (never GitHub or a key)', async () => {
-    assert((await page.innerText('#meName')) === 'PJ Drozo' && (await page.getAttribute('#meWho', 'title')) === ME_EMAIL, await page.innerText('#meName'));
-    assert(await page.isVisible('#meWho [data-act="signout"]'), 'a visible Sign out button next to the name');
+    assert((await page.innerText('.lv-who [data-me]')) === 'PJ Drozo', await page.innerText('.lv-who [data-me]'));
+    assert(await page.isVisible('.lv-so[data-lv="signout"]'), 'a visible Sign out button next to the name');
     assert(!(await page.locator('input[type="password"], #keyView, #keyIn, #lfmpLogin').count()), 'password / key UI');
     assert(!directGh.length, `direct GitHub calls: ${directGh.join(' ')}`);
-    assert(ghCalls.every(c => /^GET \/repos\/peejayedz\/automation-review\/contents\/(data|plans)\?ref=main$/.test(c)), ghCalls.join(' '));
+    assert(ghCalls.every(c => /^GET \/repos\/peejayedz\/automation-review\/contents\/(data|plans)\?ref=main$/.test(c) || /^(GET|PUT) \/repos\/peejayedz\/ghl-subaccount-builder\/contents\/records(\/[a-z0-9-]+\.json)?(\?ref=main)?$/.test(c)), ghCalls.join(' '));
     assert(posts.filter(p => /^admin_/.test(p.action)).every(p => p.key === KEY), 'every admin action reached the backend with the server key');
   });
   await check('sign-in: nothing secret in browser storage; old password-login leftovers are wiped on load', async () => {
     await page.evaluate(() => { localStorage.setItem('lfmp-vault', 'x'); localStorage.setItem('ar_admin_key', 'x'); localStorage.setItem('lfmp-lock-at', '1'); sessionStorage.setItem('lfmp-session', 'x'); });
-    await page.reload(); await page.waitForSelector('.crow[data-client]', { timeout: 20000 });
+    await page.reload(); await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
     const dump = await page.evaluate(() => JSON.stringify({ l: Object.fromEntries(Object.entries(localStorage)), s: Object.fromEntries(Object.entries(sessionStorage)) }));
     for (const bad of [KEY, TEST_TOKEN, 'lfmp-vault', 'ar_admin_key', 'lfmp-lock-at', 'lfmp-session']) assert(!dump.includes(bad), `${bad} in storage: ${dump}`);
   });
-  await check('last sign-in under the name; ⋯ → Team sign-ins; top-bar Sign out → /signin/?out=1', async () => {
+  await check('last sign-in under the name; Me → Team sign-ins; top-bar Sign out → /signin/?out=1', async () => {
     const p = await ctx.newPage(); cur = p;
-    await p.goto(ADMIN); await p.waitForSelector('#meWho [data-me-last]:not(:empty)');
-    ACCESS.signIn(ME_EMAIL); await p.reload(); await p.waitForFunction(() => /^Last signed in/.test(document.querySelector('#meWho [data-me-last]')?.textContent || ''), null, { timeout: 20000 });
-    assert(LAST.test(await p.innerText('#meWho [data-me-last]')), await p.innerText('#meWho [data-me-last]'));
-    await p.click('[data-menu="topMenu"]'); assert(LAST.test(await p.innerText('#topMenu [data-me-last]')), 'menu: last sign-in');
-    await p.click('#topMenu [data-act="signins"]'); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');
+    await p.goto(ADMIN); await p.waitForSelector('.lv-who [data-me-last]:not(:empty)');
+    ACCESS.signIn(ME_EMAIL); await p.reload(); await p.waitForFunction(() => /^Last signed in/.test(document.querySelector('.lv-who [data-me-last]')?.textContent || ''), null, { timeout: 20000 });
+    assert(LAST.test(await p.innerText('.lv-who [data-me-last]')), await p.innerText('.lv-who [data-me-last]'));
+    await openMe(p); assert(LAST.test(await p.innerText('.lv-pop .lv-me-who .lv-l')), 'Me: last sign-in');
+    await p.click('.lv-pop [data-lv="signins"]'); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');
     const row = await p.innerText('#lfmpSignins tbody tr');
-    assert(row.includes('PJ Drozo') && row.includes(ME_EMAIL) && Number(row.trim().split(/\s+/).pop()) >= 2 && await p.isHidden('#topMenu'), row);
+    assert(row.includes('PJ Drozo') && row.includes(ME_EMAIL) && Number(row.trim().split(/\s+/).pop()) >= 2 && await p.isHidden('.lv-pop'), row);
     await p.keyboard.press('Escape'); assert(!(await p.locator('#lfmpSignins[open]').count()), 'Esc closes it');
     await routeTeamLogout(p); const before = logouts, n = teamLogouts.length;
-    await p.click('#meWho [data-act="signout"]'); await p.waitForURL(/\/signin\/\?out=1$/);
+    await p.click('.lv-so[data-lv="signout"]'); await p.waitForURL(/\/signin\/\?out=1$/);
     assert(logouts > before && teamLogouts.length === n, `team-domain logout called: ${teamLogouts.at(-1)}`);
     await p.close(); cur = page;
   });
@@ -615,7 +720,7 @@ try {
     try {
       SIGNED.email = 'someone@gmail.com';
       await p3.goto(ADMIN); await p3.waitForSelector('#setupView:not([hidden])');
-      assert(/Only @lawfirmmarketingpros\.com/.test(await p3.innerText('#setupMsg')) && !(await p3.locator('.crow').count()), await p3.innerText('#setupMsg'));
+      assert(/Only @lawfirmmarketingpros\.com/.test(await p3.innerText('#setupMsg')) && !(await p3.locator('.lv-row, .lv-top').count()), await p3.innerText('#setupMsg'));
       SIGNED.email = null;
       await p3.goto('about:blank'); await p3.goto(`${ADMIN}#/subs`); await p3.waitForURL(/\/signin\/\?next=/);
       assert(decodeURIComponent(p3.url().split('next=')[1]) === '/automation-review/admin/#/subs', p3.url());
@@ -684,19 +789,29 @@ try {
       await signIn(p); await p.evaluate(() => document.fonts.ready); await p.waitForSelector('#toast', { state: 'hidden', timeout: 5000 });
       const measure = async where => {
         const m = await p.evaluate(() => { const cs = s => { const e = document.querySelector(s); return e ? getComputedStyle(e) : null; };
-          const bg = getComputedStyle(document.body).backgroundColor, panel = cs('.clist, .grp, .dpanel:not([hidden])')?.backgroundColor || bg;
-          return { sw: document.documentElement.scrollWidth, iw: innerWidth, bg, panel, ink: getComputedStyle(document.body).color, acc: cs('.hero .disp .g')?.color, need: cs('.st.need, .tg-red')?.color, wait: cs('.st.wait, .tg-tool')?.color, ok: cs('.st.ok, .tg-green')?.color, mut: cs('.stsub, .st2 small, .gcnt')?.color, seg: cs('.seg button[aria-pressed="true"]')?.color, segbg: cs('.seg button[aria-pressed="true"]')?.backgroundColor }; });
+          const bg = getComputedStyle(document.body).backgroundColor, panel = cs('.dpanel:not([hidden]), .grp, .lv-list')?.backgroundColor || bg;
+          return { sw: document.documentElement.scrollWidth, iw: innerWidth, bg, panel, ink: getComputedStyle(document.body).color, need: cs('.dpanel:not([hidden]) .st.need, .lv-st.red, .tg-red')?.color, wait: cs('.dpanel:not([hidden]) .st.wait, .tg-tool')?.color, ok: cs('.dpanel:not([hidden]) .st.ok, .tg-green')?.color, mut: cs('.dpanel:not([hidden]) .stsub, .lv-mt, .st2 small, .gcnt')?.color, seg: cs('.lv-seg button[aria-pressed="true"]')?.color, segbg: cs('.lv-seg button[aria-pressed="true"]')?.backgroundColor }; });
         assert(m.sw <= m.iw + 1, `${where}: ${m.sw}px wide in ${m.iw}`);
-        for (const [k, v, on] of [['ink', m.ink, m.bg], ['accent', m.acc, m.bg], ['needs you', m.need, m.panel], ['waiting', m.wait, m.panel], ['ok', m.ok, m.panel], ['muted', m.mut, m.panel], ['active filter', m.seg, m.segbg]]) if (v && on) assert(ratio(v, on) >= 4.5, `${where} ${k} ${ratio(v, on).toFixed(2)}`);
+        for (const [k, v, on] of [['ink', m.ink, m.bg], ['needs you', m.need, m.panel], ['waiting', m.wait, m.panel], ['ok', m.ok, m.panel], ['muted', m.mut, m.panel], ['active filter', m.seg, m.segbg]]) if (v && on) assert(ratio(v, on) >= 4.5, `${where} ${k} ${ratio(v, on).toFixed(2)}`);
       };
       await measure('home'); await shot(p, `home_${w}_${scheme}`, w === 390);
-      // Not started is grey and readable (AA on the row)
-      const nm = await p.$eval('.st.new', e => [getComputedStyle(e).color, getComputedStyle(document.querySelector('.clist')).backgroundColor]);
+      // Waiting (amber dot) word is readable (AA on the row)
+      const nm = await p.$eval('.lv-row .lv-c:not(.lv-pr) .lv-st.amber', e => [getComputedStyle(e).color, getComputedStyle(document.querySelector('.lv-list')).backgroundColor]);
       assert(ratio(nm[0], nm[1]) >= 4.5, `not started ${ratio(nm[0], nm[1]).toFixed(2)}`);
-      await p.check('#showTests'); await p.waitForSelector('.crow[data-client="zz-test-2-qpqhx7"]'); await shot(p, `home-tests_${w}_${scheme}`, w === 390);
+      // shell: phone = band · icon · REVIEWS · avatar (no +, no bell), bottom tabs (Reviews current), rows ≥ 44 px; desktop = one top bar
+      if (w === 390) {
+        assert(await p.isVisible('.lv-ptop') && await p.isHidden('.lv-top') && await p.isVisible('.lv-tabs'), 'phone bars');
+        assert(await p.$eval('[data-lv-title]', h => h.textContent) === 'Reviews' && !(await p.locator('.lv-ptop [data-lv="plus"], .lv-ptop .lv-bell').count()), 'phone title / no + / no bell');
+        assert(await p.$$eval('.lv-tabs .lv-tab', t => t.map(x => `${x.textContent.trim()}${x.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews* Me', 'tabs');
+        const small = await p.$$eval('.lv-row, .lv-tab, .lv-seg button, .lv-search, .lv-ptop .lv-avbtn', els => els.filter(e => { const r = e.getBoundingClientRect(); const a = getComputedStyle(e, '::after'); const ah = a.content !== 'none' ? parseFloat(a.height) : 0; return Math.max(r.height, ah) < 44; }).map(e => e.className));
+        assert(!small.length, `tap targets under 44 px: ${small.join(', ')}`);
+        assert(await p.$eval('.lv-row .lv-chev', e => getComputedStyle(e).display !== 'none'), 'chevron on phone rows');
+      } else assert(await p.isVisible('.lv-top') && await p.isHidden('.lv-tabs'), 'desktop bars');
+      await setTests(p, true); await p.waitForSelector(ROW('zz-test-2-qpqhx7')); await shot(p, `home-tests_${w}_${scheme}`, w === 390);
       // Details: Mahdavi (A plans/ + B), ZZ TEST 2 (A + B, test client shown), Dumas (classic only); Copy → "Copied"
       for (const [code, name] of [['mahdavi-law-mc1mar', 'mahdavi'], ['zz-test-2-qpqhx7', 'zz-test-2'], ['dumas-sanclemente-mo5cay', 'dumas']]) {
-        await p.click(`.crow[data-client="${code}"] .cname`); await p.waitForSelector('#dPanel:not([hidden]) #clTitle'); await p.waitForTimeout(100);
+        await p.click(`${ROW(code)} .lv-nm`); await p.waitForSelector('#dPanel:not([hidden]) #clTitle'); await p.waitForTimeout(100);
+        if (w === 390) assert(await p.isVisible('#dPanel .dclose .bk') && (await p.innerText('#dPanel .dclose')).trim() === '‹ Reviews' && await p.$eval('#dPanel', e => e.getBoundingClientRect().width) === 390, 'phone details: full screen with ‹ Reviews');
         await p.$eval('#clTitle', el => el.scrollIntoView({ block: 'start' }));
         if (name !== 'dumas') { await p.click('#dPanel .clinks li:first-child [data-copy]'); await p.waitForFunction(() => document.querySelector('#dPanel .clinks li:first-child .copied').textContent === 'Copied'); }
         await measure(`details ${name}`);
@@ -714,14 +829,19 @@ try {
       await p.click('[data-ed-cancel]'); await p.click('[data-ed-ver]'); await p.waitForSelector('.edconfirm'); await shot(p, `edit-tab-version_${w}_${scheme}`); await p.click('[data-ed-ver-cancel]');
       await p.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay/edit`); await p.waitForSelector('#dPanel:not([hidden]) .nolinkbox'); await shot(p, `edit-tab-nolink_${w}_${scheme}`);
       await p.click('[data-menu="dpMenu"]'); await shot(p, `details-menu_${w}_${scheme}`); await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
-      await p.uncheck('#showTests');
+      await setTests(p, false);
       await p.goto(`${ADMIN}#/subs`); await p.waitForSelector('.sline'); await p.click('.sline >> nth=1'); await p.waitForSelector('.sopen');
       await measure('submissions'); await shot(p, `submissions_${w}_${scheme}`, w === 390);
-      // the signed-in person: top bar (desktop) / ⋯ menu (phone), and ⋯ → Team sign-ins
-      if (w === 390) assert(await p.isHidden('#meWho'), 'phone: the name + Sign out live in the ⋯ menu');
-      else { assert(await p.isVisible('#meWho [data-act="signout"]') && /^(Last signed in|First sign-in)/.test(await p.innerText('#meWho [data-me-last]')), 'top bar: name, last sign-in, Sign out'); await p.locator('header.top').first().screenshot({ path: join(OUT, `topbar_${w}_${scheme}.png`) }); }
-      await p.click('[data-menu="topMenu"]'); await shot(p, `menu_${w}_${scheme}`);
-      await p.click('#topMenu [data-act="signins"]'); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');
+      if (w === 390) assert(await p.$eval('[data-lv-title]', h => h.textContent) === 'Submissions', 'phone title on Submissions');
+      // the signed-in person: top bar (desktop) / Me (phone), and Me → Team sign-ins
+      if (w === 390) assert(await p.isHidden('.lv-top .lv-who'), 'phone: the name + Sign out live in Me');
+      else { assert(await p.isVisible('.lv-so') && /^(Last signed in|First sign-in)/.test(await p.innerText('.lv-who [data-me-last]')), 'top bar: name, last sign-in, Sign out'); await p.locator('.lv-top').screenshot({ path: join(OUT, `topbar_${w}_${scheme}.png`) }); }
+      await openMe(p); await shot(p, `menu_${w}_${scheme}`);
+      if (w === 390) {
+        assert(await p.$$eval('.lv-tabs .lv-tab', t => t.map(x => `${x.textContent.trim()}${x.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews Me*', 'Me tab current');
+        assert(await p.isVisible('[data-lv-me] .lv-mi.out'), 'phone Me: red Sign out row');
+      }
+      await p.click('[data-lv="signins"]:visible'); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');
       await measure('team sign-ins'); await shot(p, `team-signins_${w}_${scheme}`); await p.keyboard.press('Escape');
       if (w === 390) { const sc = await p.evaluate(() => { const s = document.querySelector('.segscroll'); return [s.scrollWidth, s.clientWidth, getComputedStyle(s).overflowX]; }); assert(sc[2] === 'auto', `filters don't scroll sideways: ${sc}`); }
       // Edit wording (team page): the edit bar, an open step with its edit buttons; no sideways scroll

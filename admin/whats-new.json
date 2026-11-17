@@ -1,0 +1,15 @@
+{
+  "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
+  "versions": [
+    {
+      "version": "1.7.0",
+      "date": "Nov 18",
+      "title": "One look for all three tools",
+      "items": [
+        { "type": "improved", "text": "Reviews now has the same top bar, colours and list as Clients and Scorecards. On a phone: the tabs at the bottom (Clients · Scorecards · Reviews · Me)." },
+        { "type": "improved", "text": "One list: each client with what needs doing, the status and its Link A/B. Tap a client for its details (review pages, Copy, Edit)." },
+        { "type": "improved", "text": "Theme, Show test clients, Refresh, Team sign-ins, Submissions and Sign out are under Me (your initials)." }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,14 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.7.0 Redesign v2 admin: BUILT 18 Nov 2026, NOT PUSHED (waiting for PJ's OK)
+
+- The admin page uses the shared v2 shell (Builder HANDOFF v1.13.0): `admin/lfmp-session.js` + `admin/lfmp-ui.css` are byte-identical copies of the Builder's (copy, never edit); `admin/tests/shell.test.mjs` identical too. New `admin/whats-new.json` (What's new in Me).
+- Status words as the reference only: Needs you (red), Waiting (amber; "Links not opened yet" when nothing was opened), Approved (green, every automation approved) or Done (green).
+- Moved: theme / test clients / Refresh / Team sign-ins / Sign out → Me; Submissions → desktop summary "· All submissions ›" and a client's Details → Open items (phone: only through a client); row buttons → the whole row opens Details (Link A/B Open ↗ + Copy there).
+- "Link A sent · Nov 16" on Waiting rows = the Builder record's `review.linkSent` (latest Copy of Link A/B in the Builder or here). The admin reads the Builder's `records/` through the team site (B1) and a Copy in Details saves it back (B2, sha-checked, 2 retries). No Builder record (classic clients) → today's text and Copy just copies; GitHub trouble → today's text, never an error banner.
+- Client pages (Link A/B, root `index.html`, `plan.html`, `messages.html`, `preview/`, `data/`), `admin/moved.html`, `apps-script/` and the classic editor (`edit.*`) unchanged.
+
 ## State (17 Nov 2026)
 
 | Area | State |
