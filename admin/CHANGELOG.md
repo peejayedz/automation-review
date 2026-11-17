@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.9.1 — 18 Nov 2026: shared stylesheet fix
+- **[internal]** Same shared `lfmp-ui.css` as Builder v1.16.1 / KPI v1.25.1 (phone "No leads yet" size; not visible in this tool). Cache: `lfmp-ui.css?v=2.2.1`, `admin.css` / `admin.js?v=1.9.1`. No client page changed.
+
 ## Review admin v1.9.0 — 18 Nov 2026: honest statuses, one name per client, v2 pop-ups
 - **[internal]** Honest statuses (`review-logic.mjs` `homeState` / `inHome` / `firstAnswerAt`): a client with NO client link yet (no Link A or B) is grey **Not sent** (sub-line "No client link yet"), never Waiting; its third column is **Create package ›** → the Builder record's Review tab (`?client=<id>&tab=review`), or the Builder's Add existing client with the name filled in (`?add=existing&q=<name>`) when there is no Builder record. Amber **Waiting** only when a link exists: sub-line "Link A sent · <date>" (or B) when a Copy was recorded, otherwise "Link not copied yet" (no answers yet; PJ: no claims about opens, they are not logged) or "Waiting for the client" (answered, waiting on an update); third column "No reply yet" (no answers) or "Replied · <date>" (the date of the client's first answer). Never "Opened": opens are not logged anywhere; a real "Opened · <date>" can come if the client pages ever log a view. Needs you and Done unchanged. The details' "No client link yet" box has the same Create package › link.
 - **[internal]** Filter: All · Needs you · n · Waiting · Not sent · Done. The summary counts the same way ("7 clients · 2 need you · 3 waiting · 1 not sent"). Order: Needs you, Waiting, Not sent, Done.

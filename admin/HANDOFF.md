@@ -2,7 +2,11 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
-## v1.9.0 Honest statuses + v2 pop-ups: COMMITTED LOCALLY 18 Nov 2026, NOT pushed (waiting for PJ's OK); with Builder v1.16.0, KPI v1.25.0
+## v1.9.1 Shared stylesheet fix: COMMITTED LOCALLY 18 Nov 2026, waiting for PJ's OK to push (no change visible in this tool; Builder HANDOFF v1.16.1)
+
+## v1.9.0 Honest statuses + v2 pop-ups: LIVE 18 Nov 2026 (`2f0e26f`; deploy 44174855128; live check in the Builder HANDOFF v1.16.0)
+
+- Live (real data): "7 clients · 2 need you · 1 waiting · 4 not sent"; Mahdavi Waiting · "Link not copied yet" · "No reply yet"; Boca / Emery / Hedayati / Sralla Not sent + Create package › (Boca → its Builder record's Review tab, the others → Add existing with the name); no "Opened" anywhere. PJ 18 Nov: sub-line "Link not copied yet", last column "No reply yet" / "Replied · <date>".
 
 - Full notes: Builder HANDOFF v1.16.0. Here: `review-logic.mjs` `homeState(state, hasLink)` → 'unsent' when there is no Link A/B and the client would have been Waiting; `inHome(filter, state)`; `HOME_FILTERS`; `firstAnswerAt(code, rows)`; `STATE_ORDER` need · wait · new · unsent · ok.
 - `admin.js`: `sumOf` applies `homeState`; grey "Not sent" + "No client link yet" + "Create package ›" (`packageUrl`: Builder `?client=<id>&tab=review` when a Builder record matches by review code or name, else `?add=existing&q=<name>`); Waiting sub-line "Link A sent · <date>" after a Copy, else "Link not copied yet" (was "Links not opened yet"); Waiting third column "No reply yet" / "Replied · <first answer date>" (PJ: never "Opened"; opens are not logged; real "Opened" only if the client pages log a view one day); filter All · Needs you · n · Waiting · Not sent · Done; summary counts the same way; the details' no-link box has Create package ›.

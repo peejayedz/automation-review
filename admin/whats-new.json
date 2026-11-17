@@ -2,6 +2,15 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.9.1",
+      "date": "Nov 18",
+      "title": "Small fix on phones",
+      "line": "A shared style fix for Scorecards on phones; nothing changes here.",
+      "items": [
+        { "type": "fixed", "text": "Shared style fix (Scorecards' \"No leads yet\" on phones). Nothing changes in Reviews." }
+      ]
+    },
+    {
       "version": "1.9.0",
       "date": "Nov 18",
       "title": "Honest statuses",
