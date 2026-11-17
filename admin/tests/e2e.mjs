@@ -122,6 +122,8 @@ const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePa
 async function ctxFor({ width = 1440, height = 900, scheme = 'light' } = {}) {
   // Motion (Nov 2026): reduced motion, so the details panel opens/closes at once here; the slide is tested in ghl-subaccount-builder tests/e2e/motion.mjs.
   const ctx = await browser.newContext({ reducedMotion: 'reduce', viewport: { width, height }, colorScheme: scheme });
+  // v1.9.0: the shared What's new card shows on the first visit of a version and would cover the list: seen, once per tab
+  await ctx.addInitScript(() => { try { if (!sessionStorage.getItem('e2e-news')) { sessionStorage.setItem('e2e-news', '1'); localStorage.setItem('ar-news-seen', '9.9.9'); } } catch {} });
   // The browser never talks to GitHub any more (the server does): any direct call fails the run.
   await ctx.route('https://api.github.com/**', r => { directGh.push(r.request().url()); return r.fulfill({ status: 599, body: '' }); });
   await ctx.route('https://fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
@@ -164,16 +166,16 @@ try {
     assert(await page.innerText('.lv-who [data-me]') === 'PJ Drozo' && await page.isVisible('.lv-so'), 'name + Sign out');
     assert(await page.$eval('html', h => h.classList.contains('lfmp-v2')), 'lfmp-v2');
   });
-  await check('home: title, "N clients · 2 need you", search "Search N clients", filter All · Needs you · 2 (red) · Waiting · Done (test clients hidden by default)', async () => {
+  await check('home: title, "N clients · 2 need you · 1 waiting · 3 not sent", search "Search N clients", filter All · Needs you · 2 (red) · Waiting · Not sent · Done (test clients hidden by default)', async () => {
     const real = CODES.filter(c => !/^zz-/.test(c)).length;
     assert(await page.innerText('.lv-h1') === 'REVIEWS' || await page.$eval('.lv-h1', e => e.textContent) === 'Reviews', 'title');
-    assert(await page.innerText('[data-lv-sum]') === `${real} clients · 2 need you · All submissions ›`, await page.innerText('[data-lv-sum]'));
+    assert(await page.innerText('[data-lv-sum]') === `${real} clients · 2 need you · 1 waiting · 3 not sent · All submissions ›`, await page.innerText('[data-lv-sum]'));
     assert(await page.getAttribute('#homeQ', 'placeholder') === `Search ${real} clients`, await page.getAttribute('#homeQ', 'placeholder'));
-    assert(await page.$$eval('.lv-seg button', bs => bs.map(b => b.querySelector('.lv-d').textContent).join('|')) === 'All|Needs you · 2|Waiting|Done', 'filter labels');
+    assert(await page.$$eval('.lv-seg button', bs => bs.map(b => b.querySelector('.lv-d').textContent).join('|')) === 'All|Needs you · 2|Waiting|Not sent|Done', 'filter labels');
     assert(await page.locator('[data-lv-seg="need"] .lv-red').count() === 1, 'Needs you red when n > 0');
     assert(!(await page.locator(ROW('zz-test-2-qpqhx7')).count()), 'ZZ shown');
   });
-  await check('home: only the reference words (Needs you red / Waiting amber, incl. links not opened yet / Approved or Done green) with the sub-line', async () => {
+  await check('home: Needs you red / Waiting amber (only with a client link) / Not sent grey (no client link) / Approved or Done green, with the sub-line', async () => {
     const rows = await page.$$eval('.lv-row[data-client]', rs => rs.map(r => [r.dataset.client, r.querySelector('.lv-c:not(.lv-pr) .lv-st').className.replace('lv-st ', ''), r.querySelector('.lv-c:not(.lv-pr) .lv-st').textContent, r.querySelector('.lv-mt').textContent]));
     const get = c => rows.find(r => r[0] === c);
     assert(rows[0][0] === 'dumas-sanclemente-mo5cay' && rows[0].slice(1).join('|') === 'red|Needs you|6 requests to answer', JSON.stringify(rows[0]));
@@ -182,9 +184,10 @@ try {
     // Boca: one automation approved, not all → green "Done" (all approved = "Approved", see ZZ below)
     const bocaAll = DATA['boca-dental-e770de'].automations.length === 1;
     assert(get('boca-dental-e770de').slice(1).join('|') === `green|${bocaAll ? 'Approved' : 'Done'}|Nothing waiting`, `boca (replaced request + approval): ${get('boca-dental-e770de')}`);
-    // no responses at all (Emery, Hedayati, Sralla in the seed) → amber "Waiting · Links not opened yet", never Done
-    for (const c of ['emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(get(c).slice(1).join('|') === 'amber|Waiting|Links not opened yet', `${c}: ${get(c)}`);
-    const words = new Set(rows.map(r => r[2])); assert([...words].every(w => ['Needs you', 'Waiting', 'Approved', 'Done'].includes(w)), [...words].join(','));
+    // v1.9.0: no responses and no client link (Emery, Hedayati, Sralla in the seed) → grey "Not sent · No client link yet", never Waiting or Done
+    for (const c of ['emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(get(c).slice(1).join('|') === 'grey|Not sent|No client link yet', `${c}: ${get(c)}`);
+    const words = new Set(rows.map(r => r[2])); assert([...words].every(w => ['Needs you', 'Waiting', 'Not sent', 'Approved', 'Done'].includes(w)), [...words].join(','));
+    assert(!rows.some(r => /opened/i.test(r[3])), 'no claims about opens');
   });
   await check('Link sent (v1.7.0): read from the Builder records through the team site (list + raw record files); no record → today\'s text; records unreadable → today\'s text, no error', async () => {
     assert(ghCalls.includes(`GET ${B_RECS}?ref=main`) && ghCalls.includes(`GET ${B_RECS}/mahdavi-law-firm-ab12cd.json?ref=main`), ghCalls.join(' '));
@@ -197,13 +200,14 @@ try {
     await page.reload(); await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
     assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`) === 'Link A sent · Nov 16', 'back after a reload');
   });
-  await check('home order: Needs you, then Waiting (for the client, then links not opened yet), then Done', async () => {
+  await check('home order: Needs you, then Waiting, then Not sent, then Done', async () => {
     const order = await page.$$eval('.lv-row[data-client] .lv-c:not(.lv-pr) .lv-st', s => s.map(x => x.className.replace('lv-st ', '')));
-    assert(order.join(',') === 'red,red,amber,amber,amber,amber,green', order.join(','));
+    assert(order.join(',') === 'red,red,amber,grey,grey,grey,green', order.join(','));
   });
   await check('home: filters Needs you / Waiting / Done, Show test clients (Me), search', async () => {
     await page.click('[data-lv-seg="need"]'); assert(await page.locator('.lv-row[data-client]').count() === 2, 'needs you');
-    await page.click('[data-lv-seg="wait"]'); assert(await page.locator('.lv-row[data-client]').count() === 4, 'waiting = waiting for the client + not started');
+    await page.click('[data-lv-seg="wait"]'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'waiting = has a link, waiting on the client');
+    await page.click('[data-lv-seg="unsent"]'); assert(await page.locator('.lv-row[data-client]').count() === 3, 'not sent = no client link yet');
     await page.click('[data-lv-seg="done"]'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'done');
     assert(await page.getAttribute('[data-lv-seg="done"]', 'aria-pressed') === 'true', 'pressed');
     await page.click('[data-lv-seg="all"]');
@@ -211,10 +215,11 @@ try {
     await setTests(page, false); await page.waitForSelector(ROW('zz-test-2-qpqhx7'), { state: 'detached' });
     await page.fill('#homeQ', 'palm'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'search'); await page.fill('#homeQ', '');
   });
-  await check('home: Link A/B column (Mahdavi "Link A + B", classic-only "No client link yet"), no ?c= classic link anywhere; row click = Details', async () => {
+  await check('home: last column (v1.9.0: Waiting Mahdavi "Replied · <date>"; Not sent "Create package ›"; Needs you / Done without a link "No client link yet"), no ?c= classic link anywhere; row click = Details', async () => {
     const lk = c => page.innerText(`${ROW(c)} .lv-c:not(.lv-pr) .lv-mt`);
-    assert(await lk('mahdavi-law-mc1mar') === 'Link A + B', await lk('mahdavi-law-mc1mar'));
-    for (const c of ['dumas-sanclemente-mo5cay', 'palm-beach-plastic-n9umxi', 'boca-dental-e770de', 'emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(await lk(c) === 'No client link yet', c);
+    assert(/^Replied · [A-Z][a-z]{2} \d{1,2}$/.test(await lk('mahdavi-law-mc1mar')), await lk('mahdavi-law-mc1mar'));
+    for (const c of ['dumas-sanclemente-mo5cay', 'palm-beach-plastic-n9umxi', 'boca-dental-e770de']) assert(await lk(c) === 'No client link yet', c);
+    for (const c of ['emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(await lk(c) === 'Create package ›' && /^\/ghl-subaccount-builder-page\/\?(client=[a-z0-9-]+&tab=review|add=existing&q=)/.test(await page.getAttribute(`${ROW(c)} a[data-pkg]`, 'href')), c);
     assert(!(await page.$$eval('a[href]', as => as.filter(a => /[?&]c=/.test(a.getAttribute('href')) && !/(plan|messages)\.html\?c=/.test(a.getAttribute('href'))).length)), 'a classic ?c= link on the home');
     assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-op`) === 'Open ›', 'Open ›');
     await page.click(`${ROW('mahdavi-law-mc1mar')} .lv-nm`); await page.waitForSelector('#dPanel:not([hidden])');
@@ -284,15 +289,15 @@ try {
   });
   await check('Details Dumas (classic only): "No client link yet — create an A/B package in the Builder." instead of a review link; past answers still open items', async () => {
     await page.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay`); await page.waitForSelector('#dPanel:not([hidden]) .nolinkbox');
-    assert(await page.innerText('#dPanel .nolinkbox') === 'No client link yet — create an A/B package in the Builder.', await page.innerText('#dPanel .nolinkbox'));
+    assert((await page.innerText('#dPanel .nolinkbox')).startsWith('No client link yet — create an A/B package in the Builder. Create package ›'), await page.innerText('#dPanel .nolinkbox'));
     assert(!(await page.locator('#dPanel .clinks, #dPanel [data-copy]').count()), 'a link / Copy for a classic-only client');
     assert(/Needs you\s*·?\s*6 requests to answer/.test(await page.innerText('#dPanel .dstat')) && await page.locator('#dPanel .oitem').count() === 6, 'status line + open items');
   });
-  await check('Details Emery (no responses): amber "● Waiting · Links not opened yet"; Palm Beach is classic too', async () => {
+  await check('Details Emery (no responses, no client link): grey "● Not sent · No client link yet" + Create package ›; Palm Beach is classic too', async () => {
     await page.goto(`${ADMIN}#/client/emery-law-9lp7do`); await page.waitForSelector('#dPanel:not([hidden]) .dstat');
-    assert(/^●\s*Waiting\s*·?\s*Links not opened yet$/.test((await page.innerText("#dPanel .dstat")).trim()), await page.innerText('#dPanel .dstat'));
+    assert(/^●\s*Not sent\s*·?\s*No client link yet$/.test((await page.innerText("#dPanel .dstat")).trim()), await page.innerText('#dPanel .dstat'));
     assert(/No responses yet/.test(await page.innerText('#dPanel')), 'last activity');
-    assert(await page.innerText('#dPanel .nolinkbox') === 'No client link yet — create an A/B package in the Builder.', 'emery no link');
+    assert((await page.innerText('#dPanel .nolinkbox')).startsWith('No client link yet — create an A/B package in the Builder. Create package ›'), 'emery no link');
     await page.goto(`${ADMIN}#/client/palm-beach-plastic-n9umxi`); await page.waitForSelector('#dPanel:not([hidden]) .nolinkbox');
     assert(!(await page.locator('#dPanel .clinks').count()), 'palm beach link');
     await page.goto(`${ADMIN}#/client/mahdavi-law-mc1mar`); await page.waitForSelector('#dPanel:not([hidden]) .clinks');
@@ -424,7 +429,7 @@ try {
   });
   await check('Edit tab, classic-only client (Dumas): "No client link yet — create an A/B package in the Builder." and nothing to edit', async () => {
     await openEdit('dumas-sanclemente-mo5cay');
-    assert(await page.innerText('#dPanel .nolinkbox') === 'No client link yet — create an A/B package in the Builder.', 'notice');
+    assert((await page.innerText('#dPanel .nolinkbox')).startsWith('No client link yet — create an A/B package in the Builder. Create package ›'), 'notice');
     assert(!(await page.locator('#dPanel form, #dPanel [data-ed-open], #dPanel [data-preview]').count()), 'edit controls for a client without Link B');
     await page.goto(`${ADMIN}#/client/dumas-sanclemente-mo5cay`); await page.waitForSelector('#dPanel:not([hidden]) .oitem');   // as the next check expects
   });
@@ -534,6 +539,7 @@ try {
   });
   await check('Me → What\'s new opens (v1.7.0 card) and clears the dot; Me → Submissions opens Submissions; Theme Dark/Auto', async () => {
     await page.evaluate(() => localStorage.removeItem('ar-news-seen')); await page.reload(); await page.waitForSelector('.lv-row[data-client]');
+    await page.waitForSelector('[data-lv-news]'); assert(/^What's new · v\d+\.\d+\.\d+$/.test((await page.innerText('[data-lv-news] .lv-note-meta')).trim()), 'v1.9.0: the shared What\'s new card on a new version');
     assert(!(await page.locator('.lv-av [data-lv-dot], .lv-av .lv-dot').count()), 'no dot on the avatar');
     await openMe(page); assert(await page.locator('.lv-pop [data-lv="news"] .lv-ndot').count() === 1, 'unseen dot on What\'s new');
     await page.click('.lv-pop [data-lv="news"]'); await page.waitForSelector('#arNews[open] .arnews section');

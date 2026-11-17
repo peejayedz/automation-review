@@ -45,8 +45,26 @@ export function inType(r, k, t) {
 }
 
 // One client on the home: 'need' (any open request), 'wait' (any updated, waiting on the client), 'new' (no responses at
-// all: Not started) or 'ok'. Home order: need, wait, new, ok.
-export const STATE_ORDER = { need: 0, wait: 1, new: 2, ok: 3 };
+// all: Not started) or 'ok'. homeState() adds 'unsent'. Home order: need, wait, new, unsent, ok.
+export const STATE_ORDER = { need: 0, wait: 1, new: 2, unsent: 3, ok: 4 };
+// v1.9.0 (PJ, 18 Nov): honest statuses. A client with NO client link yet (no Link A or B) can't be waiting on anything:
+// grey "Not sent" ('unsent'). Amber Waiting only when a link exists. Open requests (Needs you) and Done stay as they are.
+export function homeState(state, hasLink) { return !hasLink && (state === 'wait' || state === 'new') ? 'unsent' : state; }
+// The home filter: All · Needs you · Waiting · Not sent · Done (the summary line counts the same way).
+export const HOME_FILTERS = ['all', 'need', 'wait', 'unsent', 'done'];
+export function inHome(f, state) {
+  if (f === 'need') return state === 'need';
+  if (f === 'wait') return state === 'wait' || state === 'new';
+  if (f === 'unsent') return state === 'unsent';
+  if (f === 'done') return state === 'ok';
+  return true;
+}
+// The client's first answer for a code ("Replied · Nov 12" on the Reviews list). Opens are not logged, so the list never says "Opened".
+export function firstAnswerAt(code, all) {
+  let t = 0;
+  for (const r of all) if (r.client === code) { const x = Date.parse(r.timestamp); if (x && (!t || x < t)) t = x; }
+  return t ? new Date(t).toISOString() : '';
+}
 // versions (optional): the current version per automation after the team's "new version" edits (linkB(...).versions).
 export function summarize(code, data, all, versions = {}) {
   const rows = all.filter(r => r.client === code);

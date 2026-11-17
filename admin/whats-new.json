@@ -2,6 +2,18 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.9.0",
+      "date": "Nov 18",
+      "title": "Honest statuses",
+      "line": "A client without a client link now shows Not sent, with a Create package link.",
+      "items": [
+        { "type": "new", "text": "A client with no client link yet shows a grey \"Not sent\" and \"Create package ›\", which opens the Builder." },
+        { "type": "improved", "text": "Waiting now only means a link exists: \"Link A sent · date\" when it was copied, and \"No reply yet\" or \"Replied · date\" in the last column." },
+        { "type": "new", "text": "New filter: All · Needs you · Waiting · Not sent · Done; the summary counts the same way." },
+        { "type": "improved", "text": "Pop-ups and buttons match the list, and each client has one name in all three tools." }
+      ]
+    },
+    {
       "version": "1.8.0",
       "date": "Nov 18",
       "title": "Smoother loading and details",

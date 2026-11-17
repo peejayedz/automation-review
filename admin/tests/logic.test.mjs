@@ -137,5 +137,19 @@ t('new version = the classic editor\'s nextVersion(); Automations approved follo
   eq(L.summarize('c', BASE, rowsV, { nl: '1.1', ns: '2' }).approved, 0, 'approval of the old version no longer counts');
 });
 
+t('v1.9.0 honest statuses: no client link → Not sent (never Waiting); Needs you and Done stay; filters and order', () => {
+  eq(L.homeState('new', false), 'unsent'); eq(L.homeState('wait', false), 'unsent');
+  eq(L.homeState('new', true), 'new'); eq(L.homeState('wait', true), 'wait');
+  eq(L.homeState('need', false), 'need', 'an open request still needs you'); eq(L.homeState('ok', false), 'ok');
+  eq(L.HOME_FILTERS, ['all', 'need', 'wait', 'unsent', 'done']);
+  const states = ['need', 'wait', 'new', 'unsent', 'ok'];
+  eq(states.filter(s => L.inHome('wait', s)), ['wait', 'new'], 'Waiting = waiting on the client, link sent or not opened yet');
+  eq(states.filter(s => L.inHome('unsent', s)), ['unsent']); eq(states.filter(s => L.inHome('need', s)), ['need']);
+  eq(states.filter(s => L.inHome('done', s)), ['ok']); eq(states.filter(s => L.inHome('all', s)), states);
+  eq([...states].sort((a, b) => L.STATE_ORDER[a] - L.STATE_ORDER[b]), states, 'order: need, wait, new, unsent, ok');
+  eq(L.firstAnswerAt('c', [{ client: 'c', timestamp: T(5) }, { client: 'd', timestamp: T(1) }, { client: 'c', timestamp: T(3) }]), new Date(T(3)).toISOString(), 'opened by = first answer');
+  eq(L.firstAnswerAt('x', []), '');
+});
+
 console.log(`\n${pass}/${pass + fail} passed`);
 process.exitCode = fail ? 1 : 0;

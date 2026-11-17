@@ -2,6 +2,13 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.9.0 Honest statuses + v2 pop-ups: COMMITTED LOCALLY 18 Nov 2026, NOT pushed (waiting for PJ's OK); with Builder v1.16.0, KPI v1.25.0
+
+- Full notes: Builder HANDOFF v1.16.0. Here: `review-logic.mjs` `homeState(state, hasLink)` → 'unsent' when there is no Link A/B and the client would have been Waiting; `inHome(filter, state)`; `HOME_FILTERS`; `firstAnswerAt(code, rows)`; `STATE_ORDER` need · wait · new · unsent · ok.
+- `admin.js`: `sumOf` applies `homeState`; grey "Not sent" + "No client link yet" + "Create package ›" (`packageUrl`: Builder `?client=<id>&tab=review` when a Builder record matches by review code or name, else `?add=existing&q=<name>`); Waiting sub-line "Link A sent · <date>" after a Copy, else "Link not copied yet" (was "Links not opened yet"); Waiting third column "No reply yet" / "Replied · <first answer date>" (PJ: never "Opened"; opens are not logged; real "Opened" only if the client pages log a view one day); filter All · Needs you · n · Waiting · Not sent · Done; summary counts the same way; the details' no-link box has Create package ›.
+- Names: `nameOf` = Builder record name (by review code) > rename > data file > Sheet > code, through `displayName`. `loadSent` now uses the shared `loadBuilderRecords()` (same allow-listed reads); `D.recs` holds all records.
+- Shared What's new card on first visit of v1.9.0. Cache `lfmp-ui.css?v=2.2.0`, `admin.css` / `admin.js?v=1.9.0`, `review-logic.mjs?v=1.9.0`. No client page changed.
+
 ## v1.8.0 Admin motion: LIVE 18 Nov 2026 (`f987e05`; with Builder v1.15.0 `b51e558`, KPI v1.24.0)
 
 - Shared shell (`admin/lfmp-session.js` + `admin/lfmp-ui.css`, byte-identical in the 3 repos; full notes in the Builder HANDOFF v1.15.0): the list shows the LFMP loading mark + "Loading reviews…" (summary empty) → fades in; after 20 s (timer in `load()`, a late answer is ignored) or a load error → the v2 error card with "Try again" (`data-act="reload"`). Details slide in/out (0.50 s / 0.40 s) with the dim; ✕, Esc, ‹ Reviews, click on the dim. `closeDetails` starts `panelClose` after `dpCode` is cleared (with reduced motion `done()` runs at once; the other order left the panel unhidden).

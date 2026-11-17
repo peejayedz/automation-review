@@ -7,9 +7,9 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT } from './lfmp-session.js';
-import * as L from './review-logic.mjs?v=1.6.0';   // versioned: admin.js needs this release's rules
-export const VERSION = '1.8.0';
+import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine } from './lfmp-session.js';
+import * as L from './review-logic.mjs?v=1.9.0';   // versioned: admin.js needs this release's rules
+export const VERSION = '1.9.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -61,7 +61,13 @@ async function openNews() {
   const vs = (await loadNews()).versions || [];
   d.innerHTML = `${head}<div class="lfmp-dlg-b arnews">${vs.length ? vs.map(v => `<section><p class="arnews-v"><b>v${esc(v.version)}</b> · ${esc(v.date || '')}</p><h3>${esc(v.title || '')}</h3><ul>${(v.items || []).map(i => `<li><span class="arnews-t">${esc(NEWS_TYPE[i.type] || i.type || '')}</span> ${esc(i.text)}</li>`).join('')}</ul></section>`).join('') : '<p class="mut">Nothing here yet.</p>'}</div>`;
   d.querySelector('[data-lfmp-close]')?.focus();
-  store.set(NEWS_SEEN, VERSION); shell?.setNewsDot(false);
+  store.set(NEWS_SEEN, VERSION); shell?.setNewsDot(false); hideNewsCard();
+}
+// v1.16.0 shell: the same What's new card as the Builder and KPI admin, once per version.
+async function showNewsToast() {
+  if (!newsUnseen()) return;
+  const v = ((await loadNews()).versions || []).find(x => x.version === VERSION); if (!v || !newsUnseen()) return;
+  showNewsCard({ version: v.version, title: v.title, line: newsLine(v), onSee: () => openNews(), onGot: () => { store.set(NEWS_SEEN, VERSION); shell?.setNewsDot(false); } });
 }
 const toAnswer = () => (D.loaded ? D.rows.filter(r => L.isReq(r) && (F.tests || !isTest(r.client)) && ['req', 'prog'].includes(L.statusKey(r, D.rows))).length : 0);
 function closeMenus() { for (const m of document.querySelectorAll('.menu:not([hidden])')) { m.hidden = true; document.querySelector(`[data-menu="${m.id}"]`)?.setAttribute('aria-expanded', 'false'); } }
@@ -94,17 +100,13 @@ const BREPO = '/repos/peejayedz/ghl-subaccount-builder';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const b64dec = b => new TextDecoder().decode(Uint8Array.from(atob(String(b).replace(/\s/g, '')), c => c.charCodeAt(0)));
 const b64enc = s => { let o = ''; for (const x of new TextEncoder().encode(s)) o += String.fromCharCode(x); return btoa(o); };
+// v1.9.0: the Builder records come from the shared loader (lfmp-session.js loadBuilderRecords, same allow-listed reads);
+// D.recs = all of them (names, "Create package ›"), D.sent = the ones with a review code, by code.
 async function loadSent() {
+  const recs = await loadBuilderRecords({ fresh: true });
   const out = {};
-  try {
-    const r = await ghFetch('GET', `${BREPO}/contents/records?ref=main`);
-    if (!r.ok) return out;
-    const files = (await r.json()).filter(f => f && f.type === 'file' && /^[a-z0-9-]{1,60}\.json$/.test(f.name));
-    const recs = await Promise.all(files.map(f => ghFetch('GET', `${BREPO}/contents/records/${f.name}?ref=main`, null, { raw: true })
-      .then(x => (x.ok ? x.text() : null)).then(t => (t ? JSON.parse(t) : null)).catch(() => null)));
-    for (const rec of recs) if (rec?.id && rec.review?.code) out[rec.review.code] = { id: rec.id, linkSent: rec.review.linkSent || null };
-  } catch { /* no sent info */ }
-  return out;
+  for (const rec of recs) if (rec.reviewCode) out[rec.reviewCode] = { id: rec.id, name: rec.name, linkSent: rec.linkSent || null };
+  return { recs, sent: out };
 }
 const sentDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };   // the viewer's time zone
 const sentText = c => { const s = D.sent[c]?.linkSent; return s && (s.link === 'A' || s.link === 'B') && sentDay(s.at) ? `Link ${s.link} sent · ${sentDay(s.at)}` : ''; };
@@ -128,19 +130,27 @@ async function markSent(code, link) {
 
 // ---------- state ----------
 let loadSeq = 0, busy = false;
-const D = { codes: [], plan: new Set(), messages: new Set(), plansPage: new Set(), files: {}, msgs: {}, content: {}, names: {}, renames: {}, rows: [], log: [], sent: {}, loaded: false, error: '' };
+const D = { codes: [], plan: new Set(), messages: new Set(), plansPage: new Set(), files: {}, msgs: {}, content: {}, names: {}, renames: {}, rows: [], log: [], sent: {}, recs: [], loaded: false, error: '' };
 const F = { home: 'all', q: '', tests: store.get(TESTS_KEY) === '1', status: 'answer', client: 'all', sq: '', type: 'all', open: null, more: new Set(), armed: null, rowMenu: null, history: null };
 // Edit tab: chosen automation per client, the message whose form is open, "new version" armed
 const E = { auto: {}, open: null, ver: null };
-// Same name the client page shows: a rename (Content tab, newest wins) > the data file's name > the Sheet tab name.
-const nameOf = c => D.renames[c] || D.files[c]?.client?.name || D.names[c] || L.prettyClient(c);
+// v1.9.0: one display name per client in all three tools: the Builder record's name when the client has one (matched by
+// review code); otherwise the name the client page shows: a rename (Content tab, newest wins) > the data file's name >
+// the Sheet tab name. Display only (displayName adds a lost last dot: "P.C" → "P.C.").
+const nameOf = c => displayName(D.sent[c]?.name || D.renames[c] || D.files[c]?.client?.name || D.names[c] || L.prettyClient(c));
+// The client's Builder record: by review code, else the same name. null = none yet.
+const normN = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const recOf = c => (D.sent[c] ? { id: D.sent[c].id } : D.recs.find(r => normN(r.name) === normN(nameOf(c))) || null);
+// "Create package ›": the Builder record's Review tab, or the Builder's Add existing client with the name filled in.
+const BUILDER_PATH = '/ghl-subaccount-builder-page/';
+const packageUrl = c => { const r = recOf(c); return r ? `${BUILDER_PATH}?client=${encodeURIComponent(r.id)}&tab=review` : `${BUILDER_PATH}?add=existing&q=${encodeURIComponent(nameOf(c))}`; };
 const autoName = (c, a) => { const x = D.files[c]?.automations?.find(y => y.id === a); return x ? x.name : a === 'setup-questions' ? 'Setup questions' : (a || ''); };
 const isTest = c => L.isTestClient(c, nameOf(c));
 const clientsAll = () => [...new Set([...D.codes, ...D.rows.map(r => r.client)])].filter(Boolean);
 const visibleClients = () => clientsAll().filter(c => F.tests || !isTest(c));
 // Link B's wording state for a client: current version per automation + the wording edits it shows (review-logic.mjs).
 const lbOf = c => L.linkB(D.content[c] || [], D.files[c]);
-const sumOf = c => L.summarize(c, D.files[c], D.rows, lbOf(c).versions);
+const sumOf = c => { const s = L.summarize(c, D.files[c], D.rows, lbOf(c).versions); return { ...s, state: L.homeState(s.state, !!homeLink(c)) }; };
 // The classic editor (old, team only, next to this page). Only Details → ⋯ → Classic editor (old) links here.
 const classicEditorUrl = c => `edit.html?c=${encodeURIComponent(c)}`;
 // Client links, as on the Builder's Review card: A = plan + review (default; the hand-made plans/<code>.html page when the
@@ -176,6 +186,7 @@ async function start() {
   });
   paintMe(ME);   // name, email, "Last signed in …" (lfmp-session.js)
   show('appView'); await load();
+  showNewsToast();
 }
 
 // ---------- load ----------
@@ -211,7 +222,7 @@ async function load() {
     D.codes.forEach((c, i) => { const ren = (content[i]?.content || []).filter(x => String(x.field) === 'client:name' && String(x.value || '').trim()).sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp))).pop(); if (ren) D.renames[c] = String(ren.value).trim(); });
     D.rows = (all.rows || []).map(r => (L.isReq(r) ? { ...r, status: L.normStatus(r.status) || L.ST.REQ } : r));
     D.log = all.log || [];
-    D.sent = await sentP;
+    ({ recs: D.recs, sent: D.sent } = await sentP);
     if (seq !== loadSeq) return;
     D.loaded = true;
     shell?.setUpdated(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));   // Me → Refresh now · updated 4:57 PM
@@ -226,16 +237,19 @@ async function load() {
 // v2 (redesign v2): title + summary (desktop) · search · filter "All · Needs you · n · Waiting · Done" · one list.
 // Submissions: its own screen, with "‹ Reviews" back to the list. Reached from the desktop summary line ("· All
 // submissions ›"), on a phone from the muted "All submissions ›" row under the list, and from a client's Details → Open items.
-const HOME_IN = { all: () => true, need: s => s.state === 'need', wait: s => s.state === 'wait' || s.state === 'new', done: s => s.state === 'ok' };
+// v1.9.0: All · Needs you · n · Waiting · Not sent · Done (review-logic.mjs inHome)
 function headHtml(screen) {
   if (screen === 'subs') {
     const n = toAnswer();
     return `<div class="lv-hrow subshead"><div><button type="button" class="lv-back" data-act="gohome"><span aria-hidden="true">‹</span>Reviews</button><h1 class="lv-h1 lv-d">Submissions</h1><div class="lv-sum">${n ? `${n} to answer` : 'Nothing to answer'}</div></div></div>`;
   }
-  const cs = D.loaded ? visibleClients() : [], need = cs.filter(c => sumOf(c).state === 'need').length;
-  return pageHeadHtml({ title: 'Reviews', summary: D.loaded ? `${cs.length} client${cs.length === 1 ? '' : 's'} · ${need ? `${need} need${need === 1 ? 's' : ''} you` : 'nothing needs you'}` : '',
+  const cs = D.loaded ? visibleClients() : [], st = cs.map(c => sumOf(c).state);
+  const n = f => st.filter(x => L.inHome(f, x)).length, need = n('need'), wait = n('wait'), unsent = n('unsent');
+  // the summary counts as the filter does: "7 clients · 2 need you · 3 waiting · 1 not sent"
+  const summary = [`${cs.length} client${cs.length === 1 ? '' : 's'}`, need ? `${need} need${need === 1 ? 's' : ''} you` : 'nothing needs you', wait ? `${wait} waiting` : '', unsent ? `${unsent} not sent` : ''].filter(Boolean).join(' · ');
+  return pageHeadHtml({ title: 'Reviews', summary: D.loaded ? summary : '',
     search: { id: 'homeQ', placeholder: `Search ${cs.length || ''} client${cs.length === 1 ? '' : 's'}`.replace('  ', ' '), value: F.q }, active: F.home,
-    segs: [{ key: 'all', label: 'All' }, { key: 'need', label: `Needs you · ${need}`, red: need > 0 }, { key: 'wait', label: 'Waiting' }, { key: 'done', label: 'Done' }] });
+    segs: [{ key: 'all', label: 'All' }, { key: 'need', label: `Needs you · ${need}`, red: need > 0 }, { key: 'wait', label: 'Waiting' }, { key: 'unsent', label: 'Not sent' }, { key: 'done', label: 'Done' }] });
 }
 function draw() {
   if ($('appView').hidden || !ME) return;
@@ -255,36 +269,46 @@ function statusHtml(c, s, { details = false } = {}) {
     return `<span class="st need"><i aria-hidden="true">!</i>Needs you</span>${details ? `<span class="stsub">${n}</span>` : `<a class="stlink" href="#/client/${encodeURIComponent(c)}" data-row-stop>${n} ${ARROW}</a>`}`;
   }
   if (s.state === 'wait') return '<span class="st wait"><i aria-hidden="true">●</i>Waiting</span><span class="stsub">Waiting for the client</span>';
-  if (s.state === 'new') return '<span class="st wait new"><i aria-hidden="true">●</i>Waiting</span><span class="stsub">Links not opened yet</span>';
+  // PJ 18 Nov: never claim anything about opens. No Copy recorded → "Link not copied yet"; after a Copy → "Link A sent · <date>"
+  if (s.state === 'new') return `<span class="st wait new"><i aria-hidden="true">●</i>Waiting</span><span class="stsub">${esc(sentText(c) || 'Link not copied yet')}</span>`;
+  if (s.state === 'unsent') return '<span class="st unsent"><i aria-hidden="true">●</i>Not sent</span><span class="stsub">No client link yet</span>';
   return `<span class="st ok"><i aria-hidden="true">●</i>${allApproved(s) ? 'Approved' : 'Done'}</span><span class="stsub">Nothing waiting</span>`;
 }
 
 // ----- 1) Review home (v2 list) -----
 // Row: name + sub-line · status dot + word · Link A/B · Open ›. The whole row opens Details (Review page ↗, Copy, Edit…).
-// Only the reference's words: Needs you (red) · Waiting (amber; also "Links not opened yet") · Approved / Done (green).
-const ROW_ST = { need: ['red', 'Needs you'], wait: ['amber', 'Waiting'], new: ['amber', 'Waiting'], ok: ['green', 'Done'] };
+// Needs you (red) · Waiting (amber, only when a client link exists) · Not sent (grey, no client link yet) · Approved / Done (green).
+const ROW_ST = { need: ['red', 'Needs you'], wait: ['amber', 'Waiting'], new: ['amber', 'Waiting'], unsent: ['grey', 'Not sent'], ok: ['green', 'Done'] };
 const allApproved = s => s.autos > 0 && s.approved === s.autos;
 function linksText(c) { const A = linkA(c), B = linkB(c); return A && B ? 'Link A + B' : A ? 'Link A' : B ? 'Link B' : 'No client link yet'; }
 function rowSub(x) {
   const s = x.s;
   const what = s.state === 'need' ? `${s.open} request${s.open === 1 ? '' : 's'} to answer` : s.state === 'wait' ? sentText(x.c) || 'Waiting for the client'
-    : s.state === 'new' ? sentText(x.c) || 'Links not opened yet' : homeLink(x.c) ? linksText(x.c) : 'Nothing waiting';
+    : s.state === 'new' ? sentText(x.c) || 'Link not copied yet' : s.state === 'unsent' ? 'No client link yet' : homeLink(x.c) ? linksText(x.c) : 'Nothing waiting';
   return [isTest(x.c) ? 'Test' : '', what].filter(Boolean).join(' · ');
 }
 function rowStatus(x) {
   const [tone, label] = ROW_ST[x.s.state];
   return lvStatus(tone, x.s.state === 'ok' && allApproved(x.s) ? 'Approved' : label);
 }
+// Third column: Not sent → "Create package ›" (Builder); Waiting → "No reply yet" / "Replied · <first answer>"; else the links.
+// (PJ 18 Nov: never "Opened": opens are not logged. A real "Opened · <date>" can come if the client pages ever log a view.)
+function thirdCell(x) {
+  if (x.s.state === 'unsent') return `<a class="lv-mt mkpkg" href="${esc(packageUrl(x.c))}" data-row-stop data-pkg>Create package ›</a>`;
+  if (x.s.state === 'new') return '<span class="lv-mt">No reply yet</span>';
+  if (x.s.state === 'wait') { const at = L.firstAnswerAt(x.c, D.rows); return `<span class="lv-mt" title="${at ? 'Date of the client\'s first reply' : ''}">Replied${at ? ` · ${esc(fmtDay(at))}` : ''}</span>`; }
+  return `<span class="lv-mt">${esc(linksText(x.c))}</span>`;
+}
 function drawHome() {
   const cs = visibleClients().map(c => ({ c, s: sumOf(c), name: nameOf(c) }));
-  const q = F.q.trim().toLowerCase(), inF = HOME_IN[F.home] || HOME_IN.all;
+  const q = F.q.trim().toLowerCase(), inF = s => L.inHome(L.HOME_FILTERS.includes(F.home) ? F.home : 'all', s.state);
   const list = cs.filter(x => inF(x.s) && (!q || `${x.name} ${x.c}`.toLowerCase().includes(q)))
     .sort((a, b) => L.STATE_ORDER[a.s.state] - L.STATE_ORDER[b.s.state] || b.s.open - a.s.open || a.name.localeCompare(b.name));
   const keepFocus = document.activeElement?.id === 'homeQ';
-  const empty = q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : F.home === 'wait' ? 'Nothing is waiting for a client.' : F.home === 'done' ? 'No client is done yet.' : 'No review clients yet.';
+  const empty = q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : F.home === 'wait' ? 'Nothing is waiting for a client.' : F.home === 'unsent' ? 'Every client has a client link.' : F.home === 'done' ? 'No client is done yet.' : 'No review clients yet.';
   $('screen').innerHTML = `${headHtml('home')}
     ${list.length ? `<div class="lv-list" id="clist" style="--lv-cols:1.5fr 200px 260px 70px">${list.map(x => lvRow({ name: x.name, sub: rowSub(x), label: `${x.name}: open details`,
-      attrs: `data-client="${esc(x.c)}"`, cells: [rowStatus(x), `<span class="lv-mt">${esc(linksText(x.c))}</span>`] })).join('')}</div>`
+      attrs: `data-client="${esc(x.c)}" data-state="${esc(x.s.state)}"`, cells: [rowStatus(x), thirdCell(x)] })).join('')}</div>`
       : `<div class="lv-list lv-empty">${empty}</div>`}
     <div class="lv-list subsrow"><a class="lv-row" href="#/subs" aria-label="All submissions"><span class="lv-c0">All submissions</span><span class="lv-chev" aria-hidden="true">›</span></a></div>`;
   if (dpCode) $('screen').querySelector(`.lv-row[data-client="${CSS.escape(dpCode)}"]`)?.classList.add('sel');   // the open client stays marked
@@ -340,7 +364,7 @@ function overviewHtml(code, s, autos) {
       ${clientLinks.length ? `<ul class="clinks">${clientLinks.map(([k, label, hint, rel]) => { const url = absUrl(rel); return `<li data-link="${k}">
         <div class="clt"><b>${esc(label)}</b><small>${esc(hint)}</small><span class="url mono">${esc(url.replace(/^https?:\/\//, ''))}</span></div>
         <div class="cla"><a class="btn sm" href="${esc(rel)}" target="_blank" rel="noopener" aria-label="Open ${esc(label)} (new tab)">Open ${EXT}</a><button class="btn sm" type="button" data-copy="${esc(url)}" aria-label="Copy ${esc(label)}">Copy</button><span class="copied" aria-live="polite"></span></div>
-      </li>`; }).join('')}</ul>` : `<p class="nolinkbox" data-link="none">${esc(NO_LINK)}</p>`}
+      </li>`; }).join('')}</ul>` : `<p class="nolinkbox" data-link="none">${esc(NO_LINK)} <a class="mkpkg" href="${esc(packageUrl(code))}" data-pkg>Create package ›</a></p>`}
     </section>
     <section class="dsec"><h3 class="lbl">Last activity</h3><p class="sub">${s.last ? esc(fmtWhen(new Date(s.last).toISOString())) : 'No responses yet.'}</p></section>`;
 }
@@ -354,7 +378,7 @@ function editMsgs(code) {
 }
 function editTabHtml(code) {
   const A = linkA(code), B = linkB(code);
-  if (!B) return `<section class="dsec"><p class="nolinkbox" data-link="none">${esc(NO_LINK)}</p><p class="sub edmore">${A ? 'This client has a plan page (Link A) but no review page (Link B), so there is no wording to edit here.' : 'Edits made here show on the client\'s Link B, so a client needs an A/B package first. Their past answers stay in Submissions.'}</p></section>`;
+  if (!B) return `<section class="dsec"><p class="nolinkbox" data-link="none">${esc(NO_LINK)} <a class="mkpkg" href="${esc(packageUrl(code))}" data-pkg>Create package ›</a></p><p class="sub edmore">${A ? 'This client has a plan page (Link A) but no review page (Link B), so there is no wording to edit here.' : 'Edits made here show on the client\'s Link B, so a client needs an A/B package first. Their past answers stay in Submissions.'}</p></section>`;
   if (!D.msgs[code]) return `<section class="dsec"><div class="errbox">Couldn't load this client's messages (data/${esc(code)}.messages.json). <button class="lnk" type="button" data-act="reload">Try again</button></div></section>`;
   const all = editMsgs(code), lb = lbOf(code), file = D.files[code];
   const autoIds = [...new Set(all.map(m => m.auto))];
