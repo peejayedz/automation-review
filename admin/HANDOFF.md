@@ -6,7 +6,11 @@ The repo README covers the client pages, the Apps Script and the Sheet. This fil
 - **What it is:** the once-a-day greeting (shared shell). This page gives "reviews need you" (= the Needs you filter) and notes it for the other two tools. The bar shows the initials only; the name menu holds the name, Last signed in, Theme, What's new v1.12.0, Team sign-ins, Install and Sign out.
 - **FIX 3.3:** the menu is fully opaque from its first frame and above the list's "Open ›" column.
 - **Live check (read-only, PJ's Chrome):** no second greeting; the menu is opaque and every item is on top; noted "reviews need you" = 2 = the filter. Sign out not pressed; the What's new card left unread.
-- **Not live (item 4, local only, Andy approves first):** the client logo on plan.html / messages.html is in the working tree only. The live client pages are unchanged.
+
+## Review pages: client logo: LIVE 19 Nov 2026 (`d35cea5`, Andy approved; GitHub Pages run 44347725392 green; Builder v1.22.0 `88a039f` right after)
+- **What it is:** when a package's `brand.logo` is set (saved by the Builder's Overview → Logo), Link A (plan.html) and Link B (messages.html) show the client's logo in the name's spot (34 px, alt = the name, white chip in dark mode). No logo = as before.
+- **Live check (read-only):** Mahdavi's live Link A / Link B rendered DOM and pixels identical before and after, 8/8 (both pages × 1440 / 390 × light / dark). No package has a logo yet: one shows only after it is picked in the Builder and the package is published again.
+- **Tests:** `node admin/tests/logo-pages.mjs [folder]` (every package: no logo = identical to HEAD; with a logo: spot / alt / size / chip).
 
 ## v1.10.0 + v1.11.0: LIVE 18 Nov 2026 07:09 UTC (`aec9959`; deploy 44256607647, fingerprint 04ab155bfbfef86b; live: A–Z, real Boca "Not sent", dark mode clean; Builder HANDOFF v1.18.0)
 

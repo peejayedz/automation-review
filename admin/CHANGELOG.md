@@ -2,7 +2,7 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
-## Review pages: client logo — 19 Nov 2026 (LOCAL ONLY, not pushed: Andy approves first)
+## Review pages: client logo — 19 Nov 2026 (Andy approved; live 19 Nov, d35cea5)
 - **[client]** Link A (plan.html) and Link B (messages.html): when the package's `brand.logo` is set (a data URL copy saved by the Builder v1.22.0, PNG / JPEG / WebP / SVG), the client's logo replaces the client-name text in the same header spot (the third brand, after LeadPro and the agency). It is 34 px high, alt = the client's name, and sits on a small white rounded chip in dark mode. No logo = exactly as before.
 - **[internal]** `admin/tests/logo-pages.mjs`: every existing package (data/ + the Builder's review packages), both pages, 1440 / 390, light / dark, renders the same DOM and the same pixels as the committed pages when there is no logo. With a logo: the spot, the alt, the size and the dark chip. Side-by-side with the preview header.
 - The Review admin's Edit tab has no page header of its own: its "Preview as client" links open these pages, which show the logo.
