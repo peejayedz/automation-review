@@ -8,8 +8,8 @@
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
 import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine } from './lfmp-session.js';
-import * as L from './review-logic.mjs?v=1.9.1';   // versioned: admin.js needs this release's rules
-export const VERSION = '1.9.1';
+import * as L from './review-logic.mjs?v=1.10.0';   // versioned: admin.js needs this release's rules
+export const VERSION = '1.10.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -64,9 +64,11 @@ async function openNews() {
   store.set(NEWS_SEEN, VERSION); shell?.setNewsDot(false); hideNewsCard();
 }
 // v1.16.0 shell: the same What's new card as the Builder and KPI admin, once per version.
+// v1.10.0: a card only for a minor release (x.Y.0); on a patch, its minor release's card if still unseen (never the patch's own).
 async function showNewsToast() {
-  if (!newsUnseen()) return;
-  const v = ((await loadNews()).versions || []).find(x => x.version === VERSION); if (!v || !newsUnseen()) return;
+  const target = L.cardVersion(VERSION), cardUnseen = () => !!target && L.isMinor(target) && semverNewer(target, store.get(NEWS_SEEN) || '0.0.0');
+  if (!cardUnseen()) return;
+  const v = ((await loadNews()).versions || []).find(x => x.version === target); if (!v || !cardUnseen()) return;
   showNewsCard({ version: v.version, title: v.title, line: newsLine(v), onSee: () => openNews(), onGot: () => { store.set(NEWS_SEEN, VERSION); shell?.setNewsDot(false); } });
 }
 const toAnswer = () => (D.loaded ? D.rows.filter(r => L.isReq(r) && (F.tests || !isTest(r.client)) && ['req', 'prog'].includes(L.statusKey(r, D.rows))).length : 0);
@@ -301,9 +303,8 @@ function thirdCell(x) {
 }
 function drawHome() {
   const cs = visibleClients().map(c => ({ c, s: sumOf(c), name: nameOf(c) }));
-  const q = F.q.trim().toLowerCase(), inF = s => L.inHome(L.HOME_FILTERS.includes(F.home) ? F.home : 'all', s.state);
-  const list = cs.filter(x => inF(x.s) && (!q || `${x.name} ${x.c}`.toLowerCase().includes(q)))
-    .sort((a, b) => L.STATE_ORDER[a.s.state] - L.STATE_ORDER[b.s.state] || b.s.open - a.s.open || a.name.localeCompare(b.name));
+  const q = F.q.trim().toLowerCase();
+  const list = L.homeList(cs, F.home, q);   // v1.10.0: A–Z by the shown name in every filter and search (status still on each row)
   const keepFocus = document.activeElement?.id === 'homeQ';
   const empty = q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : F.home === 'wait' ? 'Nothing is waiting for a client.' : F.home === 'unsent' ? 'Every client has a client link.' : F.home === 'done' ? 'No client is done yet.' : 'No review clients yet.';
   $('screen').innerHTML = `${headHtml('home')}
@@ -635,6 +636,8 @@ function edDirty() {
 function closeDialog() { $('ovl').hidden = true; $('dlg').innerHTML = ''; }
 
 // ---------- events ----------
+// v1.10.0: header shadow once the details body scrolls
+document.addEventListener('scroll', e => { const b = e.target; if (b?.classList?.contains('dbody')) b.closest('.dpanel')?.classList.toggle('scrolled', b.scrollTop > 4); }, true);
 document.addEventListener('click', async e => {
   const m = e.target.closest('[data-menu]');
   if (m) { const menu = $(m.dataset.menu); const open = menu.hidden; closeMenus(); menu.hidden = !open; m.setAttribute('aria-expanded', String(open)); if (open) menu.querySelector('button,a')?.focus(); return; }

@@ -2,6 +2,10 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.10.0 Clients A–Z, What's new for minor releases only, details header shadow: COMMITTED LOCALLY 19 Nov 2026 (overnight run Part 1, not pushed; with Builder v1.17.0, KPI v1.26.0)
+
+- Reviews list A–Z by the shown name in every filter and search (`homeList`, shared `byName`; "The Mahdavi Law Firm" under M); the status dots and filter counts still show urgency. What's new card only for x.Y.0. The details header (name, buttons, tabs) keeps its solid background and 1px line, plus a soft shadow once the body scrolls. Client pages unchanged. Shared `lfmp-session.js` has `byName`: deploy it with this version.
+
 ## v1.9.1 Shared stylesheet fix: LIVE 18 Nov 2026 (Builder `f42bdf6`, KPI `8d37f1d`, Review `5bcc965`; admin-site.yml run 44186335198 green, "Changed: deploying admin-site e41d91c8b689d668" = local build of the 3 pushed commits) (no change visible in this tool; Builder HANDOFF v1.16.1)
 
 ## v1.9.0 Honest statuses + v2 pop-ups: LIVE 18 Nov 2026 (`2f0e26f`; deploy 44174855128; live check in the Builder HANDOFF v1.16.0)

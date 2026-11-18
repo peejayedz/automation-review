@@ -149,6 +149,10 @@ async function setTests(p, on) {
 }
 const EDIT = `${ADMIN}edit.html`;
 const shot = (page, name, full = false) => page.screenshot({ path: join(OUT, `${name}.png`), fullPage: full });
+// v1.10.0: A–Z by the shown name, case-insensitive, a leading "The " ignored (written here on its own, not taken from the page)
+const azKey = s => String(s).replace(/\s+/g, ' ').trim().replace(/^the\s+/i, '').toLowerCase();
+const isAZ = names => names.every((n, i) => !i || azKey(names[i - 1]).localeCompare(azKey(n), 'en', { sensitivity: 'base', numeric: true }) <= 0);
+const rowNames = page => page.$$eval('.lv-row[data-client] .lv-nm', ns => ns.map(n => n.textContent));
 const lum = c => { const [r, g, b] = c.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 const lastPost = action => [...posts].reverse().find(p => p.action === action);
@@ -178,7 +182,7 @@ try {
   await check('home: Needs you red / Waiting amber (only with a client link) / Not sent grey (no client link) / Approved or Done green, with the sub-line', async () => {
     const rows = await page.$$eval('.lv-row[data-client]', rs => rs.map(r => [r.dataset.client, r.querySelector('.lv-c:not(.lv-pr) .lv-st').className.replace('lv-st ', ''), r.querySelector('.lv-c:not(.lv-pr) .lv-st').textContent, r.querySelector('.lv-mt').textContent]));
     const get = c => rows.find(r => r[0] === c);
-    assert(rows[0][0] === 'dumas-sanclemente-mo5cay' && rows[0].slice(1).join('|') === 'red|Needs you|6 requests to answer', JSON.stringify(rows[0]));
+    assert(get('dumas-sanclemente-mo5cay').slice(1).join('|') === 'red|Needs you|6 requests to answer', JSON.stringify(get('dumas-sanclemente-mo5cay')));
     assert(get('palm-beach-plastic-n9umxi').slice(1).join('|') === 'red|Needs you|1 request to answer', 'palm');
     assert(get('mahdavi-law-mc1mar').slice(1).join('|') === 'amber|Waiting|Link A sent · Nov 16', `mahdavi (Builder record: Link A sent 16 Nov): ${get('mahdavi-law-mc1mar')}`);
     // Boca: one automation approved, not all → green "Done" (all approved = "Approved", see ZZ below)
@@ -200,20 +204,26 @@ try {
     await page.reload(); await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
     assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`) === 'Link A sent · Nov 16', 'back after a reload');
   });
-  await check('home order: Needs you, then Waiting, then Not sent, then Done', async () => {
+  await check('home order (v1.10.0): A–Z by the shown name ("The " ignored, case-insensitive); the statuses are all still there', async () => {
+    const names = await rowNames(page);
+    assert(names.length === 7 && isAZ(names), `not A–Z: ${names.join(' | ')}`);
     const order = await page.$$eval('.lv-row[data-client] .lv-c:not(.lv-pr) .lv-st', s => s.map(x => x.className.replace('lv-st ', '')));
-    assert(order.join(',') === 'red,red,amber,grey,grey,grey,green', order.join(','));
+    assert([...order].sort().join(',') === 'amber,green,grey,grey,grey,red,red', order.join(','));
   });
-  await check('home: filters Needs you / Waiting / Done, Show test clients (Me), search', async () => {
-    await page.click('[data-lv-seg="need"]'); assert(await page.locator('.lv-row[data-client]').count() === 2, 'needs you');
-    await page.click('[data-lv-seg="wait"]'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'waiting = has a link, waiting on the client');
-    await page.click('[data-lv-seg="unsent"]'); assert(await page.locator('.lv-row[data-client]').count() === 3, 'not sent = no client link yet');
-    await page.click('[data-lv-seg="done"]'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'done');
+  await check('home: filters Needs you / Waiting / Done, Show test clients (Me), search; A–Z in every filter and in search results', async () => {
+    const az = async what => { const n = await rowNames(page); assert(isAZ(n), `${what} not A–Z: ${n.join(' | ')}`); return n.length; };
+    await page.click('[data-lv-seg="need"]'); assert(await az('needs you') === 2, 'needs you');
+    await page.click('[data-lv-seg="wait"]'); assert(await az('waiting') === 1, 'waiting = has a link, waiting on the client');
+    await page.click('[data-lv-seg="unsent"]'); assert(await az('not sent') === 3, 'not sent = no client link yet');
+    await page.click('[data-lv-seg="done"]'); assert(await az('done') === 1, 'done');
     assert(await page.getAttribute('[data-lv-seg="done"]', 'aria-pressed') === 'true', 'pressed');
     await page.click('[data-lv-seg="all"]');
     await setTests(page, true); await page.waitForSelector(`${ROW('zz-test-2-qpqhx7')} .lv-mt:text-matches("^Test · ")`);
+    assert(await az('all + test clients') === 8, 'all + test clients');
     await setTests(page, false); await page.waitForSelector(ROW('zz-test-2-qpqhx7'), { state: 'detached' });
     await page.fill('#homeQ', 'palm'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'search'); await page.fill('#homeQ', '');
+    await page.fill('#homeQ', 'law'); assert(await az('search "law"') >= 3, 'search "law": several results'); await page.fill('#homeQ', '');
+    await page.click('[data-lv-seg="need"]'); await page.fill('#homeQ', 'a'); await az('needs you + search "a"'); await page.fill('#homeQ', ''); await page.click('[data-lv-seg="all"]');
   });
   await check('home: last column (v1.9.0: Waiting Mahdavi "Replied · <date>"; Not sent "Create package ›"; Needs you / Done without a link "No client link yet"), no ?c= classic link anywhere; row click = Details', async () => {
     const lk = c => page.innerText(`${ROW(c)} .lv-c:not(.lv-pr) .lv-mt`);
@@ -539,7 +549,9 @@ try {
   });
   await check('Me → What\'s new opens (v1.7.0 card) and clears the dot; Me → Submissions opens Submissions; Theme Dark/Auto', async () => {
     await page.evaluate(() => localStorage.removeItem('ar-news-seen')); await page.reload(); await page.waitForSelector('.lv-row[data-client]');
-    await page.waitForSelector('[data-lv-news]'); assert(/^What's new · v\d+\.\d+\.\d+$/.test((await page.innerText('[data-lv-news] .lv-note-meta')).trim()), 'v1.9.0: the shared What\'s new card on a new version');
+    // v1.10.0: the card is the current MINOR release's (x.Y.0), also when admin.js is a patch: never a card of its own for a patch
+    { const v = (await readFile(new URL('../admin.js', import.meta.url), 'utf8')).match(/VERSION = '(\d+)\.(\d+)\.\d+'/); const want = `What's new · v${v[1]}.${v[2]}.0`;
+      await page.waitForSelector('[data-lv-news]'); const got = (await page.innerText('[data-lv-news] .lv-note-meta')).trim(); assert(got === want, `card "${got}", want "${want}"`); }
     assert(!(await page.locator('.lv-av [data-lv-dot], .lv-av .lv-dot').count()), 'no dot on the avatar');
     await openMe(page); assert(await page.locator('.lv-pop [data-lv="news"] .lv-ndot').count() === 1, 'unseen dot on What\'s new');
     await page.click('.lv-pop [data-lv="news"]'); await page.waitForSelector('#arNews[open] .arnews section');
@@ -802,6 +814,7 @@ try {
         for (const [k, v, on] of [['ink', m.ink, m.bg], ['needs you', m.need, m.panel], ['waiting', m.wait, m.panel], ['ok', m.ok, m.panel], ['muted', m.mut, m.panel], ['active filter', m.seg, m.segbg]]) if (v && on) assert(ratio(v, on) >= 4.5, `${where} ${k} ${ratio(v, on).toFixed(2)}`);
       };
       await measure('home'); await shot(p, `home_${w}_${scheme}`, w === 390);
+      { const n = await rowNames(p); assert(n.length >= 7 && isAZ(n), `${w}: home not A–Z: ${n.join(' | ')}`); }   // v1.10.0: A–Z on desktop and phone
       // Waiting (amber dot) word is readable (AA on the row)
       const nm = await p.$eval('.lv-row .lv-c:not(.lv-pr) .lv-st.amber', e => [getComputedStyle(e).color, getComputedStyle(document.querySelector('.lv-list')).backgroundColor]);
       assert(ratio(nm[0], nm[1]) >= 4.5, `not started ${ratio(nm[0], nm[1]).toFixed(2)}`);

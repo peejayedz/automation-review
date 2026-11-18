@@ -151,5 +151,41 @@ t('v1.9.0 honest statuses: no client link → Not sent (never Waiting); Needs yo
   eq(L.firstAnswerAt('x', []), '');
 });
 
+t('v1.10.0 A–Z: the home list is A–Z by the shown name in every filter and in search ("The " ignored, case-insensitive)', () => {
+  const cs = [
+    { c: 'zz-test-2-qpqhx7', name: 'ZZ TEST 2', s: { state: 'new' } },
+    { c: 'mahdavi-law-mc1mar', name: 'The Mahdavi Law Firm', s: { state: 'need' } },
+    { c: 'boca-dental-e770de', name: 'boca Dental', s: { state: 'unsent' } },
+    { c: 'emery-law-x1', name: 'Emery Law Office', s: { state: 'ok' } },
+    { c: 'hedayati-x2', name: 'Hedayati Law Group, P.C.', s: { state: 'wait' } },
+    { c: 'acme-x3', name: 'Acme Law', s: { state: 'need' } },
+    { c: 'sralla-x4', name: 'Sralla Family Law, PLLC', s: { state: 'unsent' } },
+    { c: 'mccarthy-x5', name: 'McCarthy & Akers, PLC', s: { state: 'ok' } },
+  ];
+  const names = (f, q) => L.homeList(cs, f, q).map(x => x.name);
+  eq(names('all'), ['Acme Law', 'boca Dental', 'Emery Law Office', 'Hedayati Law Group, P.C.', 'The Mahdavi Law Firm', 'McCarthy & Akers, PLC', 'Sralla Family Law, PLLC', 'ZZ TEST 2'], 'All: A–Z, Mahdavi under M, "boca" lower case under B');
+  eq(names('need'), ['Acme Law', 'The Mahdavi Law Firm'], 'Needs you: A–Z (was most open requests first)');
+  eq(names('wait'), ['Hedayati Law Group, P.C.', 'ZZ TEST 2']);
+  eq(names('unsent'), ['boca Dental', 'Sralla Family Law, PLLC']);
+  eq(names('done'), ['Emery Law Office', 'McCarthy & Akers, PLC']);
+  eq(names('all', 'LAW'), ['Acme Law', 'Emery Law Office', 'Hedayati Law Group, P.C.', 'The Mahdavi Law Firm', 'Sralla Family Law, PLLC'], 'search results A–Z too');
+  eq(names('need', 'm'), ['Acme Law', 'The Mahdavi Law Firm'], 'filter + search: A–Z ("m" in acme-x3 / Mahdavi)');
+  eq(names('bogus'), names('all'), 'an unknown filter = All');
+  eq(names('all', 'nobody'), []);
+});
+
+const adminJs = await readFile(new URL('../admin.js', import.meta.url), 'utf8');
+const newsJson = await readFile(new URL('../whats-new.json', import.meta.url), 'utf8');
+t('v1.10.0 What\'s new: a card only for minor releases; a patch never pops its own card', () => {
+  eq([L.isMinor('1.10.0'), L.isMinor('1.9.1'), L.isMinor('1.10.10'), L.isMinor('')], [true, false, false, false]);
+  eq([L.cardVersion('1.10.0'), L.cardVersion('1.10.2'), L.cardVersion('x')], ['1.10.0', '1.10.0', null], 'a patch shows its minor release\'s card (if unseen), never its own');
+  const js = adminJs;
+  const toast = js.match(/async function showNewsToast\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  if (!/L\.cardVersion\(VERSION\)/.test(toast) || !/L\.isMinor\(target\)/.test(toast) || !/x\.version === target/.test(toast)) throw new Error('showNewsToast must pick the card by cardVersion(VERSION) and isMinor');
+  const VERSION = js.match(/VERSION = '([\d.]+)'/)[1];
+  const news = JSON.parse(newsJson);
+  if (!news.versions.find(v => v.version === L.cardVersion(VERSION))?.title) throw new Error(`whats-new.json has no card for ${L.cardVersion(VERSION)}`);
+});
+
 console.log(`\n${pass}/${pass + fail} passed`);
 process.exitCode = fail ? 1 : 0;

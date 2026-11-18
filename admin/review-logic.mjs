@@ -1,6 +1,7 @@
 // Automation Review admin: pure rules (no DOM), unit-tested in admin/tests/logic.test.mjs.
 // The request rules copy index.html's (normStatus, sameV, isReplaced, subStatusKey) so the admin and the client
 // page always agree on what is open.
+import { byName } from './lfmp-session.js';
 
 export const ST = { REQ: 'Changes Requested', PROG: 'In Progress', UPD: 'Updated — Ready for Review', OK: 'Approved' };
 export const TEAM_ST = [ST.REQ, ST.PROG, ST.UPD];   // Approved is only ever set by the client
@@ -58,6 +59,17 @@ export function inHome(f, state) {
   if (f === 'unsent') return state === 'unsent';
   if (f === 'done') return state === 'ok';
   return true;
+}
+// v1.10.0 (PJ, 19 Nov): a What's new CARD only for minor releases (x.Y.0); a patch (x.y.Z, Z > 0) gets a CHANGELOG line
+// only and never pops a card. On a patch, the card (if still unseen) is its minor release's: cardVersion('1.10.2') = '1.10.0'.
+export const isMinor = v => /^\d+\.\d+\.0$/.test(String(v || ''));
+export const cardVersion = v => { const m = String(v || '').match(/^(\d+)\.(\d+)\.\d+$/); return m ? `${m[1]}.${m[2]}.0` : null; };
+// v1.10.0 (PJ, 19 Nov): the home list is A–Z by the name shown (shared byName: case-insensitive, a leading "The " ignored),
+// in every filter and in search results. The status dots and filter counts still show what needs you; only the order changed.
+// cs = [{ c: code, s: { state }, name }] (name = the shown name); f = a HOME_FILTERS id; q = the search text.
+export function homeList(cs, f, q = '') {
+  const qq = String(q || '').trim().toLowerCase(), ff = HOME_FILTERS.includes(f) ? f : 'all';
+  return cs.filter(x => inHome(ff, x.s.state) && (!qq || `${x.name} ${x.c}`.toLowerCase().includes(qq))).sort(byName(x => x.name));
 }
 // The client's first answer for a code ("Replied · Nov 12" on the Reviews list). Opens are not logged, so the list never says "Opened".
 export function firstAnswerAt(code, all) {

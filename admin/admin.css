@@ -226,3 +226,10 @@ label.f textarea{text-transform:none;letter-spacing:0;font-weight:400}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 .nolinkbox a.mkpkg{color:var(--ink);font-weight:600;white-space:nowrap;margin-left:4px}
+/* v1.10.0: the details header (name, buttons, tabs) stays put above the scrolling body: solid background, 1px line,
+   soft shadow once the body scrolls */
+.dpanel .dhead,.dpanel .dtabs{background:var(--panel)}
+.dpanel .dtabs{position:relative;z-index:1;transition:box-shadow .2s ease}
+.dpanel.scrolled .dtabs{box-shadow:0 8px 18px rgba(0,0,0,.08)}
+:root[data-theme="dark"] .dpanel.scrolled .dtabs{box-shadow:0 8px 18px rgba(0,0,0,.45)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dpanel.scrolled .dtabs{box-shadow:0 8px 18px rgba(0,0,0,.45)}}

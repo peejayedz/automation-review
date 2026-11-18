@@ -2,6 +2,11 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.10.0 — 19 Nov 2026: clients A–Z, What's new cards for minor releases only
+- **[internal]** Client details: the header (name, buttons, tabs) keeps a solid background and its 1px line above the scrolling body, with a soft shadow once the body scrolls. Same as the Builder (v1.17.0) and KPI admin (v1.26.0).
+- **[internal]** The Reviews list is A–Z by the name shown (`nameOf`), case-insensitive, a leading "The " ignored ("The Mahdavi Law Firm" under M), in every filter (All, Needs you, Waiting, Not sent, Done) and in search results, desktop and phone. It was Needs you, Waiting, Not sent, Done, then most open requests. Status dots and filter counts still show who needs you; only the order changed. `review-logic.mjs` `homeList` with the shared `byName` from `lfmp-session.js` (`STATE_ORDER` is kept but no longer orders the list).
+- **[internal]** What's new: a card only for minor releases (x.Y.0). A patch (x.y.Z) gets a CHANGELOG line only and never pops a card; on a patch, its minor release's card shows if still unseen. `review-logic.mjs` `isMinor` / `cardVersion`. Cache: `admin.css` / `admin.js` / `review-logic.mjs?v=1.10.0`. No client page changed.
+
 ## Review admin v1.9.1 — 18 Nov 2026: shared stylesheet fix
 - **[internal]** Same shared `lfmp-ui.css` as Builder v1.16.1 / KPI v1.25.1 (phone "No leads yet" size; not visible in this tool). Cache: `lfmp-ui.css?v=2.2.1`, `admin.css` / `admin.js?v=1.9.1`. No client page changed.
 

@@ -2,6 +2,17 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.10.0",
+      "date": "Nov 19",
+      "title": "Clients A to Z",
+      "line": "The Reviews list is now in A to Z order by client name, in every filter and search.",
+      "items": [
+        { "type": "improved", "text": "Clients are listed A to Z by the name you see, in every filter and in search results, on a computer and on a phone. \"The\" at the start is skipped, so The Mahdavi Law Firm is under M." },
+        { "type": "improved", "text": "The status on each row and the counts on the filters still show who needs you first." },
+        { "type": "improved", "text": "Scorecards uses the same A to Z order." }
+      ]
+    },
+    {
       "version": "1.9.1",
       "date": "Nov 18",
       "title": "Small fix on phones",
