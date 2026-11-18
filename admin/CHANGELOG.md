@@ -2,6 +2,11 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review pages: client logo — 19 Nov 2026 (LOCAL ONLY, not pushed: Andy approves first)
+- **[client]** Link A (plan.html) and Link B (messages.html): when the package's `brand.logo` is set (a data URL copy saved by the Builder v1.22.0, PNG / JPEG / WebP / SVG), the client's logo replaces the client-name text in the same header spot (the third brand, after LeadPro and the agency). It is 34 px high, alt = the client's name, and sits on a small white rounded chip in dark mode. No logo = exactly as before.
+- **[internal]** `admin/tests/logo-pages.mjs`: every existing package (data/ + the Builder's review packages), both pages, 1440 / 390, light / dark, renders the same DOM and the same pixels as the committed pages when there is no logo. With a logo: the spot, the alt, the size and the dark chip. Side-by-side with the preview header.
+- The Review admin's Edit tab has no page header of its own: its "Preview as client" links open these pages, which show the logo.
+
 ## Review admin v1.12.0 — 19 Nov 2026: greeting + cleaner top bar
 - **[internal]** A greeting when you sign in, once a day, with what needs you (shared `lfmp-session.js` / `lfmp-ui.css` 2.4.0, the same as Builder v1.21.0 and KPI v1.29.0, PJ's `LFMP_Greeting_Final_1plus9.html`). This page gives "reviews need you", the same count as the "Needs you" filter, and notes it for the other two tools' greetings. Skipped with reduced motion; a click, tap or key ends it.
 - **[internal]** Top bar: no name and no Sign out. The initials open the name menu on desktop and phone (name + Last signed in · Theme · test clients · Refresh · What's new v… · Team sign-ins · Install · Sign out). "Your menu ›" shows under the initials after the greeting for the first 3 days.
