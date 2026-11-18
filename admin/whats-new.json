@@ -2,6 +2,17 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.11.0",
+      "date": "Nov 19",
+      "title": "Every click shows it's working",
+      "line": "The button you press fills with gold while it works, then says what it did.",
+      "items": [
+        { "type": "new", "text": "The button you press fills with gold from left to right and says what it's doing (\"Saving…\", \"Deleting…\"), then \"✓\" when it's done. Other buttons next to it wait, so nothing is sent twice." },
+        { "type": "new", "text": "A thin gold line under the top bar shows while anything is loading." },
+        { "type": "improved", "text": "Every button, row and tab dips slightly the moment you press it. If something fails, you see the error; nothing finishes silently." }
+      ]
+    },
+    {
       "version": "1.10.0",
       "date": "Nov 19",
       "title": "Clients A to Z",

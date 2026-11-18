@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.11.0 — 19 Nov 2026: busy states (no silent clicks)
+- **[internal]** Shared `lfmp-session.js` / `lfmp-ui.css` 2.3.0 (same as Builder v1.18.0, KPI v1.27.0): press feedback; the pressed button fills with gold (option 1) with the action word, then "✓"; neighbours wait (no double submit); a 3px gold line under the top bar while any request is in flight. The Save / Delete / Start buttons of the details panel use `busyButton`; any other button that starts a request gets it automatically. Reduced motion: gold outline + action word. Cache `lfmp-ui.css?v=2.3.0`, `admin.css` / `admin.js` / `review-logic.mjs?v=1.11.0`. Client pages unchanged.
+
 ## Review admin v1.10.0 — 19 Nov 2026: clients A–Z, What's new cards for minor releases only
 - **[internal]** Client details: the header (name, buttons, tabs) keeps a solid background and its 1px line above the scrolling body, with a soft shadow once the body scrolls. Same as the Builder (v1.17.0) and KPI admin (v1.26.0).
 - **[internal]** The Reviews list is A–Z by the name shown (`nameOf`), case-insensitive, a leading "The " ignored ("The Mahdavi Law Firm" under M), in every filter (All, Needs you, Waiting, Not sent, Done) and in search results, desktop and phone. It was Needs you, Waiting, Not sent, Done, then most open requests. Status dots and filter counts still show who needs you; only the order changed. `review-logic.mjs` `homeList` with the shared `byName` from `lfmp-session.js` (`STATE_ORDER` is kept but no longer orders the list).

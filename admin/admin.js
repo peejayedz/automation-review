@@ -7,9 +7,9 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine } from './lfmp-session.js';
-import * as L from './review-logic.mjs?v=1.10.0';   // versioned: admin.js needs this release's rules
-export const VERSION = '1.10.0';
+import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton } from './lfmp-session.js';
+import * as L from './review-logic.mjs?v=1.11.0';   // versioned: admin.js needs this release's rules
+export const VERSION = '1.11.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -538,7 +538,7 @@ function openHtml(r, k) {
 async function saveStatus(form) {
   if (busy) { toast('Still saving, one moment…'); return; }
   const id = form.dataset.id, client = form.dataset.client, status = form.status.value, reply = form.reply.value.trim();
-  const btn = form.querySelector('[type="submit"]'); busy = true; btn.disabled = true; btn.textContent = 'Saving…';
+  const btn = form.querySelector('[type="submit"]'); busy = true; busyButton(btn, 'Saving…', { ms: 3000 });   // v1.11.0: the gold fill (shared)
   try {
     const j = await post({ action: 'admin_status', client, id, status, lfmp_reply: reply, name: who('LFMP team') });
     if (!j.ok) throw new Error(j.error || 'Could not save');
@@ -590,7 +590,7 @@ async function saveMsg(form) {
   const fields = L.editFieldsFor(m, lbOf(code).edits, subj, text);
   if (!fields.length) { E.open = null; openDetails(code, 'edit'); toast('No changes'); return; }
   if (busy) { toast('Still saving, one moment…'); return; }
-  const b = form.querySelector('[type="submit"]'); busy = true; b.disabled = true; b.textContent = 'Saving…'; $('edErr').textContent = '';
+  const b = form.querySelector('[type="submit"]'); busy = true; busyButton(b, 'Saving…', { ms: 3000 }); $('edErr').textContent = '';
   try { await saveEdits(code, m.auto, fields); E.open = null; toast('Saved. Link B shows the new wording.'); openDetails(code, 'edit'); $('dPanel').querySelector(`[data-ed-open="${CSS.escape(m.id)}"]`)?.focus(); }
   catch (err) { $('edErr').textContent = `Couldn't save: ${err.message}`; b.disabled = false; b.textContent = 'Save'; }
   finally { busy = false; }
@@ -600,7 +600,7 @@ async function startVersion(code, auto) {
   const lb = lbOf(code), ver = lb.versions[auto] ?? String(D.files[code]?.automations?.find(a => a.id === auto)?.version || '1'), nv = L.nextVersion(ver);
   // Link B drops an automation's wording edits when a new version starts, so the current wording is saved again after it.
   const carry = editMsgs(code).filter(m => m.auto === auto).map(m => [m, L.shownWording(m, lb.edits)]).filter(([, w]) => w.edited);
-  busy = true; const b = $('dPanel').querySelector('[data-ed-ver-go]'); if (b) { b.disabled = true; b.textContent = 'Starting…'; }
+  busy = true; const b = $('dPanel').querySelector('[data-ed-ver-go]'); if (b) busyButton(b, 'Starting…', { ms: 3000 });
   try {
     await saveEdits(code, auto, [['version', nv]]);
     for (const [m, w] of carry) await saveEdits(code, auto, L.editFieldsFor(m, {}, w.subject, w.text));
@@ -710,14 +710,14 @@ document.addEventListener('submit', async e => {
   if (f.dataset.form === 'rename') {
     const v = $('renIn').value.trim(); if (!v) { $('renIn').focus(); return; }
     if (v === nameOf(dpCode)) { dpMode = null; openDetails(dpCode, dpTab); toast('No changes'); return; }
-    const b = f.querySelector('[type="submit"]'); b.disabled = true; b.textContent = 'Saving…';
+    const b = f.querySelector('[type="submit"]'); busyButton(b, 'Saving…', { ms: 3000 });
     try { await rename(dpCode, v); dpMode = null; toast('Client name saved'); drawHome(); openDetails(dpCode, dpTab); }
     catch (err) { toast(`Couldn't save: ${err.message}`); b.disabled = false; b.textContent = 'Save name'; }
     return;
   }
   if (f.dataset.form === 'clear') {
     if ($('clrIn').value.trim().toLowerCase() !== nameOf(dpCode).trim().toLowerCase()) { $('clrErr').textContent = 'Type the client name exactly to confirm.'; return; }
-    const b = $('clrGo'); b.disabled = true; b.textContent = 'Deleting…';
+    const b = $('clrGo'); busyButton(b, 'Deleting…', { ms: 4000 });
     try { const n = await clearResponses(dpCode, $('clrScope').value); dpMode = null; toast(n ? `Cleared ${n} response${n === 1 ? '' : 's'}` : 'Nothing to clear'); drawHome(); openDetails(dpCode, dpTab); }
     catch (err) { $('clrErr').textContent = `Couldn't clear: ${err.message}`; b.disabled = false; b.textContent = 'Delete responses'; }
   }

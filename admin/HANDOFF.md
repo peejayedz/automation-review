@@ -2,6 +2,10 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.11.0 Busy states ("no silent clicks"): COMMITTED LOCALLY 19 Nov 2026 (overnight run Part 2, not pushed; with Builder v1.18.0, KPI v1.27.0)
+
+- Shared `lfmp-session.js` / `lfmp-ui.css` 2.3.0 (Builder HANDOFF v1.18.0): press feedback, gold fill on the pressed button ("Saving…", "Deleting…", "Starting…" on the details forms via `busyButton`; any other button that starts a request automatically), gold top line while any request runs. Client pages unchanged. Cache `lfmp-ui.css?v=2.3.0`, `admin.css` / `admin.js` / `review-logic.mjs?v=1.11.0`.
+
 ## v1.10.0 Clients A–Z, What's new for minor releases only, details header shadow: COMMITTED LOCALLY 19 Nov 2026 (overnight run Part 1, not pushed; with Builder v1.17.0, KPI v1.26.0)
 
 - Reviews list A–Z by the shown name in every filter and search (`homeList`, shared `byName`; "The Mahdavi Law Firm" under M); the status dots and filter counts still show urgency. What's new card only for x.Y.0. The details header (name, buttons, tabs) keeps its solid background and 1px line, plus a soft shadow once the body scrolls. Client pages unchanged. Shared `lfmp-session.js` has `byName`: deploy it with this version.
