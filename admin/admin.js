@@ -8,15 +8,13 @@
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
 import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount } from './lfmp-session.js';
-import * as L from './review-logic.mjs?v=1.11.0';   // versioned: admin.js needs this release's rules
-export const VERSION = '1.12.0';
+import * as L from './review-logic.mjs?v=1.12.1';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
+import * as GC from './greet-count.mjs?v=1.12.1';   // v1.12.1: the load + the "Needs you" count (list + greeting)
+export const VERSION = '1.12.1';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
-const TESTS_KEY = 'ar-admin-tests';
-const REPO_PATH = '/repos/peejayedz/automation-review';
-const LIST_PATH = `${REPO_PATH}/contents/data?ref=main`;
-const PLANS_PATH = `${REPO_PATH}/contents/plans?ref=main`;   // hand-made plans/<code>.html pages
+const TESTS_KEY = GC.TESTS_KEY;   // v1.12.1: the data/ and plans/ lists are read in greet-count.mjs
 // v1.2.0: on the team-only admin site (lfmp-admin.pages.dev, behind Google sign-in) the client pages and data/ aren't
 // there, so data is read from, and every client link (A/B, ?c=, plans/) points at, the public site. Elsewhere: next door.
 const PUBLIC_BASE = 'https://dashboard.lawfirmmarketingpros.com/automation-review/';
@@ -76,23 +74,9 @@ function closeMenus() { for (const m of document.querySelectorAll('.menu:not([hi
 
 // ---------- backend ----------
 // Admin actions through the team site's server (no key here). A refusal or a network error is retried once: the first
-// call after the Apps Script sits idle can fail.
-async function post(obj) {
-  let last;
-  for (let i = 0; i < 2; i++) {
-    try { return await api('review', obj); } catch (e) { last = e; if (e.status === 401 || e.status === 403) break; }
-  }
-  throw new Error(last?.code === 'network' || last?.code === 'upstream' ? `Couldn't reach the review backend (${last.message}).` : (last?.message || "Couldn't reach the review backend."));
-}
-async function listData() {
-  // plans/ is optional (most clients have none): any failure there just means "no plans/ page"
-  const [r, plans] = await Promise.all([ghFetch('GET', LIST_PATH), ghFetch('GET', PLANS_PATH).then(x => (x.ok ? x.json() : [])).catch(() => [])]);
-  if (!r.ok) throw new Error(r.status === 403 ? 'GitHub refused the client list (the team site\'s GitHub token may be missing a permission). Tell PJ.' : `Couldn't list review clients from GitHub (HTTP ${r.status}).`);
-  const names = (await r.json()).map(f => f.name);
-  const codes = names.filter(n => /^[a-z0-9-]+\.json$/.test(n)).map(n => n.slice(0, -5));
-  const plansPage = new Set((Array.isArray(plans) ? plans : []).map(f => f.name).filter(n => /^[a-z0-9-]+\.html$/.test(n)).map(n => n.slice(0, -5)));
-  return { codes, plansPage, plan: new Set(names.filter(n => n.endsWith('.plan.json')).map(n => n.slice(0, -10))), messages: new Set(names.filter(n => n.endsWith('.messages.json')).map(n => n.slice(0, -14))) };
-}
+// call after the Apps Script sits idle can fail. v1.12.1: the load (data/ + plans/ lists, admin_ping, admin_all, data
+// files, Content reads, Builder records) lives in greet-count.mjs readData, which the greeting's count also uses.
+const post = GC.makePost(api);
 // ---------- "Link A sent · Nov 16" (v1.7.0, PJ): Copy on Link A / Link B counts as sent ----------
 // The Builder's client record (private repo, records/<id>.json) keeps the latest copy as review.linkSent
 // { link: 'A' | 'B', at, by }. Read through the team site exactly as the Builder reads it (allow-list B1); a Copy here
@@ -103,13 +87,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const b64dec = b => new TextDecoder().decode(Uint8Array.from(atob(String(b).replace(/\s/g, '')), c => c.charCodeAt(0)));
 const b64enc = s => { let o = ''; for (const x of new TextEncoder().encode(s)) o += String.fromCharCode(x); return btoa(o); };
 // v1.9.0: the Builder records come from the shared loader (lfmp-session.js loadBuilderRecords, same allow-listed reads);
-// D.recs = all of them (names, "Create package ›"), D.sent = the ones with a review code, by code.
-async function loadSent() {
-  const recs = await loadBuilderRecords({ fresh: true });
-  const out = {};
-  for (const rec of recs) if (rec.reviewCode) out[rec.reviewCode] = { id: rec.id, name: rec.name, linkSent: rec.linkSent || null };
-  return { recs, sent: out };
-}
+// D.recs = all of them (names, "Create package ›"), D.sent = the ones with a review code, by code (greet-count.mjs loadSent).
 const sentDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };   // the viewer's time zone
 const sentText = c => { const s = D.sent[c]?.linkSent; return s && (s.link === 'A' || s.link === 'B') && sentDay(s.at) ? `Link ${s.link} sent · ${sentDay(s.at)}` : ''; };
 async function markSent(code, link) {
@@ -138,8 +116,9 @@ const F = { home: 'all', q: '', tests: store.get(TESTS_KEY) === '1', status: 'an
 const E = { auto: {}, open: null, ver: null };
 // v1.9.0: one display name per client in all three tools: the Builder record's name when the client has one (matched by
 // review code); otherwise the name the client page shows: a rename (Content tab, newest wins) > the data file's name >
-// the Sheet tab name. Display only (displayName adds a lost last dot: "P.C" → "P.C.").
-const nameOf = c => displayName(D.sent[c]?.name || D.renames[c] || D.files[c]?.client?.name || D.names[c] || L.prettyClient(c));
+// the Sheet tab name. Display only (displayName adds a lost last dot: "P.C" → "P.C."). v1.12.1: these list rules live in
+// greet-count.mjs, so the greeting's "reviews need you" counts exactly as the Needs you filter.
+const nameOf = c => GC.nameOf(D, c);
 // The client's Builder record: by review code, else the same name. null = none yet.
 const normN = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const recOf = c => (D.sent[c] ? { id: D.sent[c].id } : D.recs.find(r => normN(r.name) === normN(nameOf(c))) || null);
@@ -147,12 +126,12 @@ const recOf = c => (D.sent[c] ? { id: D.sent[c].id } : D.recs.find(r => normN(r.
 const BUILDER_PATH = '/ghl-subaccount-builder-page/';
 const packageUrl = c => { const r = recOf(c); return r ? `${BUILDER_PATH}?client=${encodeURIComponent(r.id)}&tab=review` : `${BUILDER_PATH}?add=existing&q=${encodeURIComponent(nameOf(c))}`; };
 const autoName = (c, a) => { const x = D.files[c]?.automations?.find(y => y.id === a); return x ? x.name : a === 'setup-questions' ? 'Setup questions' : (a || ''); };
-const isTest = c => L.isTestClient(c, nameOf(c));
-const clientsAll = () => [...new Set([...D.codes, ...D.rows.map(r => r.client)])].filter(Boolean);
-const visibleClients = () => clientsAll().filter(c => F.tests || !isTest(c));
+const isTest = c => GC.isTest(D, c);
+const clientsAll = () => GC.clientsAll(D);
+const visibleClients = () => GC.visibleClients(D, F.tests);
 // Link B's wording state for a client: current version per automation + the wording edits it shows (review-logic.mjs).
-const lbOf = c => L.linkB(D.content[c] || [], D.files[c]);
-const sumOf = c => { const s = L.summarize(c, D.files[c], D.rows, lbOf(c).versions); return { ...s, state: L.homeState(s.state, !!homeLink(c)) }; };
+const lbOf = c => GC.lbOf(D, c);
+const sumOf = c => GC.sumOf(D, c);
 // The classic editor (old, team only, next to this page). Only Details → ⋯ → Classic editor (old) links here.
 const classicEditorUrl = c => `edit.html?c=${encodeURIComponent(c)}`;
 // Client links, as on the Builder's Review card: A = plan + review (default; the hand-made plans/<code>.html page when the
@@ -201,34 +180,11 @@ async function load() {
   D.error = ''; if (first) $('screen').innerHTML = `${headHtml(route().screen)}${loadingHtml('reviews')}`;   // the LFMP blocks until the data arrives
   // never spin forever: after 20 s show the error / Try again state (a late answer is then ignored)
   const slow = setTimeout(() => { if (seq === loadSeq && !D.loaded) { loadSeq++; D.error = LOAD_SLOW_TEXT; draw(); } }, LOAD_LIMIT_MS);
-  const sentP = loadSent();   // Builder records (Link A/B sent), alongside; never fails
   try {
-    Object.assign(D, await listData());
-    if (!D.codes.length) throw new Error('No review clients found in the repo.');
-    const ping = await post({ action: 'admin_ping', client: D.codes[0] });
-    if (seq !== loadSeq) return;
-    if (!ping?.ok) throw new Error(ping?.error ? `The review backend refused the team site's admin key (${ping.error}). Tell PJ: REVIEW_ADMIN_KEY in Cloudflare must match ADMIN_KEY in the Apps Script.` : "The review backend didn't answer.");
-    const msgCodes = D.codes.filter(c => D.messages.has(c));
-    const [all, files, content, msgs] = await Promise.all([
-      post({ action: 'admin_all', client: D.codes[0] }),
-      Promise.all(D.codes.map(c => fetch(`${BASE}data/${encodeURIComponent(c)}.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null))),
-      // renames live in the Content tab: the same public read the client page makes (GET ?client=)
-      Promise.all(D.codes.map(c => fetch(`${SAVE_URL}?client=${encodeURIComponent(c)}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null))),
-      // Link B's messages (the Edit tab edits exactly these)
-      Promise.all(msgCodes.map(c => fetch(`${BASE}data/${encodeURIComponent(c)}.messages.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null))),
-    ]);
-    if (seq !== loadSeq) return;
-    if (!all?.ok) throw new Error(all?.error || "The backend didn't return the submissions.");
-    D.files = Object.fromEntries(D.codes.map((c, i) => [c, files[i]]));
-    D.names = { ...(ping.names || {}), ...(all.clients || {}) };
-    D.renames = {};
-    D.content = Object.fromEntries(D.codes.map((c, i) => [c, Array.isArray(content[i]?.content) ? content[i].content : []]));
-    D.msgs = Object.fromEntries(msgCodes.map((c, i) => [c, msgs[i]]));
-    D.codes.forEach((c, i) => { const ren = (content[i]?.content || []).filter(x => String(x.field) === 'client:name' && String(x.value || '').trim()).sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp))).pop(); if (ren) D.renames[c] = String(ren.value).trim(); });
-    D.rows = (all.rows || []).map(r => (L.isReq(r) ? { ...r, status: L.normStatus(r.status) || L.ST.REQ } : r));
-    D.log = all.log || [];
-    ({ recs: D.recs, sent: D.sent } = await sentP);
-    if (seq !== loadSeq) return;
+    // v1.12.1: greet-count.mjs readData (the same load the greeting's count makes), plus Link B's messages for the Edit tab
+    const data = await GC.readData({ post, ghFetch, loadBuilderRecords, saveUrl: SAVE_URL, base: BASE }, { messages: true, current: () => seq === loadSeq });
+    if (seq !== loadSeq || !data) return;
+    Object.assign(D, data);
     D.loaded = true;
     shell?.setUpdated(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));   // Me → Refresh now · updated 4:57 PM
   } catch (err) { if (seq !== loadSeq) return; D.error = err.message; }
@@ -248,8 +204,8 @@ function headHtml(screen) {
     const n = toAnswer();
     return `<div class="lv-hrow subshead"><div><button type="button" class="lv-back" data-act="gohome"><span aria-hidden="true">‹</span>Reviews</button><h1 class="lv-h1 lv-d">Submissions</h1><div class="lv-sum">${n ? `${n} to answer` : 'Nothing to answer'}</div></div></div>`;
   }
-  const cs = D.loaded ? visibleClients() : [], st = cs.map(c => sumOf(c).state);
-  const n = f => st.filter(x => L.inHome(f, x)).length, need = n('need'), wait = n('wait'), unsent = n('unsent');
+  const cs = D.loaded ? visibleClients() : [];
+  const { need, wait, unsent } = D.loaded ? GC.homeCounts(D, F.tests) : { need: 0, wait: 0, unsent: 0 };   // v1.12.1: greet-count.mjs
   // v1.12.0: the greeting's "reviews need you" (the same count as the filter); kept for the other tools' greetings
   if (D.loaded) { noteCount('reviews', need); greetReady({ reviews: need }); }
   // the summary counts as the filter does: "7 clients · 2 need you · 3 waiting · 1 not sent"

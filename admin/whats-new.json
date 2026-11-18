@@ -2,6 +2,15 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.12.1",
+      "date": "Nov 19",
+      "title": "The greeting plays again after you sign out and back in",
+      "line": "And it always shows all three numbers.",
+      "items": [
+        { "type": "fixed", "text": "The greeting plays again after you sign out and back in, and always shows all three numbers." }
+      ]
+    },
+    {
       "version": "1.12.0",
       "date": "Nov 19",
       "title": "A greeting when you sign in, once a day, with what needs you",

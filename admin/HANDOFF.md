@@ -2,6 +2,12 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.12.1 Greeting after Sign out + all three numbers (shared shell 2.4.1): TESTED LOCALLY 19 Nov 2026, NOT PUSHED (waiting for PJ)
+- **What it is:** see CHANGELOG v1.12.1 (with Builder v1.22.1 and KPI v1.29.1). Sign out clears "greeted today"; the greeting reads all three counts fresh. `admin/greet-count.mjs` = this page's load (`readData`) + the "Needs you" count (`homeCounts`); admin.js uses both, so the greeting's number and the filter come from the same code. From another tool, `readCount()` reads `saveUrl` from `../config.js` (already public).
+- **Timing:** this page's load waits on the Apps Script (admin_ping, then admin_all + Content reads), so it is the slowest of the three; a late read shows the last known count in the other tools' greeting, and is noted for next time.
+- **Push order:** KPI and Review first, the Builder last (its push deploys); see the Builder HANDOFF v1.22.1.
+- **Tests (19 Nov, local):** `admin/tests/logic.test.mjs` + `admin/tests/shell.test.mjs` 34/34, `admin/tests/e2e.mjs` 65/65; cross-tool: Builder `tests/e2e/greet-fresh.mjs` 27/27.
+
 ## v1.12.0 Greeting + name menu (shared shell 2.4.0): LIVE 18 Nov 2026 14:54 UTC (`7dc6f8b` + `4bbc014`; deployed by the Builder's admin-site run 44329460367, admin-site 7674f3d040aacd3b)
 - **What it is:** the once-a-day greeting (shared shell). This page gives "reviews need you" (= the Needs you filter) and notes it for the other two tools. The bar shows the initials only; the name menu holds the name, Last signed in, Theme, What's new v1.12.0, Team sign-ins, Install and Sign out.
 - **FIX 3.3:** the menu is fully opaque from its first frame and above the list's "Open ›" column.

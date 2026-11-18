@@ -2,6 +2,11 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.12.1 — 19 Nov 2026: greeting after Sign out + all three numbers
+- **[internal]** The greeting plays again after you sign out and back in, and always shows all three numbers (shared `lfmp-session.js` 2.4.1, the same as Builder v1.22.1 and KPI v1.29.1; look unchanged). Sign out clears "greeted today"; nothing else replays it. When the greeting starts, the other two tools' counts are read fresh (read-only, through the team site); a late or failed read falls back to the last known count (≤ 12 h) or is left out.
+- **[internal]** New `admin/greet-count.mjs` holds this page's load (`readData`: the data/ and plans/ lists, admin_ping, admin_all, data files, Content reads, Builder records) and the "Needs you" count (`homeCounts`, `sumOf`, `nameOf`, `isTest`); admin.js uses them, and `readCount()` makes the same reads for the other tools' greetings. No writes, no GHL. `review-logic.mjs` is imported as `?v=1.12.1`.
+- **[internal]** Tests: `admin/tests/shell.test.mjs` (same in all three repos) covers Sign out and the fresh reads; the cross-tool check is the Builder's `tests/e2e/greet-fresh.mjs`.
+
 ## Review pages: client logo — 19 Nov 2026 (Andy approved; live 19 Nov, d35cea5)
 - **[client]** Link A (plan.html) and Link B (messages.html): when the package's `brand.logo` is set (a data URL copy saved by the Builder v1.22.0, PNG / JPEG / WebP / SVG), the client's logo replaces the client-name text in the same header spot (the third brand, after LeadPro and the agency). It is 34 px high, alt = the client's name, and sits on a small white rounded chip in dark mode. No logo = exactly as before.
 - **[internal]** `admin/tests/logo-pages.mjs`: every existing package (data/ + the Builder's review packages), both pages, 1440 / 390, light / dark, renders the same DOM and the same pixels as the committed pages when there is no logo. With a logo: the spot, the alt, the size and the dark chip. Side-by-side with the preview header.
