@@ -7,9 +7,9 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton } from './lfmp-session.js';
+import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.11.0';   // versioned: admin.js needs this release's rules
-export const VERSION = '1.11.0';
+export const VERSION = '1.12.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -175,6 +175,8 @@ const go = h => { if (location.hash !== h) location.hash = h; else draw(); };
 addEventListener('hashchange', () => draw());
 
 // ---------- sign-in (Google, Cloudflare Access) ----------
+let greetReady = () => {};
+const greetCount = new Promise(r => { greetReady = r; });
 async function start() {
   try { ME = await startSession(); }
   catch (err) { if (err.status !== 401) { show('setupView'); $('setupMsg').textContent = err.message; } return; }   // 401: on the way to /signin/
@@ -185,6 +187,7 @@ async function start() {
     onRefresh: async () => { shell.closeMe(); await load(); toast('Refreshed'); },
     onNews: () => openNews(),
     onHome: () => { closeDetails(true); F.home = F.home || 'all'; go('#/'); window.scrollTo(0, 0); },
+    greet: { count: () => greetCount },   // v1.12.0: the once-a-day greeting (shell); our count when the list has loaded
   });
   paintMe(ME);   // name, email, "Last signed in …" (lfmp-session.js)
   show('appView'); await load();
@@ -247,6 +250,8 @@ function headHtml(screen) {
   }
   const cs = D.loaded ? visibleClients() : [], st = cs.map(c => sumOf(c).state);
   const n = f => st.filter(x => L.inHome(f, x)).length, need = n('need'), wait = n('wait'), unsent = n('unsent');
+  // v1.12.0: the greeting's "reviews need you" (the same count as the filter); kept for the other tools' greetings
+  if (D.loaded) { noteCount('reviews', need); greetReady({ reviews: need }); }
   // the summary counts as the filter does: "7 clients · 2 need you · 3 waiting · 1 not sent"
   const summary = [`${cs.length} client${cs.length === 1 ? '' : 's'}`, need ? `${need} need${need === 1 ? 's' : ''} you` : 'nothing needs you', wait ? `${wait} waiting` : '', unsent ? `${unsent} not sent` : ''].filter(Boolean).join(' · ');
   return pageHeadHtml({ title: 'Reviews', summary: D.loaded ? summary : '',

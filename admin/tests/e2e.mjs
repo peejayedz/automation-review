@@ -140,7 +140,11 @@ async function signIn(page) {
 // v1.7.0 (redesign v2): the shared shell. Me = the avatar (desktop popover / phone screen); test clients live there.
 const ROW = c => `.lv-row[data-client="${c}"]`;
 const meBtn = async p => ((await p.isVisible('[data-lv-top] [data-lv="me"]')) ? '[data-lv-top] [data-lv="me"]' : '[data-lv-ptop] [data-lv="me"]');
-async function openMe(p) { await p.click(await meBtn(p)); await p.waitForSelector('.lv-pop:not([hidden]) .lv-mi, [data-lv-me]:not([hidden]) .lv-mi'); }
+// v1.12.0 (shell 2.4.0): the initials open the name menu on desktop AND phone; the phone's Me tab = the Me screen
+async function openMe(p) { await p.click(await meBtn(p)); await p.waitForSelector('.lv-pop:not([hidden]) .lv-mi'); }
+const openPop = '.lv-pop:not([hidden])';
+// the name + "Last signed in …" now live in that menu (the bar shows the initials only)
+async function menuWho(p, cls = '.lv-n') { await openMe(p); const t = (await p.innerText(`${openPop} .lv-mh ${cls}`)).trim(); await p.keyboard.press('Escape'); return t; }
 async function setTests(p, on) {
   await openMe(p);
   const tg = p.locator('[data-lv="tests"]:visible');
@@ -163,11 +167,12 @@ try {
   await signIn(page);
 
   // ===== 1) home
-  await check('v2 shell: top bar LFMP · Clients / Scorecards / Reviews (Reviews current), no + and no bell on Reviews, name + Last signed in + Sign out', async () => {
+  await check('v2 shell: top bar LFMP · Clients / Scorecards / Reviews (Reviews current), no + and no bell on Reviews, initials only (v1.12.0: name + Sign out in the name menu)', async () => {
     assert(await page.isVisible('.lv-top') && await page.isHidden('.lv-tabs') && await page.isHidden('.lv-ptop'), 'desktop: one top bar, no phone bar / tabs');
     assert(await page.$$eval('.lv-nav a', as => as.map(a => `${a.textContent}${a.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews*', 'nav');
     assert(!(await page.locator('[data-lv="plus"], .lv-bell, .top, .toolchip, .hero, .strip, .foot, #themeSeg, #topMenu').count()), 'a + / bell / old header piece');
-    assert(await page.innerText('.lv-who [data-me]') === 'PJ Drozo' && await page.isVisible('.lv-so'), 'name + Sign out');
+    assert(!(await page.locator('.lv-top .lv-who, .lv-top .lv-so').count()) && !/PJ Drozo|Sign out/.test(await page.innerText('.lv-top')), 'no name / Sign out in the bar');
+    assert(await menuWho(page) === 'PJ Drozo', 'the name is in the name menu');
     assert(await page.$eval('html', h => h.classList.contains('lfmp-v2')), 'lfmp-v2');
   });
   await check('home: title, "N clients · 2 need you · 1 waiting · 3 not sent", search "Search N clients", filter All · Needs you · 2 (red) · Waiting · Not sent · Done (test clients hidden by default)', async () => {
@@ -540,10 +545,10 @@ try {
     await page.keyboard.press('Escape');
     await openMe(page);
     const items = await page.$$eval('.lv-pop .lv-mi', b => b.map(x => x.querySelector('span')?.textContent || x.textContent).map(s => s.trim()));
-    assert(items.join('|') === "Theme|Show test clients|Refresh now|Team sign-ins|What's new|Install the app|Sign out", items.join('|'));   // Me is the same in all three tools
+    assert(items.join('|') === "Theme|Show test clients|Refresh now|What's new|Team sign-ins|Install the app|Sign out", items.join('|'));   // the name menu is the same in all three tools
     assert(/^updated \d{1,2}:\d\d [AP]M$/.test(await page.innerText('.lv-pop [data-lv="refresh"] .lv-v')), await page.innerText('.lv-pop [data-lv="refresh"] .lv-v'));
     { const v = (await readFile(new URL('../admin.js', import.meta.url), 'utf8')).match(/VERSION = '([\d.]+)'/)[1]; assert((await page.innerText('.lv-pop [data-lv="news"]')).includes(`v${v}`), `version v${v}`); }   // the current admin.js VERSION
-    assert(await page.locator('.lv-pop .lv-gl').count() === 2, 'Settings + Team only (no tool extras)');
+    assert(await page.locator('.lv-pop .lv-gl').count() === 0 && (await page.innerText(`${openPop} .lv-sw`)).replace(/\s+/g, ' ').trim() === 'Light Dark Auto', 'the compact name menu: no group labels, no tool extras; Theme Light / Dark / Auto');
     assert(!(await page.locator('.lv-pop input[type="password"]').count()), 'password');
     await page.click('.lv-pop [data-lv="refresh"]'); await page.waitForFunction(() => /Refreshed/.test(document.getElementById('toast').textContent));
   });
@@ -705,9 +710,9 @@ try {
   await editPage.close(); cur = page;
 
   // ===== 5) Google-only sign-in
-  await check('sign-in: name in the top bar; no password or key field on any page; the browser called only /api/ (never GitHub or a key)', async () => {
-    assert((await page.innerText('.lv-who [data-me]')) === 'PJ Drozo', await page.innerText('.lv-who [data-me]'));
-    assert(await page.isVisible('.lv-so[data-lv="signout"]'), 'a visible Sign out button next to the name');
+  await check('sign-in: the Google name in the name menu; no password or key field on any page; the browser called only /api/ (never GitHub or a key)', async () => {
+    assert(await menuWho(page) === 'PJ Drozo', 'name in the menu');
+    await openMe(page); assert(await page.isVisible(`${openPop} [data-lv="signout"]`), 'Sign out in the name menu'); await page.keyboard.press('Escape');
     assert(!(await page.locator('input[type="password"], #keyView, #keyIn, #lfmpLogin').count()), 'password / key UI');
     assert(!directGh.length, `direct GitHub calls: ${directGh.join(' ')}`);
     assert(ghCalls.every(c => /^GET \/repos\/peejayedz\/automation-review\/contents\/(data|plans)\?ref=main$/.test(c) || /^(GET|PUT) \/repos\/peejayedz\/ghl-subaccount-builder\/contents\/records(\/[a-z0-9-]+\.json)?(\?ref=main)?$/.test(c)), ghCalls.join(' '));
@@ -719,21 +724,47 @@ try {
     const dump = await page.evaluate(() => JSON.stringify({ l: Object.fromEntries(Object.entries(localStorage)), s: Object.fromEntries(Object.entries(sessionStorage)) }));
     for (const bad of [KEY, TEST_TOKEN, 'lfmp-vault', 'ar_admin_key', 'lfmp-lock-at', 'lfmp-session']) assert(!dump.includes(bad), `${bad} in storage: ${dump}`);
   });
-  await check('last sign-in under the name; Me → Team sign-ins; top-bar Sign out → /signin/?out=1', async () => {
+  await check('last sign-in under the name in the name menu; → Team sign-ins; Sign out from the menu → /signin/?out=1', async () => {
     const p = await ctx.newPage(); cur = p;
-    await p.goto(ADMIN); await p.waitForSelector('.lv-who [data-me-last]:not(:empty)');
-    ACCESS.signIn(ME_EMAIL); await p.reload(); await p.waitForFunction(() => /^Last signed in/.test(document.querySelector('.lv-who [data-me-last]')?.textContent || ''), null, { timeout: 20000 });
-    assert(LAST.test(await p.innerText('.lv-who [data-me-last]')), await p.innerText('.lv-who [data-me-last]'));
-    await openMe(p); assert(LAST.test(await p.innerText('.lv-pop .lv-me-who .lv-l')), 'Me: last sign-in');
-    await p.click('.lv-pop [data-lv="signins"]'); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');
+    await p.goto(ADMIN); await p.waitForSelector('[data-lv-top] [data-lv="me"]');
+    ACCESS.signIn(ME_EMAIL); await p.reload(); await p.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
+    { const l = await menuWho(p, '.lv-l'); assert(LAST.test(l), l); }
+    await openMe(p);
+    await p.click(`${openPop} [data-lv="signins"]`); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');
     const row = await p.innerText('#lfmpSignins tbody tr');
-    assert(row.includes('PJ Drozo') && row.includes(ME_EMAIL) && Number(row.trim().split(/\s+/).pop()) >= 2 && await p.isHidden('.lv-pop'), row);
+    assert(row.includes('PJ Drozo') && row.includes(ME_EMAIL) && Number(row.trim().split(/\s+/).pop()) >= 2 && !(await p.locator(openPop).count()), row);
     await p.keyboard.press('Escape'); assert(!(await p.locator('#lfmpSignins[open]').count()), 'Esc closes it');
     await routeTeamLogout(p); const before = logouts, n = teamLogouts.length;
-    await p.click('.lv-so[data-lv="signout"]'); await p.waitForURL(/\/signin\/\?out=1$/);
+    await openMe(p); await p.click(`${openPop} [data-lv="signout"]`); await p.waitForURL(/\/signin\/\?out=1$/);   // v1.12.0: Sign out is in the name menu
     assert(logouts > before && teamLogouts.length === n, `team-domain logout called: ${teamLogouts.at(-1)}`);
     await p.close(); cur = page;
   });
+  // v1.12.0: the once-a-day greeting (shared shell 2.4.0), motion on for this page
+  for (const [w, h] of [[1440, 900], [390, 844]]) for (const scheme of ['dark', 'light']) {
+    await check(`greeting ${w} ${scheme}: plays on the first load of the day, "reviews need you" = the filter, a click skips it, then not again that day`, async () => {
+      const c = await ctxFor({ width: w, height: h, scheme }); const p = await c.newPage(); cur = p;
+      await p.emulateMedia({ reducedMotion: 'no-preference' });
+      await p.addInitScript(() => { try { if (!localStorage.getItem('lfmp-counts')) localStorage.setItem('lfmp-counts', JSON.stringify({ scorecards: { n: 1, at: Date.now() - 3600e3 }, clients: { n: 2, at: Date.now() - 3600e3 } })); } catch {} });
+      await p.goto(ADMIN); await p.waitForSelector('[data-lv-greet].play', { timeout: 10000 });
+      const t = (await p.innerText('[data-lv-greet]')).replace(/\s+/g, ' ');
+      assert(/GOOD (MORNING|AFTERNOON|EVENING),\s*PJ/.test(t) && /TAP ANYWHERE TO SKIP/i.test(t), t.slice(0, 80));
+      await p.waitForTimeout(1900);
+      const ks = await p.$$eval('[data-lv-greet] .lv-gr-st > div', els => els.map(e => e.dataset.k));
+      assert(ks.includes('scorecards') && ks.includes('clients'), `the other tools' counts: ${ks}`);
+      await shot(p, `greeting-review_${w}_${scheme}`);
+      await p.mouse.click(w / 2, h / 2); await p.waitForSelector('[data-lv-greet]', { state: 'detached', timeout: 1500 });
+      await p.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
+      const need = await p.evaluate(() => JSON.parse(localStorage.getItem('lfmp-counts') || '{}').reviews?.n);
+      const seg = await p.innerText('[data-lv-seg="need"]');
+      assert(seg.includes(`Needs you · ${need}`), `noted "reviews need you" ${need} = the filter "${seg}"`);
+      const bar = w < 880 ? '[data-lv-ptop]' : '[data-lv-top]';
+      assert(!/PJ Drozo|Sign out/.test(await p.innerText(bar)), 'no name / Sign out in the bar');
+      await openMe(p); await shot(p, `menu-review_${w}_${scheme}`); await p.keyboard.press('Escape');
+      await p.reload(); await p.waitForSelector('.lv-row[data-client]', { timeout: 20000 }); await p.waitForTimeout(500);
+      assert(!(await p.locator('[data-lv-greet]').count()), 'not again that day');
+      await c.close(); cur = page;
+    });
+  }
   await check('sign-in: a non-LFMP Google account is refused (no data); signed out → /signin/?next=<this page>', async () => {
     const p3 = await ctx.newPage();
     try {
@@ -858,9 +889,12 @@ try {
       await measure('submissions'); await shot(p, `submissions_${w}_${scheme}`, w === 390);
       if (w === 390) assert(await p.$eval('[data-lv-title]', h => h.textContent) === 'Submissions', 'phone title on Submissions');
       // the signed-in person: top bar (desktop) / Me (phone), and Me → Team sign-ins
-      if (w === 390) assert(await p.isHidden('.lv-top .lv-who'), 'phone: the name + Sign out live in Me');
-      else { assert(await p.isVisible('.lv-so') && /^(Last signed in|First sign-in)/.test(await p.innerText('.lv-who [data-me-last]')), 'top bar: name, last sign-in, Sign out'); await p.locator('.lv-top').screenshot({ path: join(OUT, `topbar_${w}_${scheme}.png`) }); }
+      // v1.12.0: the bar has the initials only; name, last sign-in and Sign out are in the name menu (desktop and phone)
+      if (w !== 390) { assert(!(await p.locator('.lv-top .lv-who, .lv-top .lv-so').count()), 'top bar: no name, no Sign out'); await p.locator('.lv-top').screenshot({ path: join(OUT, `topbar_${w}_${scheme}.png`) }); }
       await openMe(p); await shot(p, `menu_${w}_${scheme}`);
+      assert(/^(Last signed in|First sign-in)/.test(await p.innerText(`${openPop} .lv-mh .lv-l`)) && await p.isVisible(`${openPop} [data-lv="signout"]`), 'name menu: last sign-in, Sign out');
+      await measure('name menu');
+      if (w === 390) { await p.keyboard.press('Escape'); await p.click('.lv-tabs [data-lv="metab"]'); await p.waitForSelector('[data-lv-me]:not([hidden]) .lv-mi'); }   // the Me tab: the Me screen
       if (w === 390) {
         assert(await p.$$eval('.lv-tabs .lv-tab', t => t.map(x => `${x.textContent.trim()}${x.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews Me*', 'Me tab current');
         assert(await p.isVisible('[data-lv-me] .lv-mi.out'), 'phone Me: red Sign out row');

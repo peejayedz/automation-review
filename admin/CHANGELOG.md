@@ -2,6 +2,11 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.12.0 — 19 Nov 2026: greeting + cleaner top bar
+- **[internal]** A greeting when you sign in, once a day, with what needs you (shared `lfmp-session.js` / `lfmp-ui.css` 2.4.0, the same as Builder v1.21.0 and KPI v1.29.0, PJ's `LFMP_Greeting_Final_1plus9.html`). This page gives "reviews need you", the same count as the "Needs you" filter, and notes it for the other two tools' greetings. Skipped with reduced motion; a click, tap or key ends it.
+- **[internal]** Top bar: no name and no Sign out. The initials open the name menu on desktop and phone (name + Last signed in · Theme · test clients · Refresh · What's new v… · Team sign-ins · Install · Sign out). "Your menu ›" shows under the initials after the greeting for the first 3 days.
+- **[internal]** Tests: `admin/tests/shell.test.mjs` (same in all three repos) covers the greeting and the name menu; `admin/tests/e2e.mjs` opens Sign out from the menu.
+
 ## Review admin v1.11.0 — 19 Nov 2026: busy states (no silent clicks)
 - **[internal]** Shared `lfmp-session.js` / `lfmp-ui.css` 2.3.0 (same as Builder v1.18.0, KPI v1.27.0): press feedback; the pressed button fills with gold (option 1) with the action word, then "✓"; neighbours wait (no double submit); a 3px gold line under the top bar while any request is in flight. The Save / Delete / Start buttons of the details panel use `busyButton`; any other button that starts a request gets it automatically. Reduced motion: gold outline + action word. Cache `lfmp-ui.css?v=2.3.0`, `admin.css` / `admin.js` / `review-logic.mjs?v=1.11.0`. Client pages unchanged.
 
