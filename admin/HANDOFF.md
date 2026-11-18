@@ -2,6 +2,12 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.12.0 Greeting + name menu (shared shell 2.4.0): LIVE 18 Nov 2026 14:54 UTC (`7dc6f8b` + `4bbc014`; deployed by the Builder's admin-site run 44329460367, admin-site 7674f3d040aacd3b)
+- **What it is:** the once-a-day greeting (shared shell). This page gives "reviews need you" (= the Needs you filter) and notes it for the other two tools. The bar shows the initials only; the name menu holds the name, Last signed in, Theme, What's new v1.12.0, Team sign-ins, Install and Sign out.
+- **FIX 3.3:** the menu is fully opaque from its first frame and above the list's "Open ›" column.
+- **Live check (read-only, PJ's Chrome):** no second greeting; the menu is opaque and every item is on top; noted "reviews need you" = 2 = the filter. Sign out not pressed; the What's new card left unread.
+- **Not live (item 4, local only, Andy approves first):** the client logo on plan.html / messages.html is in the working tree only. The live client pages are unchanged.
+
 ## v1.10.0 + v1.11.0: LIVE 18 Nov 2026 07:09 UTC (`aec9959`; deploy 44256607647, fingerprint 04ab155bfbfef86b; live: A–Z, real Boca "Not sent", dark mode clean; Builder HANDOFF v1.18.0)
 
 ## v1.11.0 Busy states ("no silent clicks"): LIVE 18 Nov 2026 (with Builder v1.18.0, KPI v1.27.0)
