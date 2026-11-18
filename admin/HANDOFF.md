@@ -2,7 +2,9 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
-## v1.12.1 Greeting after Sign out + all three numbers (shared shell 2.4.1): TESTED LOCALLY 19 Nov 2026, NOT PUSHED (waiting for PJ)
+## v1.12.1 Greeting after Sign out + all three numbers (shared shell 2.4.1): LIVE 19 Nov 2026 (`67ad062`; KPI `f5b959c` before, Builder `8ae7acd` after; admin-site run 44359509100, admin-site 4935c6c871b5ab14 = the local build)
+- **Live check (read-only):** serves 1.12.1 (`admin.js?v=1.12.1`, whats-new); fresh `readCount` = Needs you filter = 2; 8 rows, no error card. Sign out not pressed.
+- **OPEN:** this count's live read takes ~9.3 s (Apps Script), far past the greeting's ~1.35 s cut, so the other tools' greetings show the last known count (≤ 12 h) or leave it out. See the Builder HANDOFF v1.22.1 for the options.
 - **What it is:** see CHANGELOG v1.12.1 (with Builder v1.22.1 and KPI v1.29.1). Sign out clears "greeted today"; the greeting reads all three counts fresh. `admin/greet-count.mjs` = this page's load (`readData`) + the "Needs you" count (`homeCounts`); admin.js uses both, so the greeting's number and the filter come from the same code. From another tool, `readCount()` reads `saveUrl` from `../config.js` (already public).
 - **Timing:** this page's load waits on the Apps Script (admin_ping, then admin_all + Content reads), so it is the slowest of the three; a late read shows the last known count in the other tools' greeting, and is noted for next time.
 - **Push order:** KPI and Review first, the Builder last (its push deploys); see the Builder HANDOFF v1.22.1.
