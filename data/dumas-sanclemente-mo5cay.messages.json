@@ -1,0 +1,107 @@
+{
+ "brand": {
+  "name": "Dumas & Sanclemente"
+ },
+ "agency": "LFMP",
+ "blanks": [
+  "custom_values.appointment_zoom_link",
+  "Wording to fill in"
+ ],
+ "eyebrow": "Dumas & Sanclemente · LeadPro",
+ "title": "Your follow-up messages, for review",
+ "intro": "These are the texts and emails your leads get from Dumas & Sanclemente, word for word. Mark each one **Looks good**, or click **Change it** and type the wording you'd like. Your answers save as you go.",
+ "footer": "Prepared for Dumas & Sanclemente by Law Firm Marketing Pros · November 2026 · You can come back to this page any time; your answers are saved.",
+ "reviewer": "Dumas & Sanclemente",
+ "questionsAutomation": "setup-questions",
+ "pageTitle": "Message review · Dumas & Sanclemente",
+ "planUrl": "plan.html?c=dumas-sanclemente-mo5cay",
+ "sections": [
+  {
+   "title": "Consultation Confirmation + Reminders",
+   "sub": "2 texts · 4 emails.",
+   "msgs": [
+    {
+     "id": "consultation.s2",
+     "kind": "Email",
+     "when": "Day 0 · right away",
+     "subject": "Appointment Confirmation",
+     "text": "Hi [First name],\n\nYour appointment has been confirmed for [Appointment date] at [Appointment time] [Time zone]\n\nLet us know if you have any questions in the meantime 👍\n\nWhen it is time, please use this Zoom Meeting ID: [custom_values.appointment_zoom_link]\n\n- Dumas & Sanclemente\n\nAdd to google calendar | Add to outlook\n\nCancel | Reschedule"
+    },
+    {
+     "id": "consultation.s3",
+     "kind": "Email",
+     "when": "24 hours before",
+     "subject": "Your Meeting is in 24 Hours!",
+     "text": "Hi [First name],\n\nJust a friendly reminder that our appointment is in 24 Hours.\n\nWhen it is time, please use this zoom Meeting ID: [custom_values.appointment_zoom_link]\n\n- Dumas & Sanclemente"
+    },
+    {
+     "id": "consultation.s4",
+     "kind": "Email",
+     "when": "1 hour before",
+     "subject": "Your Meeting is in 1 hour!",
+     "text": "Hi [First name],\n\nJust a friendly reminder that your appointment is in one hour.\n\nPlease use this zoom Meeting ID: [custom_values.appointment_zoom_link]\n\n- Dumas & Sanclemente"
+    },
+    {
+     "id": "consultation.s5",
+     "kind": "Text",
+     "when": "1 hour before · same time",
+     "text": "Hi [First name], just a friendly reminder that our appointment is in one hour. - Dumas & Sanclemente​"
+    },
+    {
+     "id": "consultation.s6",
+     "kind": "Email",
+     "when": "5 minutes before",
+     "subject": "Your appointment is starting!",
+     "text": "Hi [First name],\n\nOur appointment is about to start. Please join here:\n\n[custom_values.appointment_zoom_link]\n\n- Dumas & Sanclemente"
+    },
+    {
+     "id": "consultation.s7",
+     "kind": "Text",
+     "when": "5 minutes before · same time",
+     "text": "Hi [First name], just a friendly reminder that our appointment is in one hour. - Dumas & Sanclemente​"
+    }
+   ]
+  },
+  {
+   "title": "GHL Build Out: Web Lead + Phone Lead",
+   "sub": "3 emails.",
+   "msgs": [
+    {
+     "id": "ghl-build-out-web-lead-phone-lead.s2",
+     "kind": "Email",
+     "when": "Day 0 · right away",
+     "subject": "Confirmed: We've received your submission!",
+     "text": "Hi [First name],\n\nThank you for reaching out to Dumas & Sanclemente and sharing the details of your incident.\n\nOur dedicated team is now reviewing the information you provided.\n\nIn the coming days, a member of our team will reach out to you to gather more details about your situation.\n\nPlease be on the lookout for a call from our office. The details to watch for are Dumas & Sanclemente office at [Office phone].\n\nIf you see this number, it will be our team getting in touch to discuss your case further.\n\nWe understand the importance of your case and are committed to exploring how we can be of assistance.\n\nThank you for choosing Dumas & Sanclemente.\n\nKind regards,\n\n[Team member's name]\n[Team member's email]\n[Office phone]\nDumas & Sanclemente"
+    },
+    {
+     "id": "ghl-build-out-web-lead-phone-lead.s3",
+     "kind": "Email",
+     "when": "Day 1",
+     "subject": "We're Reviewing Your Incident Form",
+     "text": "Hi [First name],\n\nWe want to assure you that your incident form has been received and our dedicated team is already hard at work reviewing the information you've shared.\n\nNavigating through the complexities of insurance and dealing with the aftermath of an incident can be incredibly frustrating and emotionally taxing.\n\nAt Dumas & Sanclemente, we recognize the burdens you're carrying, and we're here to lighten that load.\n\nHere's How Our Process Works:\n\nStep 1: Discovery\n\nOnce we accept your case, our dedicated team will carry out a comprehensive discovery phase.\n\nThis involves contacting relevant insurance companies, obtaining police reports, and gathering essential information.\n\nStep 2: Assessment\n\nWe dive deep into assessing the damages you've faced, whether it's mounting medical expenses, lost wages, or any other challenges resulting from the incident.\n\nStep 3: Settlement\n\nOur ultimate goal is to work towards a fair settlement with the responsible parties.\n\nOnce an agreement is reached, we guide you through the necessary steps, including signing off on the settlement and receiving the funds.\n\nTo give you peace of mind throughout this process, we'd like to share some successfully handled cases similar to yours:\n\n[Insert Case Study/Review]\n\nIf you have any questions or concerns, please feel free to reach out. We are here to provide the support and guidance you need during this challenging time.\n\nKind regards,\n\n[Team member's name]\n[Team member's email]\n[Office phone]\nDumas & Sanclemente"
+    },
+    {
+     "id": "ghl-build-out-web-lead-phone-lead.s4",
+     "kind": "Email",
+     "when": "Day 2",
+     "subject": "Why Choose Dumas & Sanclemente?",
+     "text": "Hi [First name],\n\nIn challenging times like these, making the right choice for legal representation is pivotal.\n\nWe understand the gravity of your situation, and we want to share why choosing Dumas & Sanclemente is a decision centered around your needs.\n\nFirst and foremost, we acknowledge the urgency in resolving your case.\n\nOur approach is designed to get you the compensation you deserve as quickly as possible.\n\nOur commitment to efficiency is evident in our [XX] rating on [Firm website], highlighting our dedication to achieving prompt and successful resolutions.\n\nBut beyond our ratings lies what truly sets us apart – our sincere compassion.\n\nWe extend our heartfelt apologies for the unfortunate events you or your loved one has experienced.\n\nOur team is not only incredibly experienced but also deeply understands the complications that Personal Injury can bring upon a family.\n\nChoosing Dumas & Sanclemente means choosing a partner who prioritizes your peace of mind, values your time, and is dedicated to securing the best outcome for you.\n\nNo case is too difficult or complex for us.\n\nWith decades of experience dedicated to practicing law, your case benefits from the wealth of knowledge and insight we've gained over [X]+ years.\n\nPlus, with our “No Fee Unless You Win” promise, you can rest assured that your financial well-being is a top priority.\n\nIf you have any questions or concerns, please feel free to reach out. We are here to provide the support and guidance you need during this challenging time.\n\nKind regards,\n\n[Team member's name]\n[Team member's email]\n[Office phone]\nDumas & Sanclemente"
+    }
+   ]
+  },
+  {
+   "title": "Internal Notification: SMS",
+   "sub": "1 alert.",
+   "msgs": [
+    {
+     "id": "internal-notification-sms.s2",
+     "kind": "Alert",
+     "to": "To your team",
+     "when": "Day 0 · right away",
+     "text": "Everyone on your team gets this text:\n\n[Wording to fill in]"
+    }
+   ]
+  }
+ ],
+ "questions": []
+}

@@ -1,0 +1,35 @@
+{
+ "pageTitle": "How every new lead gets followed up · Dumas & Sanclemente",
+ "eyebrow": "Dumas & Sanclemente · LeadPro",
+ "title": "How every new lead gets followed up",
+ "intro": "These are the automations set up for Dumas & Sanclemente in LeadPro: what starts each one, and every text and email your leads get, word for word.",
+ "status": "For your review · November 2026",
+ "cta": {
+  "text": "**Ready to review?** Mark each message “Looks good” or change the wording on your review page. Your answers save as you go.",
+  "button": "Review the messages →"
+ },
+ "footer": "Prepared for Dumas & Sanclemente by Law Firm Marketing Pros · November 2026",
+ "sections": [
+  {
+   "type": "html",
+   "id": "overview",
+   "html": "<h2>Your automations at a glance</h2>\n  <div class=\"rules\">\n    <div class=\"rule\"><strong>Consultation Confirmation + Reminders</strong><span>When a consultation is confirmed, this sends a confirmation email with the Zoom link, then reminders 24 hours, 1 hour and 5 minutes before.</span><span>Starts when: Appointment</span></div>\n    <div class=\"rule\"><strong>GHL Build Out: Web Lead + Phone Lead</strong><span>When someone fills in a form, they get 3 emails over 2 days.</span><span>Starts when: Form Submitted or Contact Tag</span></div>\n    <div class=\"rule\"><strong>Internal Notification: SMS</strong><span>When a lead replies, your team gets an alert right away.</span><span>Starts when: Customer Replied</span></div>\n  </div>"
+  },
+  {
+   "type": "messages",
+   "title": "Every message, word for word",
+   "sub": "Blue words in [brackets] are filled in automatically for each lead. Amber ones are blanks we'll fill in with you."
+  },
+  {
+   "type": "html",
+   "id": "next",
+   "html": "<h2>Where things stand</h2>\n  <p>Read the plan, then mark each message “Looks good” or tell us what to change on your review page. We update the wording in LeadPro and let you know when it's ready to check again.</p>"
+  },
+  {
+   "type": "questions",
+   "id": "questions",
+   "title": "Open items",
+   "sub": "Nothing for you to answer right now."
+  }
+ ]
+}
