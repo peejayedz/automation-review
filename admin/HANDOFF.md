@@ -2,7 +2,7 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
-## Review admin v1.13.0 Part 2: a Done popup for every save (shared shell 2.5.0): READY LOCALLY 20 Nov 2026, NOT PUSHED (push B, after KPI v1.31.0, before Builder v1.25.0)
+## Review admin v1.13.0 Part 2: a Done popup for every save (shared shell 2.5.0): LIVE 20 Nov 2026 (KPI `3e98f83` → Review `64bba24` → Builder `4def994`; admin-site run 44625556680 green, "Changed: deploying admin-site 89d244fbcc5a34e2" = the local build, 103 files). Live check (PJ's Chrome, signed in as the LFMP account): KPI admin Edit mapping on ZZ TEST 2 → Re-read GHL (read only) showed the cyclist + "Reading ZZ TEST 2's pipelines from GHL…" / "Asking GHL nicely for your pipelines…", then after 13 s the popup "Done: pipelines updated · Pipelines 1 · Stages 12 · no new stages · Close / Review mapping"; the bell badge 1 → its Recent jobs line; the Builder and Review admin load with their new bell (the same job listed); no console errors on any of the three
 - **What it is:** CHANGELOG v1.13.0. Save wording (bar on the Edit tab), Start new version, Save reply, Delete response, Rename client, Clear test responses end with the shared Done / Didn't work popup; the page has a bell (recent jobs from all three tools). `admin.js?v=1.13.0`.
 - **Tests (20 Nov, local):** `admin/tests/e2e.mjs` 66/66 (new: every save's Done popup; the Builder harness's `autoResults` records and closes popups), `logic.test.mjs` 12/12, `shell.test.mjs` 42/42, `logo-pages.mjs` 40/40.
 
