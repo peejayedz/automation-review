@@ -2,6 +2,10 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## Review admin v1.13.0 Part 2: a Done popup for every save (shared shell 2.5.0): READY LOCALLY 20 Nov 2026, NOT PUSHED (push B, after KPI v1.31.0, before Builder v1.25.0)
+- **What it is:** CHANGELOG v1.13.0. Save wording (bar on the Edit tab), Start new version, Save reply, Delete response, Rename client, Clear test responses end with the shared Done / Didn't work popup; the page has a bell (recent jobs from all three tools). `admin.js?v=1.13.0`.
+- **Tests (20 Nov, local):** `admin/tests/e2e.mjs` 66/66 (new: every save's Done popup; the Builder harness's `autoResults` records and closes popups), `logic.test.mjs` 12/12, `shell.test.mjs` 42/42, `logo-pages.mjs` 40/40.
+
 ## Builder v1.23.0 (no change in this repo): classic packages linked "as it is": LIVE 20 Nov 2026 (Builder `9115bd3`, admin-site 53c2914f639fe7fe)
 - Classic one-page reviews are retired. A Builder client linked "as it is" to one (Dumas & Sanclemente, `dumas-sanclemente-mo5cay`) had dead links: Link A "This review has moved", Link B "couldn't find this review page".
 - The Builder's Review tab now flags it (amber note) and offers "Move to links A/B (keep <code>)". Its links can't be opened or copied there.

@@ -2,6 +2,16 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.13.0",
+      "date": "Nov 20",
+      "title": "A clear Done for every save",
+      "line": "A popup says what changed (or why it didn't work), and the bell keeps the list.",
+      "items": [
+        { "type": "new", "text": "Saving wording, starting a new version, saving a reply or deleting responses now ends with a popup that says Done and what changed, or why it didn't work." },
+        { "type": "new", "text": "A bell at the top lists your recent jobs from all three tools." }
+      ]
+    },
+    {
       "version": "1.12.2",
       "date": "Nov 19",
       "title": "The greeting's three numbers show at once",

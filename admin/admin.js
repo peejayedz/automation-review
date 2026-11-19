@@ -7,10 +7,10 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount } from './lfmp-session.js';
+import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.12.2';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
 import * as GC from './greet-count.mjs?v=1.12.2';   // v1.12.1: the load + the "Needs you" count (list + greeting)
-export const VERSION = '1.12.2';
+export const VERSION = '1.13.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -383,7 +383,7 @@ function editMsgHtml(code, m, lb) {
       ${email ? `<label class="f" for="edSubj">Subject<input type="text" id="edSubj" value="${esc(w.subject || '')}" maxlength="300" required></label>` : ''}
       <label class="f" for="edText">${email ? 'Email body' : 'Text message'}<textarea id="edText" rows="${rows}" required>${esc(w.text || '')}</textarea></label>
       <p class="sub edhint">Write names as [First name], [Office phone]. They fill in for each lead.</p>
-      <p class="ferr" id="edErr" role="alert"></p>
+      <div data-lv-jobhost="ar:ed"></div><p class="ferr" id="edErr" role="alert"></p>
       <div class="btnrow"><button class="btn p" type="submit">Save</button><button class="btn" type="button" data-ed-cancel>Cancel</button>${w.edited ? `<button class="btn lnkbtn" type="button" data-ed-restore="${esc(m.id)}" title="Puts the original wording back in the boxes. Nothing is saved until you click Save.">Restore original</button>` : ''}</div>
     </form></li>`;
 }
@@ -496,10 +496,14 @@ function openHtml(r, k) {
 }
 
 // ---------- actions ----------
+// v1.13.0 (Part 2, shared shell 2.5.0): every save here ends with the Done / Didn't work popup (and a line in the bell).
+// Saves take a second or two: the clicked button's gold fill is the progress; Save wording also shows the working bar.
+const arJob = (o) => startJob({ tool: 'review', kind: 'other', ...o });
 async function saveStatus(form) {
   if (busy) { toast('Still saving, one moment…'); return; }
   const id = form.dataset.id, client = form.dataset.client, status = form.status.value, reply = form.reply.value.trim();
   const btn = form.querySelector('[type="submit"]'); busy = true; busyButton(btn, 'Saving…', { ms: 3000 });   // v1.11.0: the gold fill (shared)
+  const job = arJob({ client: nameOf(client), what: 'Save reply', title: `Saving the reply for ${nameOf(client)}…`, typicalMs: 3000 });
   try {
     const j = await post({ action: 'admin_status', client, id, status, lfmp_reply: reply, name: who('LFMP team') });
     if (!j.ok) throw new Error(j.error || 'Could not save');
@@ -507,18 +511,21 @@ async function saveStatus(form) {
     if (i > -1) D.rows[i] = { ...D.rows[i], ...(j.row || { status, lfmp_reply: reply }), status: L.normStatus((j.row || {}).status || status) };
     D.log.push({ timestamp: new Date().toISOString(), client, request_id: id, event: 'status', status, note: reply, by: who('LFMP team') });
     toast('Saved. The client sees it straight away.');
-  } catch (err) { toast(`Couldn't save: ${err.message}`); }
+    job.done({ title: 'Done: reply saved', lead: 'The client sees it straight away on Link B.', line: 'Reply saved', items: [['Status', status]] });
+  } catch (err) { toast(`Couldn't save: ${err.message}`); job.fail({ reason: `Couldn't save: ${err.message}`, nothingChanged: 'the client sees the same as before.', line: 'Reply not saved', onRetry: () => saveStatus(form) }); }
   finally { busy = false; draw(); }
 }
 async function deleteRow(id) {
   const r = D.rows.find(x => x.id === id); if (!r) return;
   if (busy) { toast('Still saving, one moment…'); return; }
   busy = true; toast('Deleting…');
+  const job = arJob({ kind: 'remove', client: nameOf(r.client), what: 'Delete response', title: `Deleting one response for ${nameOf(r.client)}…`, typicalMs: 3000 });
   try {
     const j = await post({ action: 'admin_delete', client: r.client, ids: [id] });
     if (!j.ok || !j.deleted) throw new Error(j.error || 'Not found');
     D.rows = D.rows.filter(x => x.id !== id); F.open = null; F.armed = null; toast('Deleted');
-  } catch (err) { toast(`Couldn't delete: ${err.message}`); }
+    job.done({ title: 'Done: response deleted', lead: `One response for ${nameOf(r.client)} was deleted from the Sheet.`, line: 'Response deleted' });
+  } catch (err) { toast(`Couldn't delete: ${err.message}`); job.fail({ reason: `Couldn't delete: ${err.message}`, nothingChanged: true, line: 'Response not deleted' }); }
   finally { busy = false; draw(); }
 }
 async function rename(code, value) {
@@ -552,8 +559,12 @@ async function saveMsg(form) {
   if (!fields.length) { E.open = null; openDetails(code, 'edit'); toast('No changes'); return; }
   if (busy) { toast('Still saving, one moment…'); return; }
   const b = form.querySelector('[type="submit"]'); busy = true; busyButton(b, 'Saving…', { ms: 3000 }); $('edErr').textContent = '';
-  try { await saveEdits(code, m.auto, fields); E.open = null; toast('Saved. Link B shows the new wording.'); openDetails(code, 'edit'); $('dPanel').querySelector(`[data-ed-open="${CSS.escape(m.id)}"]`)?.focus(); }
-  catch (err) { $('edErr').textContent = `Couldn't save: ${err.message}`; b.disabled = false; b.textContent = 'Save'; }
+  const job = arJob({ client: nameOf(code), what: 'Save wording', title: `Saving the new wording for ${nameOf(code)}…`, host: 'ar:ed', typicalMs: 3000 });
+  try {
+    await saveEdits(code, m.auto, fields); E.open = null; toast('Saved. Link B shows the new wording.'); openDetails(code, 'edit'); $('dPanel').querySelector(`[data-ed-open="${CSS.escape(m.id)}"]`)?.focus();
+    job.done({ title: 'Done: wording saved', lead: `The client's Link B shows the new wording for ${nameOf(code)} straight away.`, line: 'Wording saved', items: [['Shows on', 'Link B (the client\'s page)']] });
+  }
+  catch (err) { $('edErr').textContent = `Couldn't save: ${err.message}`; b.disabled = false; b.textContent = 'Save'; job.fail({ reason: `Couldn't save: ${err.message}`, nothingChanged: 'Link B shows the same wording as before.', line: 'Wording not saved' }); }
   finally { busy = false; }
 }
 async function startVersion(code, auto) {
@@ -562,11 +573,13 @@ async function startVersion(code, auto) {
   // Link B drops an automation's wording edits when a new version starts, so the current wording is saved again after it.
   const carry = editMsgs(code).filter(m => m.auto === auto).map(m => [m, L.shownWording(m, lb.edits)]).filter(([, w]) => w.edited);
   busy = true; const b = $('dPanel').querySelector('[data-ed-ver-go]'); if (b) busyButton(b, 'Starting…', { ms: 3000 });
+  const job = arJob({ client: nameOf(code), what: 'Start new version', title: `Starting version ${nv} for ${nameOf(code)}…`, typicalMs: 4000 });
   try {
     await saveEdits(code, auto, [['version', nv]]);
     for (const [m, w] of carry) await saveEdits(code, auto, L.editFieldsFor(m, {}, w.subject, w.text));
     E.ver = null; toast(`Version ${nv} started. The client reviews it again on Link B.`);
-  } catch (err) { toast(`Couldn't start the new version: ${err.message}`); }
+    job.done({ title: `Done: version ${nv} started`, lead: 'The client reviews this automation again on Link B. Earlier answers are kept.', line: `Version ${nv} started` });
+  } catch (err) { toast(`Couldn't start the new version: ${err.message}`); job.fail({ reason: `Couldn't start the new version: ${err.message}`, line: 'New version not started' }); }
   finally { busy = false; openDetails(code, 'edit'); drawHome(); }
 }
 
@@ -672,15 +685,17 @@ document.addEventListener('submit', async e => {
     const v = $('renIn').value.trim(); if (!v) { $('renIn').focus(); return; }
     if (v === nameOf(dpCode)) { dpMode = null; openDetails(dpCode, dpTab); toast('No changes'); return; }
     const b = f.querySelector('[type="submit"]'); busyButton(b, 'Saving…', { ms: 3000 });
-    try { await rename(dpCode, v); dpMode = null; toast('Client name saved'); drawHome(); openDetails(dpCode, dpTab); }
-    catch (err) { toast(`Couldn't save: ${err.message}`); b.disabled = false; b.textContent = 'Save name'; }
+    const job = arJob({ client: nameOf(dpCode), what: 'Rename client', title: `Saving the new name…`, typicalMs: 3000 });
+    try { await rename(dpCode, v); dpMode = null; toast('Client name saved'); drawHome(); openDetails(dpCode, dpTab); job.done({ title: 'Done: client name saved', lead: `Shown as "${v}" in Review admin.`, line: 'Client name saved' }); }
+    catch (err) { toast(`Couldn't save: ${err.message}`); b.disabled = false; b.textContent = 'Save name'; job.fail({ reason: `Couldn't save: ${err.message}`, nothingChanged: true, line: 'Name not saved' }); }
     return;
   }
   if (f.dataset.form === 'clear') {
     if ($('clrIn').value.trim().toLowerCase() !== nameOf(dpCode).trim().toLowerCase()) { $('clrErr').textContent = 'Type the client name exactly to confirm.'; return; }
     const b = $('clrGo'); busyButton(b, 'Deleting…', { ms: 4000 });
-    try { const n = await clearResponses(dpCode, $('clrScope').value); dpMode = null; toast(n ? `Cleared ${n} response${n === 1 ? '' : 's'}` : 'Nothing to clear'); drawHome(); openDetails(dpCode, dpTab); }
-    catch (err) { $('clrErr').textContent = `Couldn't clear: ${err.message}`; b.disabled = false; b.textContent = 'Delete responses'; }
+    const nm = nameOf(dpCode), job = arJob({ kind: 'remove', client: nm, what: 'Clear test responses', title: `Deleting ${nm}'s test responses…`, typicalMs: 4000 });
+    try { const n = await clearResponses(dpCode, $('clrScope').value); dpMode = null; toast(n ? `Cleared ${n} response${n === 1 ? '' : 's'}` : 'Nothing to clear'); drawHome(); openDetails(dpCode, dpTab); job.done({ title: n ? 'Done: responses cleared' : 'Done: nothing to clear', lead: n ? `${n} response${n === 1 ? '' : 's'} for ${nm} deleted from the Sheet.` : `${nm} had no responses to clear.`, line: n ? `Cleared ${n} response${n === 1 ? '' : 's'}` : 'Nothing to clear' }); }
+    catch (err) { $('clrErr').textContent = `Couldn't clear: ${err.message}`; b.disabled = false; b.textContent = 'Delete responses'; job.fail({ reason: `Couldn't clear: ${err.message}`, nothingChanged: true, line: 'Responses not cleared' }); }
   }
 });
 

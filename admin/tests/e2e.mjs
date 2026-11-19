@@ -18,6 +18,8 @@ await mkdir(OUT, { recursive: true });
 const { chromium } = await import(pathToFileURL(join(B, 'node_modules/playwright-core/index.mjs')).href);
 const { loadCodeGs } = await import(pathToFileURL(join(B, 'tests/mock/apps-script.mjs')).href);
 const { createTestAccess, TEST_REVIEW_KEY, TEST_TOKEN } = await import(pathToFileURL(join(B, 'admin-site/lib/test-access.mjs')).href);
+// v1.13.0 (Part 2): saves end with the shared Done / Didn't work popup; it's recorded (window.__lvResults) and closed so the checks go on
+const { autoResults } = await import(pathToFileURL(join(B, 'tests/e2e/harness.mjs')).href);
 
 const KEY = TEST_REVIEW_KEY;   // the Apps Script ADMIN_KEY = the server's REVIEW_ADMIN_KEY; the browser never sees it
 const ME_EMAIL = 'pj@lawfirmmarketingpros.com';
@@ -126,6 +128,7 @@ const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePa
 async function ctxFor({ width = 1440, height = 900, scheme = 'light' } = {}) {
   // Motion (Nov 2026): reduced motion, so the details panel opens/closes at once here; the slide is tested in ghl-subaccount-builder tests/e2e/motion.mjs.
   const ctx = await browser.newContext({ reducedMotion: 'reduce', viewport: { width, height }, colorScheme: scheme });
+  await autoResults(ctx);
   // v1.9.0: the shared What's new card shows on the first visit of a version and would cover the list: seen, once per tab
   await ctx.addInitScript(() => { try { if (!sessionStorage.getItem('e2e-news')) { sessionStorage.setItem('e2e-news', '1'); localStorage.setItem('ar-news-seen', '9.9.9'); } } catch {} });
   // The browser never talks to GitHub any more (the server does): any direct call fails the run.
@@ -145,7 +148,12 @@ async function signIn(page) {
 const ROW = c => `.lv-row[data-client="${c}"]`;
 const meBtn = async p => ((await p.isVisible('[data-lv-top] [data-lv="me"]')) ? '[data-lv-top] [data-lv="me"]' : '[data-lv-ptop] [data-lv="me"]');
 // v1.12.0 (shell 2.4.0): the initials open the name menu on desktop AND phone; the phone's Me tab = the Me screen
-async function openMe(p) { await p.click(await meBtn(p)); await p.waitForSelector('.lv-pop:not([hidden]) .lv-mi'); }
+async function openMe(p) {
+  const sel = await meBtn(p);
+  try { await p.click(sel, { timeout: 8000 }); }
+  catch (e) { const why = await p.evaluate(s => { const b = document.querySelector(s); if (!b) return 'no button'; const r = b.getBoundingClientRect(); const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return `on top: ${top?.className || top?.tagName} | res: ${document.querySelectorAll('[data-lv-res-shade]').length} | ${JSON.stringify(window.__lvResults || [])}`.slice(0, 600); }, sel); throw new Error(`Me button not clickable: ${why}`); }
+  await p.waitForSelector('.lv-pop:not([hidden]) .lv-mi');
+}
 const openPop = '.lv-pop:not([hidden])';
 // the name + "Last signed in …" now live in that menu (the bar shows the initials only)
 async function menuWho(p, cls = '.lv-n') { await openMe(p); const t = (await p.innerText(`${openPop} .lv-mh ${cls}`)).trim(); await p.keyboard.press('Escape'); return t; }
@@ -174,7 +182,9 @@ try {
   await check('v2 shell: top bar LFMP · Clients / Scorecards / Reviews (Reviews current), no + and no bell on Reviews, initials only (v1.12.0: name + Sign out in the name menu)', async () => {
     assert(await page.isVisible('.lv-top') && await page.isHidden('.lv-tabs') && await page.isHidden('.lv-ptop'), 'desktop: one top bar, no phone bar / tabs');
     assert(await page.$$eval('.lv-nav a', as => as.map(a => `${a.textContent}${a.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews*', 'nav');
-    assert(!(await page.locator('[data-lv="plus"], .lv-bell, .top, .toolchip, .hero, .strip, .foot, #themeSeg, #topMenu').count()), 'a + / bell / old header piece');
+    assert(!(await page.locator('[data-lv="plus"], .top, .toolchip, .hero, .strip, .foot, #themeSeg, #topMenu').count()), 'a + / old header piece');
+    // v1.13.0 (Part 2, shared shell 2.5.0): every tool has a bell; here it lists recent jobs ("Notifications")
+    assert(await page.locator('[data-lv-top] [data-lv="bell"]').count() === 1 && /^Notifications/.test(await page.getAttribute('[data-lv-top] [data-lv="bell"]', 'aria-label')), 'the recent-jobs bell');
     assert(!(await page.locator('.lv-top .lv-who, .lv-top .lv-so').count()) && !/PJ Drozo|Sign out/.test(await page.innerText('.lv-top')), 'no name / Sign out in the bar');
     assert(await menuWho(page) === 'PJ Drozo', 'the name is in the name menu');
     assert(await page.$eval('html', h => h.classList.contains('lfmp-v2')), 'lfmp-v2');
@@ -545,7 +555,14 @@ try {
     await page.fill('#clrIn', 'ZZ TEST 2'); await page.click('#clrGo'); await page.waitForFunction(() => /Cleared 2 responses/.test(document.getElementById('toast').textContent));
     const p = lastPost('admin_delete'); assert(p.client === 'zz-test-2-qpqhx7' && p.ids.length === 2 && p.ids.includes(ids.z0) && p.ids.includes(ids.z1), JSON.stringify(p));
   });
+  await check('Part 2: every save ended with the shared Done popup (wording, new version, reply, delete, clear), plain words, nothing red', async () => {
+    const r = await page.evaluate(() => window.__lvResults || []);
+    for (const t of [/^Done: wording saved$/, /^Done: version [\d.]+ started$/, /^Done: reply saved$/, /^Done: response deleted$/, /^Done: (responses cleared|nothing to clear)$/])
+      assert(r.some(x => t.test(x.title) && !x.bad), `${t}: ${r.map(x => x.title).join(' | ')}`);
+    assert(r.every(x => !/in_progress|queued|undefined/.test(x.text)), 'plain words');
+  });
   await check('Me (avatar): Theme · Show test clients · Refresh now (updated …) · Team sign-ins · What\'s new v<VERSION> · Install the app · Submissions · Sign out (no key, no Lock); Refresh works', async () => {
+    await page.waitForFunction(() => !document.querySelector('[data-lv-res-shade]'));   // the last save's Done popup has been closed (recorded)
     await page.keyboard.press('Escape');
     await openMe(page);
     const items = await page.$$eval('.lv-pop .lv-mi', b => b.map(x => x.querySelector('span')?.textContent || x.textContent).map(s => s.trim()));
@@ -856,7 +873,7 @@ try {
       // shell: phone = band · icon · REVIEWS · avatar (no +, no bell), bottom tabs (Reviews current), rows ≥ 44 px; desktop = one top bar
       if (w === 390) {
         assert(await p.isVisible('.lv-ptop') && await p.isHidden('.lv-top') && await p.isVisible('.lv-tabs'), 'phone bars');
-        assert(await p.$eval('[data-lv-title]', h => h.textContent) === 'Reviews' && !(await p.locator('.lv-ptop [data-lv="plus"], .lv-ptop .lv-bell').count()), 'phone title / no + / no bell');
+        assert(await p.$eval('[data-lv-title]', h => h.textContent) === 'Reviews' && !(await p.locator('.lv-ptop [data-lv="plus"]').count()) && await p.locator('[data-lv-ptop] .lv-bell').count() === 1, 'phone title / no + / the recent-jobs bell');
         assert(await p.$$eval('.lv-tabs .lv-tab', t => t.map(x => `${x.textContent.trim()}${x.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews* Me', 'tabs');
         const small = await p.$$eval('.lv-row, .lv-tab, .lv-seg button, .lv-search, .lv-ptop .lv-avbtn', els => els.filter(e => { const r = e.getBoundingClientRect(); const a = getComputedStyle(e, '::after'); const ah = a.content !== 'none' ? parseFloat(a.height) : 0; return Math.max(r.height, ah) < 44; }).map(e => e.className));
         assert(!small.length, `tap targets under 44 px: ${small.join(', ')}`);
