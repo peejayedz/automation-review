@@ -2,6 +2,12 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## Builder v1.23.0 (no change in this repo): classic packages linked "as it is": LIVE 20 Nov 2026 (Builder `9115bd3`, admin-site 53c2914f639fe7fe)
+- Classic one-page reviews are retired. A Builder client linked "as it is" to one (Dumas & Sanclemente, `dumas-sanclemente-mo5cay`) had dead links: Link A "This review has moved", Link B "couldn't find this review page".
+- The Builder's Review tab now flags it (amber note) and offers "Move to links A/B (keep <code>)". Its links can't be opened or copied there.
+- Adding a client with a classic package offers only the move.
+- Nothing here changed: `data/dumas-sanclemente-mo5cay.json` is untouched until someone moves Dumas and presses Publish in the Builder. See the Builder HANDOFF v1.23.0.
+
 ## v1.12.2 The greeting's numbers at once (shared shell 2.4.2): DEPLOYED 19 Nov 2026 (`b268957`; KPI `3d4b9ca` before, Builder `8ee757a` after; admin-site run 44496387224 green, admin-site c7bd791fc03d7012 = the local build)
 - **Live check: PJ to test by Sign out → sign in.** No Chrome live check was run.
 - **What it is:** see CHANGELOG v1.12.2 and the Builder HANDOFF v1.22.2. The team site's `/api/greet-counts` counts "Needs you" with `admin/greet-count.mjs` `readCounts()` (hidden + shown), making this page's reads on the server (admin_ping / admin_all, the public data files, the Apps Script `?client=` read). Its ~9 s now happens in the background, never in front of anyone.
