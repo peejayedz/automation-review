@@ -2,7 +2,8 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
-## v1.12.2 The greeting's numbers at once (shared shell 2.4.2): TESTED LOCALLY 19 Nov 2026, NOT PUSHED (waiting for PJ)
+## v1.12.2 The greeting's numbers at once (shared shell 2.4.2): DEPLOYED 19 Nov 2026 (`b268957`; KPI `3d4b9ca` before, Builder `8ee757a` after; admin-site run 44496387224 green, admin-site c7bd791fc03d7012 = the local build)
+- **Live check: PJ to test by Sign out → sign in.** No Chrome live check was run.
 - **What it is:** see CHANGELOG v1.12.2 and the Builder HANDOFF v1.22.2. The team site's `/api/greet-counts` counts "Needs you" with `admin/greet-count.mjs` `readCounts()` (hidden + shown), making this page's reads on the server (admin_ping / admin_all, the public data files, the Apps Script `?client=` read). Its ~9 s now happens in the background, never in front of anyone.
 - **Push order:** KPI and Review first, the Builder last.
 
