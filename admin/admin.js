@@ -8,9 +8,9 @@
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
 import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount } from './lfmp-session.js';
-import * as L from './review-logic.mjs?v=1.12.1';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
-import * as GC from './greet-count.mjs?v=1.12.1';   // v1.12.1: the load + the "Needs you" count (list + greeting)
-export const VERSION = '1.12.1';
+import * as L from './review-logic.mjs?v=1.12.2';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
+import * as GC from './greet-count.mjs?v=1.12.2';   // v1.12.1: the load + the "Needs you" count (list + greeting)
+export const VERSION = '1.12.2';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();

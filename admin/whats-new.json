@@ -2,6 +2,15 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.12.2",
+      "date": "Nov 19",
+      "title": "The greeting's three numbers show at once",
+      "line": "The team site keeps them ready, so they don't wait on the other tools.",
+      "items": [
+        { "type": "fixed", "text": "The greeting's three numbers now show at once, also on the first sign-in of the day. The team site keeps them ready (updated every 10 minutes)." }
+      ]
+    },
+    {
       "version": "1.12.1",
       "date": "Nov 19",
       "title": "The greeting plays again after you sign out and back in",

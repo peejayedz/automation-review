@@ -2,6 +2,11 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.12.2 — 19 Nov 2026: the greeting's numbers at once
+- **[internal]** The greeting's three numbers show at once, also on the first sign-in of the day (shared `lfmp-session.js` 2.4.2, with Builder v1.22.2 and KPI v1.29.2). The team site keeps them (new `POST /api/greet-counts`, refreshed every 10 minutes) and counts them with the tools' own `greet-count` modules; per-tool reads are the fallback.
+- **[internal]** `admin/greet-count.mjs` `readCounts()`: one read, "Needs you" with test clients hidden and shown; the server passes the Apps Script address, the public data address and its own fetch. `review-logic.mjs` / `greet-count.mjs` are imported as `?v=1.12.2`.
+- **[internal]** Tests: `admin/tests/shell.test.mjs` (same in all three repos) covers the order; the endpoint is tested in the Builder. `admin/tests/e2e.mjs` gives its test server the three greet-count modules (as the site does), so the endpoint isn't a "not set up" refusal there.
+
 ## Review admin v1.12.1 — 19 Nov 2026: greeting after Sign out + all three numbers
 - **[internal]** The greeting plays again after you sign out and back in, and always shows all three numbers (shared `lfmp-session.js` 2.4.1, the same as Builder v1.22.1 and KPI v1.29.1; look unchanged). Sign out clears "greeted today"; nothing else replays it. When the greeting starts, the other two tools' counts are read fresh (read-only, through the team site); a late or failed read falls back to the last known count (≤ 12 h) or is left out.
 - **[internal]** New `admin/greet-count.mjs` holds this page's load (`readData`: the data/ and plans/ lists, admin_ping, admin_all, data files, Content reads, Builder records) and the "Needs you" count (`homeCounts`, `sumOf`, `nameOf`, `isTest`); admin.js uses them, and `readCount()` makes the same reads for the other tools' greetings. No writes, no GHL. `review-logic.mjs` is imported as `?v=1.12.1`.

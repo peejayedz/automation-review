@@ -2,6 +2,10 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.12.2 The greeting's numbers at once (shared shell 2.4.2): TESTED LOCALLY 19 Nov 2026, NOT PUSHED (waiting for PJ)
+- **What it is:** see CHANGELOG v1.12.2 and the Builder HANDOFF v1.22.2. The team site's `/api/greet-counts` counts "Needs you" with `admin/greet-count.mjs` `readCounts()` (hidden + shown), making this page's reads on the server (admin_ping / admin_all, the public data files, the Apps Script `?client=` read). Its ~9 s now happens in the background, never in front of anyone.
+- **Push order:** KPI and Review first, the Builder last.
+
 ## v1.12.1 Greeting after Sign out + all three numbers (shared shell 2.4.1): LIVE 19 Nov 2026 (`67ad062`; KPI `f5b959c` before, Builder `8ae7acd` after; admin-site run 44359509100, admin-site 4935c6c871b5ab14 = the local build)
 - **Live check (read-only):** serves 1.12.1 (`admin.js?v=1.12.1`, whats-new); fresh `readCount` = Needs you filter = 2; 8 rows, no error card. Sign out not pressed.
 - **OPEN:** this count's live read takes ~9.3 s (Apps Script), far past the greeting's ~1.35 s cut, so the other tools' greetings show the last known count (≤ 12 h) or leave it out. See the Builder HANDOFF v1.22.1 for the options.

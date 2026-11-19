@@ -87,6 +87,10 @@ const DEPS = ACCESS.deps({
   },
   review: body => { posts.push(body); try { return { body: gs.post(body) }; } catch (e) { return { body: { ok: false, error: e.message } }; } },
 });
+// v1.12.2: /api/greet-counts counts with the three tools' greet-count modules (on Cloudflare: the assembled site's copies;
+// here the repos' own files, KPI next door). Only this page's data is mocked, so the other two counts just fail quietly.
+DEPS.greet = Object.fromEntries(await Promise.all([['clients', join(B, 'page/greet-count.js')], ['scorecards', join(AR, '../leadpro-kpi/admin/greet-count.mjs')],
+  ['reviews', join(AR, 'admin/greet-count.mjs')], ['session', join(B, 'page/lfmp-session.js')]].map(async ([k, f]) => [k, await import(pathToFileURL(f).href)])));
 const refused = () => DEPS.logs.filter(l => l.api === 'refused');
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); };
 let ORIGIN = '';

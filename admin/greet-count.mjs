@@ -4,7 +4,7 @@
 // page makes on load (the data/ and plans/ lists on GitHub through /api/gh, admin_ping + admin_all through /api/review,
 // the public data files and Content reads, the Builder records), then the same count. No writes, no GHL, no DOM; the
 // caller passes its own api / ghFetch / loadBuilderRecords. Never shown on screen.
-import * as L from './review-logic.mjs?v=1.12.1';
+import * as L from './review-logic.mjs?v=1.12.2';
 import { displayName } from './lfmp-session.js';
 
 export const TESTS_KEY = 'ar-admin-tests';   // Me → "Show test clients" (per browser), as the list
@@ -99,10 +99,17 @@ async function saveUrlOf() {
   const t = await (await fetch(new URL('../config.js', import.meta.url), { cache: 'no-store' })).text();
   return /saveUrl\s*:\s*["']([^"']+)["']/.exec(t)?.[1] || '';
 }
-export async function readCount({ api, ghFetch, loadBuilderRecords, store = globalThis.localStorage } = {}) {
-  const saveUrl = await saveUrlOf();
-  if (!saveUrl) return {};
-  const D = await readData({ post: makePost(api), ghFetch, loadBuilderRecords, saveUrl, base: baseFor() });
+// readCounts (v1.12.2): this page's load, read only, then "Needs you" with test clients hidden and shown (the team
+// site's /api/greet-counts keeps both). The server passes saveUrl / base / fetch; in a browser they default to this site's.
+export const KIND = 'reviews';
+export async function readCounts({ api, ghFetch, loadBuilderRecords, saveUrl, base, fetch } = {}) {
+  const url = saveUrl || await saveUrlOf();
+  if (!url) throw new Error('no review backend');
+  const D = await readData({ post: makePost(api), ghFetch, loadBuilderRecords, saveUrl: url, base: base || baseFor(), fetch });
+  return { hidden: homeCounts(D, false).need, shown: homeCounts(D, true).need };
+}
+export async function readCount({ store = globalThis.localStorage, ...io } = {}) {
+  const c = await readCounts(io);
   let showTests = false; try { showTests = store?.getItem(TESTS_KEY) === '1'; } catch {}
-  return { reviews: homeCounts(D, showTests).need };
+  return { reviews: showTests ? c.shown : c.hidden };
 }
