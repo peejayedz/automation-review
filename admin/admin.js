@@ -10,7 +10,7 @@
 import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob, confirmAction } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.14.0';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
 import * as GC from './greet-count.mjs?v=1.12.2';   // v1.12.1: the load + the "Needs you" count (list + greeting)
-export const VERSION = '1.14.1';
+export const VERSION = '1.14.2';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -652,7 +652,7 @@ async function removePackage(code) {
   if (!rec) { await confirmAction({ title: `${name}'s package wasn't made in the Builder`, lead: 'Only packages made in the Builder can be removed from here. Ask PJ to take this one off by hand.', ok: 'OK' }); return; }
   const published = ['published', 'publish_failed'].includes(rec.review?.status);
   if (!await confirmAction({ title: `Remove ${name}'s review package?`, danger: true, typeName: name, ok: 'Remove review package',
-    will: published ? [['Client pages', 'Link A and Link B say "This review isn\'t available. Your LFMP team will be in touch."'], ['automation-review', `the package's 3 files (${code}) are replaced by a small "removed" note`], ['Builder', 'the preview and the links A / B on the client record']]
+    will: published ? [['Client pages', `Link A and Link B say "This review isn't available. Your ${String(rec.brand || '').toUpperCase() === 'WPP' ? 'WPP' : 'LFMP'} team will be in touch."`], ['automation-review', `the package's 3 files (${code}) are replaced by a small "removed" note`], ['Builder', 'the preview and the links A / B on the client record']]
       : [['Builder', 'the review package preview (never published: nothing on the client\'s pages)']],
     wont: ['The client\'s earlier answers and Submissions are kept (the Sheet isn\'t touched)', 'Nothing in GHL is deleted: no workflow, template or contact', `The code ${code} stays with this client`] })) return;
   const rid = `ar-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, t0 = Date.now();

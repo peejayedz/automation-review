@@ -2,6 +2,11 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.14.2 — 20 Nov 2026: the "isn't available" page follows the agency
+- **[client]** A removed package's Link A (plan.html), Link B (messages.html) and old link (index.html) show the package's agency, read from the "removed" marker (Builder v1.26.1 keeps `agency` + the agency logo in it, no names): a WPP package shows the WPP logo, "Your WPP team will be in touch." and "Web Promotion Partners" in the title and footer. LFMP packages look exactly as before. plan.html and messages.html share one `applyAgency()` with the normal pages (same code, moved). The old link now reads `data/<code>.removed.json` (code, date and agency only) instead of a HEAD check; it still never reads review content.
+- **[internal]** Remove review package's confirm says "Your WPP team" for a WPP client.
+- **[internal]** Tests: the normal pages are unchanged: Mahdavi Link A (plans/ + plan.html) and B, Dumas A and B, ZZ TEST 2 A and B, the old link, an unknown code and a WPP copy of ZZ TEST 2, rendered before and after at 1440 + 390, light + dark: 44/44 identical (text, title, pixels). Builder `tests/e2e/removed-pages.mjs` 32/32.
+
 ## Review admin v1.14.1 — 20 Nov 2026: Remove review package finds the Builder record
 - **[internal]** Fix: ⋯ → Remove review package always said "<Client>'s package wasn't made in the Builder" (live in v1.14.0). It matched `review.code` on the shared loader's short rows, which only have `reviewCode`. Now it matches `reviewCode`, then reads that record in full. Remove is offered only for a package the Builder made (preview / published / publish failed); a linked one is refused, as `review-remove.yml` refuses it. The same lookup now lets Undo edit / Undo version log on the Builder record. Nothing was ever removed or sent by the bug.
 - **[internal]** Tests: `admin/tests/e2e.mjs` 68/68 (new: a Builder-made package asks first, red, name typed, Esc = nothing dispatched; a linked one is refused). It fails on v1.14.0.

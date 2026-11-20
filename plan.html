@@ -184,6 +184,20 @@ $("#theme-btn").addEventListener("click", () => {
   applyTheme(THEMES[(THEMES.findIndex(x => x[0] === now) + 1) % THEMES.length][0], true);
 });
 const AGENCIES = { LFMP: "Law Firm Marketing Pros", WPP: "Web Promotion Partners" };
+// Agency logo: LFMP (default) or WPP, from the messages file's "agency" (or a removed package's marker, which keeps
+// only the agency and its logo). Returns [code, name].
+function applyAgency(src){
+  const agency = AGENCIES[String(src.agency || "LFMP").toUpperCase()] ? String(src.agency || "LFMP").toUpperCase() : "LFMP";
+  const agencyName = AGENCIES[agency];
+  if (agency !== "LFMP"){
+    const L = src.agencyLogo || {}; // {logoMask (transparent PNG data URI), logoWidth, logoHeight, color}: brand colour in light mode, white in dark
+    $("#agency-brand").innerHTML = /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoMask || "")
+      ? '<span class="agency-logo" role="img" aria-label="' + esc(agencyName) + '" style="width:' + (+L.logoWidth || 112) + "px;height:" + (+L.logoHeight || 44) + "px;-webkit-mask-image:url(" + L.logoMask + ");mask-image:url(" + L.logoMask + ")" + (/^#[0-9a-f]{3,8}$/i.test(L.color || "") ? ";--agency-ink:" + L.color : "") + '"></span>'
+      : '<span class="agency-word">' + esc(agencyName) + "</span>";
+    $("#brands").setAttribute("aria-label", "LeadPro and " + agencyName);
+  }
+  return [agency, agencyName];
+}
 (async function(){
   if (!code){ fail("This link is missing the client code."); return; }
   let P, M;
@@ -192,22 +206,20 @@ const AGENCIES = { LFMP: "Law Firm Marketing Pros", WPP: "Web Promotion Partners
   } catch(e){
     // Removed by the LFMP team (Builder → Remove review package): data/<code>.json is a small "removed" marker. The
     // client's earlier answers are kept; the page only says it isn't available. Any other missing code: "check the link".
+    // The marker keeps the package's agency (WPP packages: "Your WPP team", the WPP logo); LFMP when it has none.
     const gone = await fetch("data/" + code + ".json?t=" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).catch(() => null);
-    fail(gone && gone.removed === true ? "This review isn't available. Your LFMP team will be in touch." : "We couldn't find this page. Please check the link.");
+    if (gone && gone.removed === true){
+      const [ag, agName] = applyAgency(gone);
+      fail("This review isn't available. Your " + ag + " team will be in touch.");
+      document.title = "This review isn't available · " + agName;
+      return;
+    }
+    fail("We couldn't find this page. Please check the link.");
     return;
   }
   const review = P.reviewUrl || ("messages.html?c=" + encodeURIComponent(code));
   BLANKS = new Set((M.blanks || []).map(esc));
-  // Agency logo: LFMP (default) or WPP, from the messages file's "agency".
-  const agency = AGENCIES[String(M.agency || "LFMP").toUpperCase()] ? String(M.agency || "LFMP").toUpperCase() : "LFMP";
-  const agencyName = AGENCIES[agency];
-  if (agency !== "LFMP"){
-    const L = M.agencyLogo || {}; // {logoMask (transparent PNG data URI), logoWidth, logoHeight, color}: brand colour in light mode, white in dark
-    $("#agency-brand").innerHTML = /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoMask || "")
-      ? '<span class="agency-logo" role="img" aria-label="' + esc(agencyName) + '" style="width:' + (+L.logoWidth || 112) + "px;height:" + (+L.logoHeight || 44) + "px;-webkit-mask-image:url(" + L.logoMask + ");mask-image:url(" + L.logoMask + ")" + (/^#[0-9a-f]{3,8}$/i.test(L.color || "") ? ";--agency-ink:" + L.color : "") + '"></span>'
-      : '<span class="agency-word">' + esc(agencyName) + "</span>";
-    $("#brands").setAttribute("aria-label", "LeadPro and " + agencyName);
-  }
+  const [, agencyName] = applyAgency(M);
   const b = M.brand || {};
   // the client's own logo (a copy kept with the package, never hotlinked) takes the name's place; no logo = as before
   const logo = b.logo && /^data:image\/(png|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+\/=]+$/.test(b.logo.src || "") ? b.logo : null;

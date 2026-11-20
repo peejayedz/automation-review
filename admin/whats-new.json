@@ -2,6 +2,16 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.14.2",
+      "date": "Nov 20",
+      "title": "Remove review package works, in the right brand",
+      "line": "Remove review package now finds the client's Builder package, and the client's links keep the agency's look.",
+      "items": [
+        { "type": "fixed", "text": "Remove review package (⋯ menu) no longer says the package wasn't made in the Builder when it was." },
+        { "type": "improved", "text": "After a remove, WPP clients' links show the WPP logo and say their WPP team will be in touch." }
+      ]
+    },
+    {
       "version": "1.14.0",
       "date": "Nov 20",
       "title": "Ask first, undo an edit, remove a package",

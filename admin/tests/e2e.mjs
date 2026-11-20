@@ -866,7 +866,8 @@ try {
     const n = posts.length, { p4, reqs } = await publicVisit('?c=boca-dental-e770de&admin&view=submissions', movedShown);
     assert(!(await p4.locator('#adminbar, [data-admin], [data-signin], input, .subs, button').count()), 'admin UI on the public page');
     assert(posts.length === n && !reqs.some(r => /config\.js|\/exec/.test(r)), 'the public page reached the backend');
-    assert(reqs.filter(r => /\/data\//.test(r)).every(r => r.startsWith('HEAD ')) && !reqs.some(r => r.endsWith('/data/boca-dental-e770de.json')), reqs.join(', '));
+    // v1.14.2: HEAD only under data/, except the "removed" marker (code, date, agency: no review content), read for the agency
+    assert(reqs.filter(r => /\/data\//.test(r)).every(r => r.startsWith('HEAD ') || r === 'GET /automation-review/data/boca-dental-e770de.removed.json') && !reqs.some(r => r.endsWith('/data/boca-dental-e770de.json')), reqs.join(', '));
     await p4.close();
   });
   await check('public classic link: Mahdavi + ZZ TEST 2 redirect to Link A with the #hash kept (Mahdavi through its plans/ page)', async () => {
@@ -883,7 +884,8 @@ try {
     for (const qs of ['?c=dumas-sanclemente-mo5cay', '?c=palm-beach-plastic-n9umxi&a=x#s2', '?c=nobody-zz9', '']) {
       const { p4, reqs } = await publicVisit(qs, movedShown);
       assert((await p4.innerText('body')).replace(/\n+/g, '\n').trim() === MOVED, `${qs}: ${JSON.stringify(await p4.innerText('body'))}`);
-      assert(new URL(p4.url()).pathname === '/automation-review/' && !reqs.some(r => /^GET \/automation-review\/data\//.test(r)), `${qs}: ${reqs.join(', ')}`);
+      // v1.14.2: the only GET under data/ is the code's "removed" marker (read for the agency; never review content)
+      assert(new URL(p4.url()).pathname === '/automation-review/' && !reqs.some(r => /^GET \/automation-review\/data\//.test(r) && !/^GET \/automation-review\/data\/[a-z0-9-]+\.removed\.json$/.test(r)), `${qs}: ${reqs.join(', ')}`);
       assert(await p4.title() === 'This review has moved · Law Firm Marketing Pros', await p4.title());
       await p4.close();
     }
