@@ -2,6 +2,16 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.15.1",
+      "date": "Nov 21",
+      "title": "The real WPP logo",
+      "line": "WPP clients' review pages show the real Web Promotion Partners logo, in colour.",
+      "items": [
+        { "type": "fixed", "text": "WPP clients' review pages show the real Web Promotion Partners logo in full colour (in dark mode only \"WEB\" turns white). LFMP clients' pages don't change." },
+        { "type": "fixed", "text": "Boca Dental's own logo is cropped so it reads at its normal size." }
+      ]
+    },
+    {
       "version": "1.15.0",
       "date": "Nov 21",
       "title": "Show only LFMP or only WPP clients",

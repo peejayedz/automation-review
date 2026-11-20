@@ -44,6 +44,13 @@ body{min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--fg);fon
 .lfmp-logo{margin-bottom:28px}
 /* a removed WPP package: the agency's logo (from the marker), brand colour in light mode, white in dark */
 .agency-logo{display:block;margin-bottom:28px;background:var(--agency-ink,var(--fg));-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-position:left center;mask-position:left center}
+/* v1.16.0: the agency's REAL logo (WPP, option B): full colour in light mode, the dark-mode version (only "WEB" white) in dark; no chip */
+.agency-pair{display:block;margin-bottom:28px}
+.agency-img{display:block;height:44px;width:auto}
+.agency-img.dk{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agency-img.lt{display:none}:root:not([data-theme="light"]) .agency-img.dk{display:block}}
+:root[data-theme="dark"] .agency-img.lt{display:none}:root[data-theme="dark"] .agency-img.dk{display:block}
+:root[data-theme="light"] .agency-img.lt{display:block}:root[data-theme="light"] .agency-img.dk{display:none}
 .agency-word{display:block;margin-bottom:28px;font:600 17px/1.2 var(--body);color:var(--fg)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agency-logo{background:#ffffff}}
 :root[data-theme="dark"] .agency-logo{background:#ffffff}
@@ -68,7 +75,12 @@ p{margin:0;color:var(--muted);font-size:16px}
     if (ag !== "LFMP"){
       var logo = document.querySelector(".card > .lfmp-logo"), L = m.agencyLogo || {}, el = document.createElement("span");
       el.setAttribute("role", "img"); el.setAttribute("aria-label", name);
-      if (/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoMask || "")){
+      if (/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoLight || "")){
+        // v1.16.0: the real logo, light / dark pair (WPP option B)
+        el.className = "agency-pair"; el.removeAttribute("role"); el.removeAttribute("aria-label");
+        ["lt", "dk"].forEach(function(k){ var i = document.createElement("img"); i.className = "agency-img " + k; i.alt = name;
+          i.src = k === "dk" && /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoDark || "") ? L.logoDark : L.logoLight; el.appendChild(i); });
+      } else if (/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoMask || "")){
         el.className = "agency-logo";
         el.style.width = (+L.logoWidth || 112) + "px"; el.style.height = (+L.logoHeight || 44) + "px";
         el.style.webkitMaskImage = el.style.maskImage = "url(" + L.logoMask + ")";

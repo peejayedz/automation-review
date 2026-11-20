@@ -103,6 +103,12 @@ tr:last-child td{border-bottom:0}
 .msg .subj{font-weight:600}
 .field{color:var(--accent);font-weight:600}
 .blank{color:var(--team);background:var(--team-soft);border:1px dashed var(--team);border-radius:4px;padding:0 4px;font-weight:600;white-space:nowrap}
+/* v1.16.0: the agency's REAL logo (WPP, option B): full colour in light mode, the dark-mode version (only "WEB" white) in dark; no chip */
+.agency-img{display:block;height:44px;width:auto}
+.agency-img.dk{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agency-img.lt{display:none}:root:not([data-theme="light"]) .agency-img.dk{display:block}}
+:root[data-theme="dark"] .agency-img.lt{display:none}:root[data-theme="dark"] .agency-img.dk{display:block}
+:root[data-theme="light"] .agency-img.lt{display:block}:root[data-theme="light"] .agency-img.dk{display:none}
 .agency-word{font:600 17px/1.2 var(--body);color:var(--fg)}
 .agency-logo{display:block;background:var(--agency-ink,var(--fg));-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-position:left center;mask-position:left center}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .agency-logo{background:#ffffff}}
@@ -190,8 +196,10 @@ function applyAgency(src){
   const agency = AGENCIES[String(src.agency || "LFMP").toUpperCase()] ? String(src.agency || "LFMP").toUpperCase() : "LFMP";
   const agencyName = AGENCIES[agency];
   if (agency !== "LFMP"){
-    const L = src.agencyLogo || {}; // {logoMask (transparent PNG data URI), logoWidth, logoHeight, color}: brand colour in light mode, white in dark
-    $("#agency-brand").innerHTML = /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoMask || "")
+    const L = src.agencyLogo || {}; // v1.16.0: {logoLight, logoDark} = the real logo (light / dark mode) as <img>; else the older {logoMask, logoWidth, logoHeight, color}
+    $("#agency-brand").innerHTML = /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoLight || "")
+      ? '<span class="agency-pair"><img class="agency-img lt" src="' + L.logoLight + '" alt="' + esc(agencyName) + '"><img class="agency-img dk" src="' + (/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoDark || "") ? L.logoDark : L.logoLight) + '" alt="' + esc(agencyName) + '"></span>'
+      : /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(L.logoMask || "")
       ? '<span class="agency-logo" role="img" aria-label="' + esc(agencyName) + '" style="width:' + (+L.logoWidth || 112) + "px;height:" + (+L.logoHeight || 44) + "px;-webkit-mask-image:url(" + L.logoMask + ");mask-image:url(" + L.logoMask + ")" + (/^#[0-9a-f]{3,8}$/i.test(L.color || "") ? ";--agency-ink:" + L.color : "") + '"></span>'
       : '<span class="agency-word">' + esc(agencyName) + "</span>";
     $("#brands").setAttribute("aria-label", "LeadPro and " + agencyName);

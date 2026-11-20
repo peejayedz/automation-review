@@ -64,8 +64,9 @@ async function main() {
       await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(400);
       return { ctx, pg };
     };
-    // 1) no logo: identical to today
-    for (const [code, files] of Object.entries(PKGS)) for (const page of ['plan', 'messages']) for (const [width, height] of [[1440, 900], [390, 844]]) for (const scheme of ['light', 'dark']) {
+    // 1) no logo: identical to today. (21 Nov, queue 1b: packages that already have a client logo, Boca since 20 Nov, aren't
+    //    "no logo" cases; they're left out here instead of failing.)
+    for (const [code, files] of Object.entries(PKGS).filter(([, f]) => !f.messages?.brand?.logo)) for (const page of ['plan', 'messages']) for (const [width, height] of [[1440, 900], [390, 844]]) for (const scheme of ['light', 'dark']) {
       await check(`no logo, unchanged: ${code} (${files.from}) · ${page} · ${width} ${scheme}`, async () => {
         assert(!files.messages?.brand?.logo, 'this package already has a logo');
         const a = await open('old', page, code, files, { width, height, scheme }), b = await open('new', page, code, files, { width, height, scheme });
