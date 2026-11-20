@@ -31,6 +31,9 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 const { execFileSync } = await import('node:child_process');
 const PIN = { 'data/dumas-sanclemente-mo5cay.plan.json': null, 'data/dumas-sanclemente-mo5cay.messages.json': null };
 try { PIN['data/dumas-sanclemente-mo5cay.json'] = execFileSync('git', ['-C', AR, 'show', '2ac085b~1:data/dumas-sanclemente-mo5cay.json'], { encoding: 'utf8' }); } catch {}
+// 20 Nov: Boca Dental moved to the Links A/B package (55adbe8) after these checks were written: pinned to its classic package
+PIN['data/boca-dental-e770de.plan.json'] = null; PIN['data/boca-dental-e770de.messages.json'] = null;
+try { PIN['data/boca-dental-e770de.json'] = execFileSync('git', ['-C', AR, 'show', '55adbe8~1:data/boca-dental-e770de.json'], { encoding: 'utf8' }); } catch {}
 const LIST = (await readdir(join(AR, 'data'))).filter(n => PIN[`data/${n}`] !== null);
 const PLANS = await readdir(join(AR, 'plans')).catch(() => []);   // hand-made plans/<code>.html (Mahdavi)
 const CODES = LIST.filter(n => /^[a-z0-9-]+\.json$/.test(n)).map(n => n.slice(0, -5));
@@ -129,6 +132,7 @@ const ADMIN = `${ORIGIN}/automation-review/admin/`;
 const results = [];
 let cur = null;
 async function check(label, fn) { try { await fn(); results.push(1); console.log(`✔ ${label}`); } catch (e) { results.push(0); console.log(`✖ ${label}\n    ${e.message.split('\n')[0]}`); if (cur) await cur.screenshot({ path: join(OUT, `FAIL_${results.length}.png`) }).catch(() => {}); } }
+const noBrand = s => String(s).replace(/^(LFMP|WPP) · /, '');   // v1.15.0: "All clients" rows start with the brand
 const assert = (c, m) => { if (!c) throw new Error(m); };
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 async function ctxFor({ width = 1440, height = 900, scheme = 'light' } = {}) {
@@ -205,7 +209,7 @@ try {
     assert(!(await page.locator(ROW('zz-test-2-qpqhx7')).count()), 'ZZ shown');
   });
   await check('home: Needs you red / Waiting amber (only with a client link) / Not sent grey (no client link) / Approved or Done green, with the sub-line', async () => {
-    const rows = await page.$$eval('.lv-row[data-client]', rs => rs.map(r => [r.dataset.client, r.querySelector('.lv-c:not(.lv-pr) .lv-st').className.replace('lv-st ', ''), r.querySelector('.lv-c:not(.lv-pr) .lv-st').textContent, r.querySelector('.lv-mt').textContent]));
+    const rows = await page.$$eval('.lv-row[data-client]', rs => rs.map(r => [r.dataset.client, r.querySelector('.lv-c:not(.lv-pr) .lv-st').className.replace('lv-st ', ''), r.querySelector('.lv-c:not(.lv-pr) .lv-st').textContent, r.querySelector('.lv-mt').textContent.replace(/^(LFMP|WPP) · /, '')]));   // v1.15.0: "All clients" rows start with the brand (checked in its own test)
     const get = c => rows.find(r => r[0] === c);
     assert(get('dumas-sanclemente-mo5cay').slice(1).join('|') === 'red|Needs you|6 requests to answer', JSON.stringify(get('dumas-sanclemente-mo5cay')));
     assert(get('palm-beach-plastic-n9umxi').slice(1).join('|') === 'red|Needs you|1 request to answer', 'palm');
@@ -223,11 +227,11 @@ try {
     BREC.fail = 'read';
     try {
       await page.reload(); await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
-      assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`) === 'Waiting for the client', await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`));
+      assert(noBrand(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`)) === 'Waiting for the client', await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`));
       assert(!(await page.locator('.errbox').count()), 'an error banner');
     } finally { BREC.fail = null; }
     await page.reload(); await page.waitForSelector('.lv-row[data-client]', { timeout: 20000 });
-    assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`) === 'Link A sent · Nov 16', 'back after a reload');
+    assert(noBrand(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-mt`)) === 'Link A sent · Nov 16', 'back after a reload');
   });
   await check('home order (v1.10.0): A–Z by the shown name ("The " ignored, case-insensitive); the statuses are all still there', async () => {
     const names = await rowNames(page);
@@ -243,7 +247,7 @@ try {
     await page.click('[data-lv-seg="done"]'); assert(await az('done') === 1, 'done');
     assert(await page.getAttribute('[data-lv-seg="done"]', 'aria-pressed') === 'true', 'pressed');
     await page.click('[data-lv-seg="all"]');
-    await setTests(page, true); await page.waitForSelector(`${ROW('zz-test-2-qpqhx7')} .lv-mt:text-matches("^Test · ")`);
+    await setTests(page, true); await page.waitForSelector(`${ROW('zz-test-2-qpqhx7')} .lv-mt:text-matches("^(LFMP|WPP) · Test · ")`);
     assert(await az('all + test clients') === 8, 'all + test clients');
     await setTests(page, false); await page.waitForSelector(ROW('zz-test-2-qpqhx7'), { state: 'detached' });
     await page.fill('#homeQ', 'palm'); assert(await page.locator('.lv-row[data-client]').count() === 1, 'search'); await page.fill('#homeQ', '');
@@ -300,7 +304,7 @@ try {
     assert(mine.length === 2 && mine[0].linkSent.link === 'B' && mine[1].linkSent.link === 'A', JSON.stringify(mine));
     assert(mine.every(p => /^The Mahdavi Law Firm: Link [AB] copied to send \(PJ Drozo\)/.test(p.message) && p.linkSent.by === 'PJ Drozo' && Date.now() - Date.parse(p.linkSent.at) < 60e3), JSON.stringify(mine));
     const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    await page.waitForFunction(t => document.querySelector('.lv-row[data-client="mahdavi-law-mc1mar"] .lv-mt')?.textContent === t, `Link A sent · ${today}`, { timeout: 5000 });
+    await page.waitForFunction(t => document.querySelector('.lv-row[data-client="mahdavi-law-mc1mar"] .lv-mt')?.textContent.replace(/^(LFMP|WPP) · /, '') === t, `Link A sent · ${today}`, { timeout: 5000 });
     assert(BREC.files['mahdavi-law-firm-ab12cd'].rec.review.code === 'mahdavi-law-mc1mar' && BREC.files['mahdavi-law-firm-ab12cd'].rec.review.status === 'linked', 'the rest of the record kept');
   });
   await check('Copy = sent: the save failing shows "Link B copied, but it couldn\'t be noted as sent: …" (the copy itself worked)', async () => {
@@ -860,6 +864,41 @@ try {
   };
   const movedShown = p4 => p4.waitForFunction(() => !document.documentElement.classList.contains('checking') && /This review has moved/.test(document.body.innerText), null, { timeout: 10000 });
   const MOVED = 'This review has moved\nYour LFMP team will send you the new link.\nLaw Firm Marketing Pros';
+  // v1.15.0: LFMP / WPP brand filter (shared shell 2.7.0). Brand = the Builder record (review code); no record = LFMP.
+  await check('brand: All clients rows start with their brand; menu LFMP · n / WPP · 1; WPP → Boca only; summary, placeholder, counts follow; one setting; phone Filter sheet', async () => {
+    BREC.files['boca-dental-zz'] = { sha: 'c'.repeat(40), rec: { id: 'boca-dental-zz', businessName: 'Boca Dental', brand: 'WPP', status: 'ready', review: { status: 'published', code: 'boca-dental-e770de' } } };
+    try {
+      for (const scheme of ['light', 'dark']) {
+        const ctx = await ctxFor({ scheme }); const page = await ctx.newPage();
+        await ctx.addInitScript(() => { try { localStorage.removeItem('lfmp-brand-filter'); } catch {} });
+        await signIn(page);
+        const n = await page.locator('.lv-row[data-client]').count();
+        const subs = await page.$$eval('.lv-row[data-client] .lv-mt.lv-d, .lv-row[data-client] .lv-c0 > .lv-mt:first-of-type', e => e.map(x => x.textContent));
+        assert(await page.innerText(`${ROW('boca-dental-e770de')} .lv-mt`).then(s => s.startsWith('WPP · ')) && await page.innerText(`${ROW('dumas-sanclemente-mo5cay')} .lv-mt`).then(s => s.startsWith('LFMP · ')), `prefix: ${subs.join(' | ')}`);
+        await page.click('[data-lv-bf]');
+        const items = (await page.$$eval('[data-lv-bfpick]', e => e.map(x => x.textContent.replace(/\s+/g, '')))).join('|');
+        assert(items === `✓Allclients${n}|LFMP${n - 1}|WPP1`, `menu ${items}`);
+        if (scheme === 'light') await page.screenshot({ path: join(OUT, 'brand-menu-1440-light.png') }); else await page.screenshot({ path: join(OUT, 'brand-menu-1440-dark.png') });
+        await page.click('[data-lv-bfpick="WPP"]');
+        assert((await rowNames(page)).join() === 'Boca Dental', `rows ${await rowNames(page)}`);
+        assert(/^1 WPP client · /.test(await page.innerText('[data-lv-sum]')) && await page.getAttribute('#homeQ', 'placeholder') === 'Search 1 WPP client', 'summary + placeholder');
+        assert(!(await page.innerText(`${ROW('boca-dental-e770de')} .lv-mt`)).startsWith('WPP'), 'no prefix once picked');
+        assert(await page.evaluate(() => localStorage.getItem('lfmp-brand-filter')) === 'WPP', 'stored');
+        await page.click('.lv-seg.lv-segb [data-lv-seg="need"]');
+        assert(/No clients here in this view\./.test(await page.innerText('.lv-empty')), 'empty view');
+        await page.click('[data-brand-all]'); assert(await page.locator('.lv-row[data-client]').count() === n, 'Show all');
+        await ctx.close();
+      }
+      const ctx = await ctxFor({ width: 390, height: 844 }); const page = await ctx.newPage(); await signIn(page);
+      assert(await page.isVisible('[data-lv-fbtn]') && !(await page.isVisible('.lv-seg.lv-segb')), 'phone: one Filter button');
+      const [sw, iw] = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]); assert(sw <= iw + 1, 'no sideways scroll');
+      await page.click('[data-lv-fbtn]'); await page.click('[data-lv-fb="WPP"]'); await page.click('[data-lv-fapply]');
+      assert((await rowNames(page)).join() === 'Boca Dental' && (await page.innerText('.lv-fbd')) === '1', 'sheet → WPP, badge');
+      await page.screenshot({ path: join(OUT, 'brand-phone-wpp-390-light.png') });
+      await page.click('.lv-chips [data-lv-clr="brand"]');
+      await ctx.close();
+    } finally { delete BREC.files['boca-dental-zz']; }
+  });
   await check('public index.html: no admin code path and no review content (no data/<code>.json, no Sheet, no admin_ action, &admin / view=submissions ignored)', async () => {
     const src = await readFile(join(AR, 'index.html'), 'utf8');
     for (const re of [/admin_/, /ar_admin_key/, /Team sign-in/, /type="password"/, /Admin login/, /params\.has\("admin"\)/, /view=submissions|"submissions"/, /data-admin/, /data-signin/, /saveUrl|config\.js|REVIEW_CONFIG/, /\.json"\s*\)\s*\.then\(\s*r\s*=>\s*r\.json/]) assert(!re.test(src), `found ${re}`);

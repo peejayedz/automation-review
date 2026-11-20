@@ -108,7 +108,7 @@ export async function readCounts({ api, ghFetch, loadBuilderRecords, saveUrl, ba
   const D = await readData({ post: makePost(api), ghFetch, loadBuilderRecords, saveUrl: url, base: base || baseFor(), fetch });
   return { hidden: homeCounts(D, false).need, shown: homeCounts(D, true).need };
 }
-export async function readCount({ store = globalThis.localStorage, ...io } = {}) {
+export async function readCount({ store = (() => { try { return globalThis.localStorage || null; } catch { return null; } })(), ...io } = {}) {
   const c = await readCounts(io);
   let showTests = false; try { showTests = store?.getItem(TESTS_KEY) === '1'; } catch {}
   return { reviews: showTests ? c.shown : c.hidden };

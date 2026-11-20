@@ -2,6 +2,16 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.15.0",
+      "date": "Nov 21",
+      "title": "Show only LFMP or only WPP clients",
+      "line": "A new filter next to the search shows only LFMP or only WPP clients, on all three pages.",
+      "items": [
+        { "type": "new", "text": "\"All clients ▾\" next to the search shows only LFMP or only WPP clients. The same choice applies on Clients, Scorecards and Reviews on this device." },
+        { "type": "improved", "text": "On a phone, the status filter and the new brand filter are one Filter button, with the filters that are on shown under the search. \"Needs you\" stays one tap away." }
+      ]
+    },
+    {
       "version": "1.14.2",
       "date": "Nov 20",
       "title": "Remove review package works, in the right brand",

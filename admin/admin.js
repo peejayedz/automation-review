@@ -7,10 +7,10 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob, confirmAction } from './lfmp-session.js';
+import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, brandFor, brandSub, brandWord, brandCounts, getBrandFilter, setBrandFilter, wireListFilter, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob, confirmAction } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.14.0';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
 import * as GC from './greet-count.mjs?v=1.12.2';   // v1.12.1: the load + the "Needs you" count (list + greeting)
-export const VERSION = '1.14.2';
+export const VERSION = '1.15.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -129,6 +129,13 @@ const autoName = (c, a) => { const x = D.files[c]?.automations?.find(y => y.id =
 const isTest = c => GC.isTest(D, c);
 const clientsAll = () => GC.clientsAll(D);
 const visibleClients = () => GC.visibleClients(D, F.tests);
+// v1.15.0: LFMP / WPP = the Builder record's brand (shared shell brandFor: review code, or the record matched by name); none = LFMP
+const codeBrand = c => brandFor(D.recs, { reviewCode: c, id: recOf(c)?.id });
+const inBrand = (codes, b = F.brand) => (b === 'LFMP' || b === 'WPP' ? codes.filter(c => codeBrand(c) === b) : codes);
+const homeSegs = (b = F.brand) => {
+  const st = inBrand(visibleClients(), b).map(c => sumOf(c).state), n = f => st.filter(x => L.inHome(f, x)).length, need = n('need');
+  return [{ key: 'all', label: 'All', n: st.length }, { key: 'need', label: `Needs you · ${need}`, red: need > 0, n: need, needs: true }, { key: 'wait', label: 'Waiting', n: n('wait') }, { key: 'unsent', label: 'Not sent', n: n('unsent') }, { key: 'done', label: 'Done', n: n('done') }];
+};
 // Link B's wording state for a client: current version per automation + the wording edits it shows (review-logic.mjs).
 const lbOf = c => GC.lbOf(D, c);
 const sumOf = c => GC.sumOf(D, c);
@@ -204,15 +211,17 @@ function headHtml(screen) {
     const n = toAnswer();
     return `<div class="lv-hrow subshead"><div><button type="button" class="lv-back" data-act="gohome"><span aria-hidden="true">‹</span>Reviews</button><h1 class="lv-h1 lv-d">Submissions</h1><div class="lv-sum">${n ? `${n} to answer` : 'Nothing to answer'}</div></div></div>`;
   }
-  const cs = D.loaded ? visibleClients() : [];
-  const { need, wait, unsent } = D.loaded ? GC.homeCounts(D, F.tests) : { need: 0, wait: 0, unsent: 0 };   // v1.12.1: greet-count.mjs
-  // v1.12.0: the greeting's "reviews need you" (the same count as the filter); kept for the other tools' greetings
-  if (D.loaded) { noteCount('reviews', need); greetReady({ reviews: need }); }
+  F.brand ??= getBrandFilter();   // v1.15.0: one setting for the three tools on this device (read once per page)
+  const cs = D.loaded ? inBrand(visibleClients()) : [], word = brandWord(F.brand);
+  const segs = D.loaded ? homeSegs() : homeSegs('all').map(s => ({ ...s, n: 0 })), cnt = k => segs.find(s => s.key === k)?.n || 0;
+  const need = cnt('need'), wait = cnt('wait'), unsent = cnt('unsent');
+  // v1.12.0: the greeting's "reviews need you" (the same count as the filter, every brand); kept for the other tools' greetings
+  if (D.loaded) { const all = GC.homeCounts(D, F.tests).need; noteCount('reviews', all); greetReady({ reviews: all }); }
   // the summary counts as the filter does: "7 clients · 2 need you · 3 waiting · 1 not sent"
-  const summary = [`${cs.length} client${cs.length === 1 ? '' : 's'}`, need ? `${need} need${need === 1 ? 's' : ''} you` : 'nothing needs you', wait ? `${wait} waiting` : '', unsent ? `${unsent} not sent` : ''].filter(Boolean).join(' · ');
+  const summary = [`${cs.length} ${word}client${cs.length === 1 ? '' : 's'}`, need ? `${need} need${need === 1 ? 's' : ''} you` : 'nothing needs you', wait ? `${wait} waiting` : '', unsent ? `${unsent} not sent` : ''].filter(Boolean).join(' · ');
   return pageHeadHtml({ title: 'Reviews', summary: D.loaded ? summary : '',
-    search: { id: 'homeQ', placeholder: `Search ${cs.length || ''} client${cs.length === 1 ? '' : 's'}`.replace('  ', ' '), value: F.q }, active: F.home,
-    segs: [{ key: 'all', label: 'All' }, { key: 'need', label: `Needs you · ${need}`, red: need > 0 }, { key: 'wait', label: 'Waiting' }, { key: 'unsent', label: 'Not sent' }, { key: 'done', label: 'Done' }] });
+    search: { id: 'homeQ', placeholder: `Search ${cs.length || ''} ${word}client${cs.length === 1 ? '' : 's'}`.replace('  ', ' '), value: F.q }, active: F.home,
+    segs, brand: { value: F.brand, counts: brandCounts((D.loaded ? visibleClients() : []).map(c => ({ brand: codeBrand(c) }))) } });
 }
 function draw() {
   if ($('appView').hidden || !ME) return;
@@ -263,13 +272,13 @@ function thirdCell(x) {
   return `<span class="lv-mt">${esc(linksText(x.c))}</span>`;
 }
 function drawHome() {
-  const cs = visibleClients().map(c => ({ c, s: sumOf(c), name: nameOf(c) }));
+  const cs = inBrand(visibleClients()).map(c => ({ c, s: sumOf(c), name: nameOf(c) }));   // v1.15.0: the brand filter first
   const q = F.q.trim().toLowerCase();
   const list = L.homeList(cs, F.home, q);   // v1.10.0: A–Z by the shown name in every filter and search (status still on each row)
   const keepFocus = document.activeElement?.id === 'homeQ';
-  const empty = q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : F.home === 'wait' ? 'Nothing is waiting for a client.' : F.home === 'unsent' ? 'Every client has a client link.' : F.home === 'done' ? 'No client is done yet.' : 'No review clients yet.';
+  const empty = F.brand !== 'all' && !q && !list.length ? `No clients here in this view. <button class="linkbtn" type="button" data-brand-all>Show all</button>` : q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : F.home === 'wait' ? 'Nothing is waiting for a client.' : F.home === 'unsent' ? 'Every client has a client link.' : F.home === 'done' ? 'No client is done yet.' : 'No review clients yet.';
   $('screen').innerHTML = `${headHtml('home')}
-    ${list.length ? `<div class="lv-list" id="clist" style="--lv-cols:1.5fr 200px 260px 70px">${list.map(x => lvRow({ name: x.name, sub: rowSub(x), label: `${x.name}: open details`,
+    ${list.length ? `<div class="lv-list" id="clist" style="--lv-cols:1.5fr 200px 260px 70px">${list.map(x => lvRow({ name: x.name, sub: brandSub(codeBrand(x.c), F.brand, rowSub(x)), label: `${x.name}: open details`,
       attrs: `data-client="${esc(x.c)}" data-state="${esc(x.s.state)}"`, cells: [rowStatus(x), thirdCell(x)] })).join('')}</div>`
       : `<div class="lv-list lv-empty">${empty}</div>`}
     <div class="lv-list subsrow"><a class="lv-row" href="#/subs" aria-label="All submissions"><span class="lv-c0">All submissions</span><span class="lv-chev" aria-hidden="true">›</span></a></div>`;
@@ -277,6 +286,10 @@ function drawHome() {
   // desktop only (the summary line is hidden on a phone): "7 clients · 2 need you · All submissions ›"
   $('screen').querySelector('[data-lv-sum]')?.insertAdjacentHTML('beforeend', ' · <a class="sumlink" href="#/subs">All submissions ›</a>');
   if (keepFocus) { const i = $('homeQ'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  wireListFilter($('screen'), { getBrand: () => F.brand, getStatus: () => F.home || 'all', noun: 'client',
+    brands: () => brandCounts(visibleClients().map(c => ({ brand: codeBrand(c) }))), segsFor: b => homeSegs(b),
+    countFor: (b, s) => inBrand(visibleClients(), b).filter(c => L.inHome(s, sumOf(c).state)).length,
+    onChange: ({ brand, status }) => { F.brand = brand; F.home = status; drawHome(); } });
 }
 
 // ----- 2) Details panel -----
@@ -712,6 +725,7 @@ document.addEventListener('click', async e => {
   if (!e.target.closest('.menu')) closeMenus();
   const cp = e.target.closest('[data-copy]'); if (cp) { copyLink(cp); return; }
   if (e.target.closest('#dpShade')) { closeDetails(); return; }
+  if (e.target.closest('[data-brand-all]')) { F.brand = setBrandFilter('all'); F.home = 'all'; drawHome(); return; }   // v1.15.0: empty view → Show all
   const hf = e.target.closest('[data-home-filter], [data-lv-seg]'); if (hf) { F.home = hf.dataset.homeFilter || hf.dataset.lvSeg; if (route().screen !== 'home') go('#/'); else drawHome(); return; }
   const sf = e.target.closest('[data-subs-filter]'); if (sf) { F.status = sf.dataset.subsFilter; F.open = null; F.more.clear(); drawSubs(); return; }
   const more = e.target.closest('[data-more]'); if (more) { F.more.add(more.dataset.more); drawSubs(); return; }
