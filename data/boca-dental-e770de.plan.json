@@ -1,0 +1,35 @@
+{
+ "pageTitle": "How every new patient gets followed up · Boca Dental",
+ "eyebrow": "Boca Dental · LeadPro",
+ "title": "How every new patient gets followed up",
+ "intro": "These are the automations set up for Boca Dental in LeadPro: what starts each one, and every text and email your patients get, word for word.",
+ "status": "For your review · November 2026",
+ "cta": {
+  "text": "**Ready to review?** Mark each message “Looks good” or change the wording on your review page. Your answers save as you go.",
+  "button": "Review the messages →"
+ },
+ "footer": "Prepared for Boca Dental by Law Firm Marketing Pros · November 2026",
+ "sections": [
+  {
+   "type": "html",
+   "id": "overview",
+   "html": "<h2>Your automations at a glance</h2>\n  <div class=\"rules\">\n    <div class=\"rule\"><strong>Existing Patient Alert</strong><span>When an existing patient’s card is moved to a specific stage on your lead board, the assigned team member gets an email right away so nobody misses the follow-up.</span><span>Starts when: Pipeline Stage Changed</span></div>\n    <div class=\"rule\"><strong>Lead Replies Alert</strong><span>When a patient replies to one of the New Patient Follow-Up messages, your team is alerted right away and the patient is marked on your lead board.</span><span>Starts when: Customer Replied</span></div>\n    <div class=\"rule\"><strong>Reactivation Replies Alert</strong><span>When a past patient replies to your reactivation messages, your team gets an email right away so you can call or text them back while they’re interested.</span><span>Starts when: Customer Replied</span></div>\n    <div class=\"rule\"><strong>New Patient Follow-Up</strong><span>When someone requests an appointment, this follows up with them by text, email, phone and voicemail over four days until your team confirms the visit.</span><span>Starts when: Pipeline Stage Changed</span></div>\n    <div class=\"rule\"><strong>Reactivation Follow-Up</strong><span>Wins back patients you haven’t seen in a while. Over about three weeks they get friendly emails, texts, a voicemail and a special offer, and finally a short request for feedback.</span><span>Starts when: The workflow is triggered in GHL</span></div>\n    <div class=\"rule\"><strong>Website Enquiry Response</strong><span>When someone enquires on your website, they get a text right away, your office phone rings with their details so you can connect instantly, and your team gets an email with the lead’s information.</span><span>Starts when: The workflow is triggered in GHL</span></div>\n  </div>"
+  },
+  {
+   "type": "messages",
+   "title": "Every message, word for word",
+   "sub": "Blue words in [brackets] are filled in automatically for each patient. Amber ones are blanks we'll fill in with you."
+  },
+  {
+   "type": "html",
+   "id": "next",
+   "html": "<h2>Where things stand</h2>\n  <p>Read the plan, then mark each message “Looks good” or tell us what to change on your review page. We update the wording in LeadPro and let you know when it's ready to check again.</p>"
+  },
+  {
+   "type": "questions",
+   "id": "questions",
+   "title": "Open items",
+   "sub": "Nothing for you to answer right now."
+  }
+ ]
+}
