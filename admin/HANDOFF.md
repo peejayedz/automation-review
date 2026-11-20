@@ -2,7 +2,7 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
-## Review admin v1.15.0 LFMP / WPP brand filter (shared shell 2.7.0, with Builder v1.27.0 + KPI v1.33.0): READY LOCALLY 21 Nov 2026, NOT PUSHED (PJ: ask before pushing)
+## Review admin v1.15.0 LFMP / WPP brand filter (shared shell 2.7.0, with Builder v1.27.0 + KPI v1.33.0): LIVE 21 Nov 2026 (KPI `d8b772e5` → Review `8516c96` → Builder `301a7bc`; admin-site cd8c61e7868f9430 = a clean build of those commits). Live check (PJ's Chrome, every write blocked in the page): brand menu on Clients (8 · LFMP 7 · WPP 1, rows start with the brand), WPP → Boca only on Clients, then Scorecards and Reviews opened on WPP (one setting), back to All; Builder ZZ TEST 2 → Client details → Agency → Change → WPP → Save → the confirm (PJ's wording) → Cancel: nothing sent, record still LFMP; no console errors.
 - **What it is:** CHANGELOG v1.15.0. Reviews: "All clients ▾" (LFMP · n / WPP · n), phone Filter button + sheet / badge / chips / red Needs you chip; summary, placeholder, counts and the empty state follow the brand; rows start with the brand on "All clients". Brand = the Builder record by review code (or by name); no record = LFMP. The greeting and bell still count every client.
 - **Client pages:** unchanged in this push. A client's agency on Link A / B is now switched from the Builder (Client details → Agency → Change → `review-agency.yml`: only `agency`, `agencyLogo` and the two footers, one commit, like the manual Boca fix 0a76589).
 - **Tests (21 Nov, local):** e2e 69/69 (Boca pinned to before 55adbe8, as Dumas already was: the old checks were written for its classic package), shell 47/47, logic 13/13.
