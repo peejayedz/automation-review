@@ -233,3 +233,6 @@ label.f textarea{text-transform:none;letter-spacing:0;font-weight:400}
 .dpanel.scrolled .dtabs{box-shadow:0 8px 18px rgba(0,0,0,.08)}
 :root[data-theme="dark"] .dpanel.scrolled .dtabs{box-shadow:0 8px 18px rgba(0,0,0,.45)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dpanel.scrolled .dtabs{box-shadow:0 8px 18px rgba(0,0,0,.45)}}
+/* v1.14.0 (Part 4): Undo edit / Undo version: a quiet red text button */
+.linkred{border-color:transparent!important;background:none!important;color:var(--red)!important;padding-left:6px;padding-right:6px}
+.linkred:hover{text-decoration:underline}

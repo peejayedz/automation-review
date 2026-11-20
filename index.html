@@ -62,7 +62,11 @@ p{margin:0;color:var(--muted);font-size:16px}
     });
   }).then(function(to){
     if (to){ location.replace(to + location.hash); return; }
-    clearTimeout(timer); show();
+    // Removed by the LFMP team: data/<code>.removed.json exists (HEAD only, like the checks above: no review content is read)
+    return has("data/" + e + ".removed.json").then(function(gone){
+      if (gone) { var h = document.getElementById("h"); if (h) { h.textContent = "This review isn't available"; h.nextElementSibling.textContent = "Your LFMP team will be in touch."; } document.title = "This review isn't available · Law Firm Marketing Pros"; }
+      clearTimeout(timer); show();
+    });
   });
 })();
 </script>

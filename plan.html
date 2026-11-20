@@ -189,7 +189,13 @@ const AGENCIES = { LFMP: "Law Firm Marketing Pros", WPP: "Web Promotion Partners
   let P, M;
   try {
     [P, M] = await Promise.all([".plan.json", ".messages.json"].map(x => fetch("data/" + code + x + "?t=" + Date.now(), {cache: "no-store"}).then(r => { if (!r.ok) throw 0; return r.json(); })));
-  } catch(e){ fail("We couldn't find this page. Please check the link."); return; }
+  } catch(e){
+    // Removed by the LFMP team (Builder → Remove review package): data/<code>.json is a small "removed" marker. The
+    // client's earlier answers are kept; the page only says it isn't available. Any other missing code: "check the link".
+    const gone = await fetch("data/" + code + ".json?t=" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).catch(() => null);
+    fail(gone && gone.removed === true ? "This review isn't available. Your LFMP team will be in touch." : "We couldn't find this page. Please check the link.");
+    return;
+  }
   const review = P.reviewUrl || ("messages.html?c=" + encodeURIComponent(code));
   BLANKS = new Set((M.blanks || []).map(esc));
   // Agency logo: LFMP (default) or WPP, from the messages file's "agency".

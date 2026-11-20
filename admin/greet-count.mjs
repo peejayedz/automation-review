@@ -4,7 +4,7 @@
 // page makes on load (the data/ and plans/ lists on GitHub through /api/gh, admin_ping + admin_all through /api/review,
 // the public data files and Content reads, the Builder records), then the same count. No writes, no GHL, no DOM; the
 // caller passes its own api / ghFetch / loadBuilderRecords. Never shown on screen.
-import * as L from './review-logic.mjs?v=1.12.2';
+import * as L from './review-logic.mjs?v=1.14.0';
 import { displayName } from './lfmp-session.js';
 
 export const TESTS_KEY = 'ar-admin-tests';   // Me → "Show test clients" (per browser), as the list

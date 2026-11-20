@@ -7,10 +7,10 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
-import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob } from './lfmp-session.js';
-import * as L from './review-logic.mjs?v=1.12.2';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
+import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob, confirmAction } from './lfmp-session.js';
+import * as L from './review-logic.mjs?v=1.14.0';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
 import * as GC from './greet-count.mjs?v=1.12.2';   // v1.12.1: the load + the "Needs you" count (list + greeting)
-export const VERSION = '1.13.0';
+export const VERSION = '1.14.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -296,6 +296,7 @@ function openDetails(code, tab = 'overview', auto = null) {
         <div class="menu" id="dpMenu" role="menu" hidden>
           <button type="button" role="menuitem" data-dp="rename">Rename client</button>
           <button type="button" role="menuitem" class="danger" data-dp="clear">Clear test responses…</button>
+          <button type="button" role="menuitem" class="danger" data-dp-rmpkg>Remove review package…</button>
           <a role="menuitem" class="menuold" href="${esc(classicEditorUrl(code))}">Classic editor (old)</a>
         </div></span>
       <button class="btn icon iconbtn dclose" type="button" data-act="closedet" aria-label="Close details"><span class="x" aria-hidden="true">✕</span><span class="bk"><span aria-hidden="true">‹</span> Reviews</span></button></div></div>
@@ -356,7 +357,7 @@ function editTabHtml(code) {
     <section class="dsec">
       <div class="edbar">
         <label class="f edpick" for="edAuto">Automation<select id="edAuto">${autoIds.map(id => `<option value="${esc(id)}" ${id === cur ? 'selected' : ''}>${esc(autoName(code, id))}</option>`).join('')}</select></label>
-        <div class="edver"><span class="lbl">Version</span><b class="mono" id="edVer">v${esc(ver)}</b>${E.ver === cur ? '' : `<button class="btn sm" type="button" data-ed-ver="${esc(cur)}">Start new version…</button>`}</div>
+        <div class="edver"><span class="lbl">Version</span><b class="mono" id="edVer">v${esc(ver)}</b>${E.ver === cur ? '' : `<button class="btn sm" type="button" data-ed-ver="${esc(cur)}">Start new version…</button>`}${L.undoVersion(cur, D.content[code], file) ? `<button class="btn sm linkred" type="button" data-ed-verundo="${esc(cur)}">Undo version…</button>` : ''}</div>
       </div>
       ${E.ver === cur ? `<div class="edconfirm" role="alert"><p><b>Start version ${esc(nv)}?</b> Every message in ${esc(autoName(code, cur))} goes back to “to review” for the client, who reviews it again on Link B. Earlier responses stay in Submissions. Your current wording carries over${nEdited ? ` (${nEdited} edited message${nEdited === 1 ? '' : 's'})` : ''}.</p>
         <div class="btnrow"><button class="btn p" type="button" data-ed-ver-go="${esc(cur)}">Start v${esc(nv)}</button><button class="btn" type="button" data-ed-ver-cancel>Cancel</button></div></div>` : ''}
@@ -375,7 +376,8 @@ function lastEditOf(code, m, versions) {
 function editMsgHtml(code, m, lb) {
   const w = L.shownWording(m, lb.edits), email = L.isEmailMsg(m), open = E.open === m.id, last = w.edited ? lastEditOf(code, m, lb.versions) : null;
   const kind = email ? 'Email' : (m.kind || 'Text');
-  const head = `<div class="edm-h"><span class="tag tg-mut">${esc(kind)}</span><span class="edwhen">${esc(m.when || '')}${m.to ? ` · ${esc(m.to)}` : ''}</span>${w.edited ? `<span class="edtag" title="${last ? esc(`Edited ${fmtWhen(last.timestamp)}${last.edited_by ? ` by ${last.edited_by}` : ''}`) : 'Edited'}">Edited${last ? ` · ${esc(fmtDay(last.timestamp))}${last.edited_by ? ` · ${esc(last.edited_by)}` : ''}` : ''}</span>` : ''}${open ? '' : `<button class="btn sm" type="button" data-ed-open="${esc(m.id)}" aria-label="Edit ${esc(kind.toLowerCase())}: ${esc(m.when || m.id)}">Edit</button>`}</div>`;
+  const undo = !open && w.edited && L.undoEditFields(m, D.content[code], D.files[code]) ? `<button class="btn sm linkred" type="button" data-ed-undo="${esc(m.id)}" aria-label="Undo the last edit: ${esc(m.when || m.id)}">Undo edit…</button>` : '';
+  const head = `<div class="edm-h"><span class="tag tg-mut">${esc(kind)}</span><span class="edwhen">${esc(m.when || '')}${m.to ? ` · ${esc(m.to)}` : ''}</span>${w.edited ? `<span class="edtag" title="${last ? esc(`Edited ${fmtWhen(last.timestamp)}${last.edited_by ? ` by ${last.edited_by}` : ''}`) : 'Edited'}">Edited${last ? ` · ${esc(fmtDay(last.timestamp))}${last.edited_by ? ` · ${esc(last.edited_by)}` : ''}` : ''}</span>` : ''}${undo}${open ? '' : `<button class="btn sm" type="button" data-ed-open="${esc(m.id)}" aria-label="Edit ${esc(kind.toLowerCase())}: ${esc(m.when || m.id)}">Edit</button>`}</div>`;
   if (!open) return `<li class="edmsg" data-msg="${esc(m.id)}">${head}${email ? `<p class="edsubj"><span class="mut">Subject:</span> ${esc(w.subject || '')}</p>` : ''}<div class="edtext">${esc(String(w.text || '').replace(/\n{2,}/g, '\n'))}</div></li>`;
   const rows = Math.min(16, Math.max(5, String(w.text || '').split('\n').length + 2));
   return `<li class="edmsg on" data-msg="${esc(m.id)}">${head}
@@ -558,6 +560,10 @@ async function saveMsg(form) {
   const fields = L.editFieldsFor(m, lbOf(code).edits, subj, text);
   if (!fields.length) { E.open = null; openDetails(code, 'edit'); toast('No changes'); return; }
   if (busy) { toast('Still saving, one moment…'); return; }
+  // v1.14.0 (Part 4): asks first (it's on the client's page straight away)
+  if (!await confirmAction({ title: `Save the new wording for ${nameOf(code)}?`, ok: 'Save wording',
+    will: [['Client page', `${nameOf(code)}'s Link B shows this wording the next time it loads`], ['Sheet', 'one edit row in the Content tab (who and when)']],
+    wont: ['Link A (the plan page) doesn\'t change', 'Nothing is sent to the client', 'Nothing in GHL changes'] })) return;
   const b = form.querySelector('[type="submit"]'); busy = true; busyButton(b, 'Saving…', { ms: 3000 }); $('edErr').textContent = '';
   const job = arJob({ client: nameOf(code), what: 'Save wording', title: `Saving the new wording for ${nameOf(code)}…`, host: 'ar:ed', typicalMs: 3000 });
   try {
@@ -581,6 +587,82 @@ async function startVersion(code, auto) {
     job.done({ title: `Done: version ${nv} started`, lead: 'The client reviews this automation again on Link B. Earlier answers are kept.', line: `Version ${nv} started` });
   } catch (err) { toast(`Couldn't start the new version: ${err.message}`); job.fail({ reason: `Couldn't start the new version: ${err.message}`, line: 'New version not started' }); }
   finally { busy = false; openDetails(code, 'edit'); drawHome(); }
+}
+
+// ---------- v1.14.0 (Part 4): undo an edit / a version; remove a client's review package ----------
+// Undo = rows that bring back what Link B showed before (nothing is deleted from the Sheet; the history keeps both).
+async function undoEdit(code, msgId) {
+  const m = editMsgs(code).find(x => x.id === msgId); if (!m || busy) return;
+  const u = L.undoEditFields(m, D.content[code], D.files[code]); if (!u) { toast('Nothing to undo for this message'); return; }
+  const name = nameOf(code);
+  if (!await confirmAction({ title: `Undo the last edit for ${name}?`, danger: true, typeName: name, ok: 'Undo edit',
+    will: [['Client page', `Link B shows the wording from before that edit: "${String(u.before.text || '').slice(0, 80)}${String(u.before.text || '').length > 80 ? '…' : ''}"`], ['Sheet', 'new Content rows that bring it back (the edit stays in the history)']],
+    wont: ['Nothing is deleted from the Sheet', 'The client\'s answers are kept', 'Nothing in GHL changes'] })) return;
+  busy = true;
+  const job = arJob({ kind: 'remove', client: name, what: 'Undo edit', title: `Bringing back the earlier wording for ${name}…`, host: 'ar:ed', typicalMs: 3000 });
+  try { await saveEdits(code, m.auto, u.fields); await logRemoval(code, 'wording edit', `${m.id} (undone)`); openDetails(code, 'edit'); job.done({ title: 'Done: edit undone', lead: `Link B shows the earlier wording for ${name} again.`, line: 'Edit undone' }); }
+  catch (err) { job.fail({ reason: `Couldn't save: ${err.message}`, nothingChanged: 'Link B shows the same wording as before.', line: 'Edit not undone' }); }
+  finally { busy = false; }
+}
+async function undoVer(code, auto) {
+  const u = L.undoVersion(auto, D.content[code], D.files[code]); if (!u || busy) return;
+  const name = nameOf(code), lb = lbOf(code);
+  if (!await confirmAction({ title: `Undo version ${u.from} for ${name}?`, danger: true, typeName: name, ok: `Back to v${u.to}`,
+    will: [['Client page', `${autoName(code, auto)} on Link B goes back to version ${u.to}, with the wording it shows now`], ['Sheet', 'new Content rows (the version stays in the history)']],
+    wont: ['Nothing is deleted from the Sheet', 'Answers for both versions are kept', 'Nothing in GHL changes'] })) return;
+  busy = true;
+  const carry = editMsgs(code).filter(m => m.auto === auto).map(m => [m, L.shownWording(m, lb.edits)]).filter(([, w]) => w.edited);
+  const job = arJob({ kind: 'remove', client: name, what: 'Undo version', title: `Going back to version ${u.to} for ${name}…`, typicalMs: 4000 });
+  try {
+    await saveEdits(code, auto, [['version', u.to]]);
+    for (const [m, w] of carry) await saveEdits(code, auto, L.editFieldsFor(m, {}, w.subject, w.text));
+    await logRemoval(code, 'review version', `${auto} v${u.from} → v${u.to}`);
+    job.done({ title: `Done: back to version ${u.to}`, lead: `${autoName(code, auto)} on Link B is version ${u.to} again.`, line: `Version ${u.from} undone` });
+  } catch (err) { job.fail({ reason: `Couldn't save: ${err.message}`, line: 'Version not undone' }); }
+  finally { busy = false; openDetails(code, 'edit'); drawHome(); }
+}
+// The Builder record that made this client's package (Remove runs the Builder's review-remove.yml, as its Review tab does).
+const BUILDER = '/repos/peejayedz/ghl-subaccount-builder';
+async function builderRecordFor(code) { const recs = await loadBuilderRecords({ fresh: true }).catch(() => []); return (recs || []).find(r => r.review?.code === code && r.review?.status !== 'removed') || null; }
+async function logRemoval(code, what, detail) {   // on the Builder record when there is one (who, when, what); never blocks
+  try {
+    const rec = await builderRecordFor(code); if (!rec) return;
+    const path = `${BUILDER}/contents/records/${rec.id}.json`;
+    const cur = await (await ghFetch('GET', `${path}?ref=main`)).json();
+    const x = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(cur.content.replace(/\s/g, '')), c => c.charCodeAt(0))));
+    x.removals = [...(x.removals || []), { what, at: new Date().toISOString(), by: who('Review admin'), detail }];
+    const b = new TextEncoder().encode(JSON.stringify(x, null, 2) + '\n'); let bin = ''; for (const c of b) bin += String.fromCharCode(c);
+    await ghFetch('PUT', path, { message: `${x.businessName || code}: ${what} undone in Review admin`, content: btoa(bin), sha: cur.sha, branch: 'main' });
+  } catch {}
+}
+async function removePackage(code) {
+  const name = nameOf(code), rec = await builderRecordFor(code);
+  if (!rec) { await confirmAction({ title: `${name}'s package wasn't made in the Builder`, lead: 'Only packages made in the Builder can be removed from here. Ask PJ to take this one off by hand.', ok: 'OK' }); return; }
+  const published = ['published', 'publish_failed'].includes(rec.review?.status);
+  if (!await confirmAction({ title: `Remove ${name}'s review package?`, danger: true, typeName: name, ok: 'Remove review package',
+    will: published ? [['Client pages', 'Link A and Link B say "This review isn\'t available. Your LFMP team will be in touch."'], ['automation-review', `the package's 3 files (${code}) are replaced by a small "removed" note`], ['Builder', 'the preview and the links A / B on the client record']]
+      : [['Builder', 'the review package preview (never published: nothing on the client\'s pages)']],
+    wont: ['The client\'s earlier answers and Submissions are kept (the Sheet isn\'t touched)', 'Nothing in GHL is deleted: no workflow, template or contact', `The code ${code} stays with this client`] })) return;
+  const rid = `ar-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, t0 = Date.now();
+  const job = arJob({ kind: 'remove', client: name, what: 'Remove review package', title: `Removing ${name}'s review package…`, typicalMs: 90000,
+    check: { repo: 'peejayedz/ghl-subaccount-builder', workflow: 'review-remove.yml', title: `review-remove ${rid}` } });
+  try {
+    const r = await ghFetch('POST', `${BUILDER}/actions/workflows/review-remove.yml/dispatches`, { ref: 'main', inputs: { payload: JSON.stringify({ recordId: rec.id, by: who('Review admin') }), request_id: rid } });
+    if (!r.ok) throw new Error(`GitHub didn't start it (${r.status}). Nothing was removed.`);
+    for (;;) {
+      await new Promise(res => setTimeout(res, 5000));
+      const fr = await ghFetch('GET', `${BUILDER}/contents/runs/review-remove-${rid}.json?ref=main`, null, { raw: true });
+      if (fr.status === 404) { if (Date.now() - t0 > 3 * 60e3) throw new Error('GitHub didn\'t start the remove within 3 minutes. Nothing was removed. Try again.'); continue; }
+      const f = JSON.parse(await fr.text());
+      job.progress(['check', 'commit', 'save'].filter(k => f.steps?.[k]?.state === 'ok').length / 3);
+      if (f.status === 'failed') throw new Error(f.error?.message || 'The remove stopped.');
+      if (f.status === 'done') break;
+      if (Date.now() - t0 > 10 * 60e3) throw new Error('The remove is taking longer than expected. Check again later; it keeps going on GitHub.');
+    }
+    job.done({ title: 'Done: review package removed', lead: published ? `Link A and Link B now say "This review isn't available". ${name}'s answers and Submissions are kept.` : 'The preview is gone. Nothing was on the client\'s pages.', line: 'Review package removed',
+      items: [...(published ? [['Client pages', 'say it isn\'t available']] : []), ['Answers + Submissions', 'kept'], ['GHL', 'nothing changed']] });
+    load();
+  } catch (err) { job.fail({ reason: err.message, nothingChanged: /Nothing was removed/.test(err.message), line: 'Review package not removed', onRetry: () => removePackage(code) }); }
 }
 
 // ---------- Copy (client links): the full link; "Copied" next to the button for 4 s ----------
@@ -638,6 +720,9 @@ document.addEventListener('click', async e => {
   const ev = e.target.closest('[data-ed-ver]'); if (ev) { E.ver = ev.dataset.edVer; E.open = null; openDetails(dpCode, 'edit'); $('dPanel').querySelector('[data-ed-ver-go]')?.focus(); return; }
   if (e.target.closest('[data-ed-ver-cancel]')) { E.ver = null; openDetails(dpCode, 'edit'); return; }
   const eg = e.target.closest('[data-ed-ver-go]'); if (eg) { await startVersion(dpCode, eg.dataset.edVerGo); return; }
+  if (e.target.closest('[data-dp-rmpkg]')) { closeMenus(); removePackage(dpCode); return; }   // v1.14.0 (Part 4)
+  const eu = e.target.closest('[data-ed-undo]'); if (eu) { undoEdit(dpCode, eu.dataset.edUndo); return; }
+  const vu = e.target.closest('[data-ed-verundo]'); if (vu) { undoVer(dpCode, vu.dataset.edVerundo); return; }
   const dp = e.target.closest('[data-dp]');
   if (dp) { closeMenus(); dpMode = dp.dataset.dp === 'back' ? null : dp.dataset.dp; openDetails(dpCode, dpTab); return; }
   if (e.target.closest('[data-row-stop]')) return;      // links inside a row work as links

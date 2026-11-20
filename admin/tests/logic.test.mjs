@@ -174,6 +174,31 @@ t('v1.10.0 A–Z: the home list is A–Z by the shown name in every filter and i
   eq(names('all', 'nobody'), []);
 });
 
+t('v1.14.0 Undo edit / Undo version: rows that bring back what Link B showed before; nothing is deleted', () => {
+  const base = { automations: [{ id: 'a1', version: '1' }] };
+  const sms = { id: 'a1.s1', auto: 'a1', text: 'Original', subject: null, kind: 'SMS' };
+  const em = { id: 'a1.s2', auto: 'a1', text: 'Body0', subject: 'Subj0', kind: 'Email' };
+  const row = (field, value, ts) => ({ automation: 'a1', field, value, timestamp: ts });
+  // two saves on the SMS: undo the last → back to the first edit
+  let c = [row('step:s1:sms', 'First edit', '2026-11-20T10:00:00Z'), row('step:s1:sms', 'Second edit', '2026-11-20T11:00:00Z')];
+  eq(L.undoEditFields(sms, c, base).fields, [['step:s1:sms', 'First edit']], 'back to the earlier edit');
+  // one save → back to the file's wording
+  c = [row('step:s1:sms', 'Only edit', '2026-11-20T10:00:00Z')];
+  eq(L.undoEditFields(sms, c, base).fields, [['step:s1:sms', 'Original']], 'back to the original');
+  // an email saved as subject + body in the same save (within 10 s) is undone together
+  c = [row('step:s2:email.subject', 'Subj1', '2026-11-20T10:00:00Z'), row('step:s2:email.body', 'Body1', '2026-11-20T10:00:03Z')];
+  const u = L.undoEditFields(em, c, base);
+  eq(u.before, { subject: 'Subj0', text: 'Body0', edited: false }, 'both fields back');
+  eq(L.shownWording(em, L.linkB([...c, ...u.fields.map(([f, v], i) => row(f, v, `2026-11-20T12:00:0${i}Z`))], base).edits), { subject: 'Subj0', text: 'Body0', edited: false }, 'Link B shows the original again');
+  // nothing to undo: no edit, or a later version already dropped it
+  eq(L.undoEditFields(sms, [], base), null, 'no edit');
+  eq(L.undoEditFields(sms, [row('step:s1:sms', 'x', '2026-11-20T10:00:00Z'), row('version', '1.1', '2026-11-20T11:00:00Z')], base), null, 'dropped by a later version');
+  // versions: back to the one before the newest version row, or the file's version
+  eq(L.undoVersion('a1', [row('version', '1.1', '2026-11-20T10:00:00Z')], base), { from: '1.1', to: '1' });
+  eq(L.undoVersion('a1', [row('version', '1.1', '2026-11-20T10:00:00Z'), row('version', '1.2', '2026-11-20T11:00:00Z')], base), { from: '1.2', to: '1.1' });
+  eq(L.undoVersion('a1', [], base), null, 'no version started');
+});
+
 const adminJs = await readFile(new URL('../admin.js', import.meta.url), 'utf8');
 const newsJson = await readFile(new URL('../whats-new.json', import.meta.url), 'utf8');
 t('v1.10.0 What\'s new: a card only for minor releases; a patch never pops its own card', () => {

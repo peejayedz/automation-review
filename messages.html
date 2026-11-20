@@ -459,7 +459,22 @@ function renderBrand(C){
   let base;
   try {
     [C, base] = await Promise.all(["data/" + clientKey + ".messages.json", "data/" + clientKey + ".json"].map(u => fetch(u + "?t=" + Date.now(), {cache: "no-store"}).then(r => { if (!r.ok) throw 0; return r.json(); })));
-  } catch(e){ notice("<span>We couldn't find this review page. Please check the link.</span>", true); return; }
+  } catch(e){
+    // Removed by the LFMP team (Builder → Remove review package): data/<code>.json is a small "removed" marker; earlier
+    // answers are kept. Any other missing code: "check the link".
+    const gone = await fetch("data/" + clientKey + ".json?t=" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).catch(() => null);
+    if (gone && gone.removed === true) {
+      // only the message: no review instructions, questions or "looks good" bar for a review that isn't there any more
+      $("#page-h1").textContent = "This review isn't available"; $("#page-lead").textContent = "Your LFMP team will be in touch.";
+      document.title = "This review isn't available · Law Firm Marketing Pros";
+      document.querySelectorAll("#sections, #qs").forEach(x => { const sec = x.closest("section") || x; sec.hidden = true; });
+      const bar = document.querySelector(".bar"); if (bar) bar.hidden = true;
+      $("#footer-text").textContent = "Law Firm Marketing Pros";
+      return;
+    }
+    notice("<span>We couldn't find this review page. Please check the link.</span>", true);
+    return;
+  }
   C.sections.forEach(s => s.msgs.forEach(m => m.sectionTitle = s.title));
   MSGS = C.sections.flatMap(s => s.msgs); byId = Object.fromEntries(MSGS.map(m => [m.id, m]));
   document.title = C.pageTitle || document.title;

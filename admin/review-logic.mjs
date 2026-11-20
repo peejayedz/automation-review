@@ -151,3 +151,36 @@ export function nextVersion(v) {
   const m = String(v || '1.0').match(/^(\d+)\.(\d+)$/);
   return m ? `${m[1]}.${Number(m[2]) + 1}` : (Number(v) ? (Number(v) + 0.1).toFixed(1) : `${String(v || '1')}.1`);
 }
+
+// ---------- v1.13.0 → v1.14.0 (Part 4): undo one saved edit / one started version ----------
+// Edits go live on Link B straight away (Content rows), so "remove an edit" = add rows that bring back what Link B showed
+// before that save. Nothing is deleted from the Sheet; the history keeps both. A "save" = this message's wording rows
+// within 10 s of its newest one.
+const ts = c => Date.parse(c.timestamp) || 0;
+const wordingField = (m, f) => { const step = m.id.slice(m.id.lastIndexOf('.') + 1); const x = String(f || '').match(/^step:([^:]+):(sms|body|email\.subject|email\.body)$/); return !!x && x[1] === step; };
+export function lastSaveRows(m, content) {
+  const mine = (content || []).filter(c => c.automation === m.auto && wordingField(m, c.field)).sort((a, b) => ts(a) - ts(b));
+  if (!mine.length) return [];
+  const t = ts(mine.at(-1));
+  return mine.filter(c => t - ts(c) <= 10000);
+}
+// { fields: [[field, value]] to save, before: {subject, text} } or null when this message has no edit to undo, or when
+// a later "version" row already dropped it (Link B no longer shows it).
+export function undoEditFields(m, content, base) {
+  const last = lastSaveRows(m, content); if (!last.length) return null;
+  const ver = (content || []).filter(c => c.automation === m.auto && c.field === 'version').map(ts).sort((a, b) => a - b).pop() || 0;
+  if (ts(last.at(-1)) < ver) return null;
+  const now = linkB(content, base).edits;
+  if (!shownWording(m, now).edited) return null;
+  const rest = (content || []).filter(c => !last.includes(c));
+  const before = shownWording(m, linkB(rest, base).edits);
+  const fields = editFieldsFor(m, now, before.subject, before.text);
+  return fields.length ? { fields, before } : null;
+}
+// The version to go back to for an automation (the one before its newest "version" row), or null.
+export function undoVersion(auto, content, base) {
+  const rows = (content || []).filter(c => c.automation === auto && c.field === 'version').sort((a, b) => ts(a) - ts(b));
+  if (!rows.length) return null;
+  const prev = rows.length > 1 ? String(rows.at(-2).value) : String(((base && base.automations) || []).find(a => a.id === auto)?.version || '1');
+  return { from: String(rows.at(-1).value), to: prev };
+}

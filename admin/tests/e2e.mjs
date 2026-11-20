@@ -26,10 +26,15 @@ const ME_EMAIL = 'pj@lawfirmmarketingpros.com';
 const ACCESS = createTestAccess({ names: { [ME_EMAIL]: 'PJ Drozo' } });
 const SIGNED = { email: ME_EMAIL };     // who Access says is signed in (null = signed out)
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.woff2': 'font/woff2', '.png': 'image/png', '.svg': 'image/svg+xml', '.txt': 'text/plain' };
-const LIST = await readdir(join(AR, 'data'));
+// Fixed test data: Dumas & Sanclemente as a CLASSIC-only client (as before it was moved to links A/B on 20 Nov 2026,
+// automation-review 2ac085b), because several checks below are about a classic-only client. Read from git history.
+const { execFileSync } = await import('node:child_process');
+const PIN = { 'data/dumas-sanclemente-mo5cay.plan.json': null, 'data/dumas-sanclemente-mo5cay.messages.json': null };
+try { PIN['data/dumas-sanclemente-mo5cay.json'] = execFileSync('git', ['-C', AR, 'show', '2ac085b~1:data/dumas-sanclemente-mo5cay.json'], { encoding: 'utf8' }); } catch {}
+const LIST = (await readdir(join(AR, 'data'))).filter(n => PIN[`data/${n}`] !== null);
 const PLANS = await readdir(join(AR, 'plans')).catch(() => []);   // hand-made plans/<code>.html (Mahdavi)
 const CODES = LIST.filter(n => /^[a-z0-9-]+\.json$/.test(n)).map(n => n.slice(0, -5));
-const DATA = Object.fromEntries(await Promise.all(CODES.map(async c => [c, JSON.parse(await readFile(join(AR, 'data', `${c}.json`), 'utf8'))])));
+const DATA = Object.fromEntries(await Promise.all(CODES.map(async c => [c, JSON.parse(PIN[`data/${c}.json`] || await readFile(join(AR, 'data', `${c}.json`), 'utf8'))])));
 
 // ---- backend: real Code.gs, seeded like real use
 function seed() {
@@ -112,6 +117,7 @@ const server = createServer(async (req, res) => {
   if (p === '/exec') { try { const d = req.method === 'POST' ? JSON.parse(body || '{}') : null; if (d) posts.push(d); return send(res, 200, d ? gs.post(d) : gs.get(Object.fromEntries(u.searchParams))); } catch (e) { return send(res, 200, { ok: false, error: e.message }); } }
   if (p.startsWith('/automation-review/')) {
     let rel = normalize(p.slice('/automation-review/'.length) || 'index.html').replace(/^(\.\.[/\\])+/, ''); if (rel.endsWith('/') || rel === '.') rel = join(rel, 'index.html');
+    if (rel in PIN) return PIN[rel] === null ? send(res, 404, 'not found', 'text/plain') : send(res, 200, PIN[rel], TYPES['.json']);   // the fixed Dumas (above)
     try { return send(res, 200, await readFile(join(AR, rel)), TYPES[extname(rel)] || 'application/octet-stream'); } catch { return send(res, 404, 'not found', 'text/plain'); }
   }
   send(res, 404, 'not found', 'text/plain');
@@ -247,7 +253,7 @@ try {
   await check('home: last column (v1.9.0: Waiting Mahdavi "Replied · <date>"; Not sent "Create package ›"; Needs you / Done without a link "No client link yet"), no ?c= classic link anywhere; row click = Details', async () => {
     const lk = c => page.innerText(`${ROW(c)} .lv-c:not(.lv-pr) .lv-mt`);
     assert(/^Replied · [A-Z][a-z]{2} \d{1,2}$/.test(await lk('mahdavi-law-mc1mar')), await lk('mahdavi-law-mc1mar'));
-    for (const c of ['dumas-sanclemente-mo5cay', 'palm-beach-plastic-n9umxi', 'boca-dental-e770de']) assert(await lk(c) === 'No client link yet', c);
+    for (const c of ['dumas-sanclemente-mo5cay', 'palm-beach-plastic-n9umxi', 'boca-dental-e770de']) assert(await lk(c) === 'No client link yet', `${c}: ${await lk(c)}`);
     for (const c of ['emery-law-9lp7do', 'hedayati-law-m90omb', 'sralla-family-law-rbi2yj']) assert(await lk(c) === 'Create package ›' && /^\/ghl-subaccount-builder-page\/\?(client=[a-z0-9-]+&tab=review|add=existing&q=)/.test(await page.getAttribute(`${ROW(c)} a[data-pkg]`, 'href')), c);
     assert(!(await page.$$eval('a[href]', as => as.filter(a => /[?&]c=/.test(a.getAttribute('href')) && !/(plan|messages)\.html\?c=/.test(a.getAttribute('href'))).length)), 'a classic ?c= link on the home');
     assert(await page.innerText(`${ROW('mahdavi-law-mc1mar')} .lv-op`) === 'Open ›', 'Open ›');
@@ -346,7 +352,7 @@ try {
   });
   await check('Details ⋯ = Rename client · Clear test responses… · Classic editor (old) (team-only edit.html, same tab): the only link to the classic editor', async () => {
     await page.click('[data-menu="dpMenu"]');
-    assert(await page.$$eval('#dpMenu [role="menuitem"]', e => e.map(x => x.textContent.trim()).join(' | ')) === 'Rename client | Clear test responses… | Classic editor (old)', 'menu items');
+    assert(await page.$$eval('#dpMenu [role="menuitem"]', e => e.map(x => x.textContent.trim()).join(' | ')) === 'Rename client | Clear test responses… | Remove review package… | Classic editor (old)', 'menu items');   // v1.14.0: + Remove review package
     const a = page.locator('#dpMenu a'); assert((await a.getAttribute('href')) === 'edit.html?c=dumas-sanclemente-mo5cay' && !(await a.getAttribute('target')), 'classic editor link');
     await page.keyboard.press('Escape');
     // nowhere else: home, Overview, Edit tab, Submissions (checked again after Submissions)
@@ -455,6 +461,24 @@ try {
     assert(p.join(' ') === `consultation|version|${v1} consultation|step:s6:sms|Hi [First na`, p.join(' '));
     assert(await page.innerText('#edVer') === `v${v1}`, 'version shown');
     await linkBText(ZZ, ['see you tomorrow at [Time]. Reply C to confirm.']);
+  });
+  // v1.14.0 (Part 4): undo an edit / a version = rows that bring back what Link B showed (nothing deleted); name typed
+  await check('Edit tab: Undo edit asks (red, name typed, Esc = nothing), then admin_edit puts back the earlier wording and Link B shows it', async () => {
+    await page.evaluate(() => { window.__lvManual = true; });
+    await openEdit(ZZ, 'reply-alert'); const n = posts.length;
+    const orig = ZZM.sections.flatMap(g => g.msgs).find(m => m.id === 'reply-alert.s2').text;
+    await page.click('#dPanel [data-ed-undo="reply-alert.s2"]'); await page.waitForSelector('[data-lv-cf-shade] .lv-cf.danger');
+    const t = await page.innerText('.lv-cf');
+    assert(/Undo the last edit for/i.test(t) && /Nothing is deleted from the Sheet/.test(t) && await page.isDisabled('[data-lv-cf="ok"]'), t);
+    await page.keyboard.press('Escape'); assert(posts.length === n && !(await page.locator('[data-lv-cf-shade]').count()), 'Esc: nothing saved');
+    await page.click('#dPanel [data-ed-undo="reply-alert.s2"]'); await page.waitForSelector('#lvCfIn');
+    await page.fill('#lvCfIn', await page.getAttribute('#lvCfIn', 'placeholder')); await page.click('[data-lv-cf="ok"]');
+    await page.waitForSelector('.lv-res', { timeout: 15000 }); assert(/Done: edit undone/i.test(await page.innerText('.lv-res')), 'Done popup'); await page.click('[data-lv-res="close"]');
+    const p = posts.slice(n).filter(x => x.action === 'admin_edit');
+    assert(p.length === 1 && p[0].automation === 'reply-alert' && p[0].field === 'step:s2:sms' && p[0].value === orig, JSON.stringify(p));
+    assert(!posts.slice(n).some(x => x.action === 'admin_delete'), 'nothing deleted');
+    await linkBText(ZZ, [orig.slice(0, 40)]);
+    await page.evaluate(() => { window.__lvManual = false; });
   });
   await check('Edit tab, classic-only client (Dumas): "No client link yet — create an A/B package in the Builder." and nothing to edit', async () => {
     await openEdit('dumas-sanclemente-mo5cay');

@@ -2,6 +2,17 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.14.0",
+      "date": "Nov 20",
+      "title": "Ask first, undo an edit, remove a package",
+      "line": "Saving wording asks first, and an edit or a new version can be undone.",
+      "items": [
+        { "type": "new", "text": "Save wording now asks first, since the client sees it on Link B straight away." },
+        { "type": "new", "text": "Undo edit and Undo version bring back what the client saw before. Nothing is deleted from the Sheet." },
+        { "type": "new", "text": "Remove review package (⋯ menu): the client's links then say the review isn't available. Their answers and Submissions are kept." }
+      ]
+    },
+    {
       "version": "1.13.0",
       "date": "Nov 20",
       "title": "A clear Done for every save",
