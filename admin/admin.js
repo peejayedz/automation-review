@@ -10,7 +10,7 @@
 import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob, confirmAction } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.14.0';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
 import * as GC from './greet-count.mjs?v=1.12.2';   // v1.12.1: the load + the "Needs you" count (list + greeting)
-export const VERSION = '1.14.0';
+export const VERSION = '1.14.1';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -623,7 +623,19 @@ async function undoVer(code, auto) {
 }
 // The Builder record that made this client's package (Remove runs the Builder's review-remove.yml, as its Review tab does).
 const BUILDER = '/repos/peejayedz/ghl-subaccount-builder';
-async function builderRecordFor(code) { const recs = await loadBuilderRecords({ fresh: true }).catch(() => []); return (recs || []).find(r => r.review?.code === code && r.review?.status !== 'removed') || null; }
+// v1.14.1: the shared loader gives short rows ({ id, reviewCode, … }), so match on reviewCode, then read that one record
+// in full (its review.status says published / preview / removed). A read that fails → null (Remove then says so).
+async function builderRecordFor(code, { removable = false } = {}) {
+  const recs = await loadBuilderRecords({ fresh: true }).catch(() => []);
+  const row = (recs || []).find(r => r.reviewCode === code); if (!row) return null;
+  try {
+    const r = await ghFetch('GET', `${BUILDER}/contents/records/${row.id}.json?ref=main`, null, { raw: true }); if (!r.ok) return null;
+    const rec = JSON.parse(await r.text());
+    if (rec?.id !== row.id || rec.review?.code !== code || rec.review?.status === 'removed') return null;
+    // removable: only a package the Builder made (as its Review tab: preview / published / publish failed), not "linked"
+    return !removable || ['preview', 'published', 'publish_failed'].includes(rec.review?.status) ? rec : null;
+  } catch { return null; }
+}
 async function logRemoval(code, what, detail) {   // on the Builder record when there is one (who, when, what); never blocks
   try {
     const rec = await builderRecordFor(code); if (!rec) return;
@@ -636,7 +648,7 @@ async function logRemoval(code, what, detail) {   // on the Builder record when 
   } catch {}
 }
 async function removePackage(code) {
-  const name = nameOf(code), rec = await builderRecordFor(code);
+  const name = nameOf(code), rec = await builderRecordFor(code, { removable: true });
   if (!rec) { await confirmAction({ title: `${name}'s package wasn't made in the Builder`, lead: 'Only packages made in the Builder can be removed from here. Ask PJ to take this one off by hand.', ok: 'OK' }); return; }
   const published = ['published', 'publish_failed'].includes(rec.review?.status);
   if (!await confirmAction({ title: `Remove ${name}'s review package?`, danger: true, typeName: name, ok: 'Remove review package',

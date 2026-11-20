@@ -480,6 +480,33 @@ try {
     await linkBText(ZZ, [orig.slice(0, 40)]);
     await page.evaluate(() => { window.__lvManual = false; });
   });
+  // v1.14.1: Remove review package finds the Builder record through the shared loader's short rows (reviewCode), then
+  // reads that record in full. Live in v1.14.0 it matched on rec.review.code, which those rows don't have, so it always
+  // said "wasn't made in the Builder". Here: a Builder-made published package asks (red, name typed; Esc = nothing
+  // dispatched); a "linked" one (Mahdavi) is refused, as the Builder's remove would refuse it.
+  await check('⋯ Remove review package: a Builder-made package asks first (red, name typed, Esc = nothing); a linked one is refused', async () => {
+    await page.evaluate(() => { window.__lvManual = true; });
+    BREC.files['zz-test-2-bz8syu'] = { sha: 'c'.repeat(40), rec: { id: 'zz-test-2-bz8syu', businessName: 'ZZ TEST 2', status: 'ready', review: { status: 'published', code: ZZ } } };
+    try {
+      const g = ghCalls.length;
+      await page.goto(`${ADMIN}#/client/${ZZ}`); await page.waitForSelector('#dPanel:not([hidden])');
+      await page.click('[data-menu="dpMenu"]'); await page.click('#dpMenu [data-dp-rmpkg]');
+      await page.waitForSelector('[data-lv-cf-shade] .lv-cf.danger', { timeout: 10000 });
+      const t = await page.innerText('.lv-cf');
+      assert(/Remove ZZ TEST 2.s review package\?/i.test(t) && /This review isn.t available/.test(t) && /Submissions are kept/.test(t) && await page.isDisabled('[data-lv-cf="ok"]'), t);
+      assert(ghCalls.slice(g).includes(`GET ${B_RECS}/zz-test-2-bz8syu.json?ref=main`), ghCalls.slice(g).join(' '));
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+      assert(!(await page.locator('[data-lv-cf-shade]').count()) && !ghCalls.slice(g).some(c => /dispatches|^PUT|^DELETE/.test(c)), `Esc: ${ghCalls.slice(g).join(' ')}`);
+      // Mahdavi: its record is only linked → refused, nothing dispatched
+      const g2 = ghCalls.length;
+      await page.goto(`${ADMIN}#/client/mahdavi-law-mc1mar`); await page.waitForSelector('#dPanel:not([hidden])');
+      await page.click('[data-menu="dpMenu"]'); await page.click('#dpMenu [data-dp-rmpkg]');
+      await page.waitForSelector('[data-lv-cf-shade] .lv-cf', { timeout: 10000 });
+      assert(/wasn.t made in the Builder/i.test(await page.innerText('.lv-cf')), await page.innerText('.lv-cf'));
+      await page.click('[data-lv-cf="cancel"]');
+      assert(!ghCalls.slice(g2).some(c => /dispatches|^PUT|^DELETE/.test(c)), ghCalls.slice(g2).join(' '));
+    } finally { delete BREC.files['zz-test-2-bz8syu']; await page.evaluate(() => { window.__lvManual = false; }); }
+  });
   await check('Edit tab, classic-only client (Dumas): "No client link yet — create an A/B package in the Builder." and nothing to edit', async () => {
     await openEdit('dumas-sanclemente-mo5cay');
     assert((await page.innerText('#dPanel .nolinkbox')).startsWith('No client link yet — create an A/B package in the Builder. Create package ›'), 'notice');

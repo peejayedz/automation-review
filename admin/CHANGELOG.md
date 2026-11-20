@@ -2,6 +2,10 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.14.1 — 20 Nov 2026: Remove review package finds the Builder record
+- **[internal]** Fix: ⋯ → Remove review package always said "<Client>'s package wasn't made in the Builder" (live in v1.14.0). It matched `review.code` on the shared loader's short rows, which only have `reviewCode`. Now it matches `reviewCode`, then reads that record in full. Remove is offered only for a package the Builder made (preview / published / publish failed); a linked one is refused, as `review-remove.yml` refuses it. The same lookup now lets Undo edit / Undo version log on the Builder record. Nothing was ever removed or sent by the bug.
+- **[internal]** Tests: `admin/tests/e2e.mjs` 68/68 (new: a Builder-made package asks first, red, name typed, Esc = nothing dispatched; a linked one is refused). It fails on v1.14.0.
+
 ## Review admin v1.14.0 — 20 Nov 2026: ask first, undo, remove
 - **[internal]** Part 4: Shared `lfmp-session.js` / `lfmp-ui.css` 2.6.0 (byte-identical in the three repos): `confirmAction()` = one small popup before anything that creates, publishes, sends or changes something outside the page: "<Action> for <Client>?", what happens and where (GitHub, GHL, Sheet, client page, this record), what does NOT happen; Cancel first (focused; Esc and a click outside = Cancel: nothing runs). Removals are red, say what goes and what is kept, and need the client's name typed when it's client-facing or has data. Quick read-only actions (Refresh, Copy, Open, filters) never ask.
 - **[internal]** Save wording asks first (Link B shows it straight away). **Undo edit** on an edited message and **Undo version** next to the version: rows that bring back what Link B showed before (nothing is deleted from the Sheet; the history keeps both; `review-logic.mjs` `undoEditFields` / `undoVersion`). Client name typed.
