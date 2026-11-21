@@ -2,6 +2,15 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.15.3",
+      "date": "Nov 21",
+      "title": "Behind the scenes",
+      "line": "A small shared update; nothing changes on this page.",
+      "items": [
+        { "type": "improved", "text": "A shared style of the three tools was updated. Nothing changes on the Reviews page." }
+      ]
+    },
+    {
       "version": "1.15.2",
       "date": "Nov 21",
       "title": "Behind the scenes",

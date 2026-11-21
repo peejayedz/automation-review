@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.15.3 — 21 Nov 2026: shared shell CSS 2.8.1
+- **[internal]** Shared shell CSS 2.8.1 (`lfmp-ui.css`, byte-identical in the three tools): the Builder's "From GHL" pill also styles `div.f`. Nothing changes on this page.
+
 ## Review admin v1.15.2 — 21 Nov 2026: shared shell 2.8.0
 - **[internal]** Shared shell 2.8.0 (`lfmp-session.js`, byte-identical in the three tools): the working bar can show "… · 6 of 9 steps" next to its time (`steps()`); nothing on this page uses it yet.
 
