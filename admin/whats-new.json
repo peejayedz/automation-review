@@ -2,6 +2,15 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.17.0",
+      "date": "Nov 21",
+      "title": "Done moments",
+      "line": "Your name menu has a new Done moments setting.",
+      "items": [
+        { "type": "new", "text": "Name menu → Done moments: the finish animation, sound and voice that play when your jobs finish (in the Builder and KPI admin), and the voice that can read your morning greeting. Classic keeps things as they were." }
+      ]
+    },
+    {
       "version": "1.16.0",
       "date": "Nov 21",
       "title": "Reports, the 4th tool",

@@ -10,7 +10,7 @@
 import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, brandFor, brandSub, brandWord, brandCounts, getBrandFilter, setBrandFilter, wireListFilter, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob, confirmAction } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.14.0';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
 import * as GC from './greet-count.mjs?v=1.12.2';   // v1.12.1: the load + the "Needs you" count (list + greeting)
-export const VERSION = '1.16.0';
+export const VERSION = '1.17.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
