@@ -2,6 +2,9 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## Review admin v1.15.2 Shared shell 2.8.0 (queue item 2; with Builder v1.29.0 + KPI v1.35.0): pushed 21 Nov 2026
+- `lfmp-session.js` 2.8.0 (byte-identical in the three tools): `startJob(...).steps(done, total)`; the bar never repeats its title in the line under it. Nothing on the Reviews page uses steps() yet. `admin/tests/shell.test.mjs` 47/47.
+
 ## Review admin v1.15.1 The real WPP logo on the client pages (queue item 1b, PJ's option B; with KPI v1.34.0 + Builder v1.28.1): pushed 21 Nov 2026
 - **What it is:** CHANGELOG v1.15.1 [client]. plan.html / messages.html / index.html: `agencyLogo.logoLight` / `logoDark` (data URIs written by the Builder) drawn as an `<img>` pair that follows Auto / Light / Dark, 44 px, no chip, alt "Web Promotion Partners"; no `logoLight` = the old mask (unchanged). LFMP pages pixel-identical.
 - **Boca Dental:** `data/boca-dental-e770de.messages.json` changed in its two logo values only (cropped Boca logo 217×58 + the real WPP logo), by the Builder's `scripts/review/logo-only.mjs`; its plan file is untouched (still the 20 Nov meeting plan = the Builder's custom plan).
