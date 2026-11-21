@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.15.2 — 21 Nov 2026: shared shell 2.8.0
+- **[internal]** Shared shell 2.8.0 (`lfmp-session.js`, byte-identical in the three tools): the working bar can show "… · 6 of 9 steps" next to its time (`steps()`); nothing on this page uses it yet.
+
 ## Review admin v1.15.1 — 21 Nov 2026: the real WPP logo on the client pages
 - **[client]** WPP packages: Link A (plan.html), Link B (messages.html) and the "isn't available" page (index.html) show the REAL Web Promotion Partners logo as `<img>` (PJ's option B): `agencyLogo.logoLight` in light mode, `logoDark` (only "WEB" white) in dark mode, following Auto / Light / Dark; 44 px, no chip, alt "Web Promotion Partners". A package without `logoLight` keeps the old one-colour mask. LFMP packages: pixel-identical (Mahdavi, Dumas checked at 1440 / 390, light / dark).
 - **[client]** Boca Dental: `data/boca-dental-e770de.messages.json` = logo fields only (the cropped Boca logo + the new agency logo), from the Builder's `scripts/review/logo-only.mjs`.
