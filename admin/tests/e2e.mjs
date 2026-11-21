@@ -191,7 +191,7 @@ try {
   // ===== 1) home
   await check('v2 shell: top bar LFMP · Clients / Scorecards / Reviews (Reviews current), no + and no bell on Reviews, initials only (v1.12.0: name + Sign out in the name menu)', async () => {
     assert(await page.isVisible('.lv-top') && await page.isHidden('.lv-tabs') && await page.isHidden('.lv-ptop'), 'desktop: one top bar, no phone bar / tabs');
-    assert(await page.$$eval('.lv-nav a', as => as.map(a => `${a.textContent}${a.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews*', 'nav');
+    assert(await page.$$eval('.lv-nav a', as => as.map(a => `${a.textContent}${a.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews* Reports', 'nav (shell 2.9.0: + Reports)');
     assert(!(await page.locator('[data-lv="plus"], .top, .toolchip, .hero, .strip, .foot, #themeSeg, #topMenu').count()), 'a + / old header piece');
     // v1.13.0 (Part 2, shared shell 2.5.0): every tool has a bell; here it lists recent jobs ("Notifications")
     assert(await page.locator('[data-lv-top] [data-lv="bell"]').count() === 1 && /^Notifications/.test(await page.getAttribute('[data-lv-top] [data-lv="bell"]', 'aria-label')), 'the recent-jobs bell');
@@ -966,7 +966,7 @@ try {
       if (w === 390) {
         assert(await p.isVisible('.lv-ptop') && await p.isHidden('.lv-top') && await p.isVisible('.lv-tabs'), 'phone bars');
         assert(await p.$eval('[data-lv-title]', h => h.textContent) === 'Reviews' && !(await p.locator('.lv-ptop [data-lv="plus"]').count()) && await p.locator('[data-lv-ptop] .lv-bell').count() === 1, 'phone title / no + / the recent-jobs bell');
-        assert(await p.$$eval('.lv-tabs .lv-tab', t => t.map(x => `${x.textContent.trim()}${x.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews* Me', 'tabs');
+        assert(await p.$$eval('.lv-tabs .lv-tab', t => t.map(x => `${x.textContent.trim()}${x.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews* Reports Me', 'tabs (shell 2.9.0: + Reports)');
         const small = await p.$$eval('.lv-row, .lv-tab, .lv-seg button, .lv-search, .lv-ptop .lv-avbtn', els => els.filter(e => { const r = e.getBoundingClientRect(); const a = getComputedStyle(e, '::after'); const ah = a.content !== 'none' ? parseFloat(a.height) : 0; return Math.max(r.height, ah) < 44; }).map(e => e.className));
         assert(!small.length, `tap targets under 44 px: ${small.join(', ')}`);
         assert(await p.$eval('.lv-row .lv-chev', e => getComputedStyle(e).display !== 'none'), 'chevron on phone rows');
@@ -1009,7 +1009,7 @@ try {
       await measure('name menu');
       if (w === 390) { await p.keyboard.press('Escape'); await p.click('.lv-tabs [data-lv="metab"]'); await p.waitForSelector('[data-lv-me]:not([hidden]) .lv-mi'); }   // the Me tab: the Me screen
       if (w === 390) {
-        assert(await p.$$eval('.lv-tabs .lv-tab', t => t.map(x => `${x.textContent.trim()}${x.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews Me*', 'Me tab current');
+        assert(await p.$$eval('.lv-tabs .lv-tab', t => t.map(x => `${x.textContent.trim()}${x.getAttribute('aria-current') ? '*' : ''}`).join(' ')) === 'Clients Scorecards Reviews Reports Me*', 'Me tab current');
         assert(await p.isVisible('[data-lv-me] .lv-mi.out'), 'phone Me: red Sign out row');
       }
       await p.click('[data-lv="signins"]:visible'); await p.waitForSelector('#lfmpSignins[open] .lfmp-signins');

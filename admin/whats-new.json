@@ -2,6 +2,15 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.16.0",
+      "date": "Nov 21",
+      "title": "Reports, the 4th tool",
+      "line": "The top bar and the phone tabs have a new tool: Reports.",
+      "items": [
+        { "type": "new", "text": "Reports sits next to Clients, Scorecards and Reviews: LeadPro Reports for each client (BrightLocal rankings first). Nothing changes on the Reviews page." }
+      ]
+    },
+    {
       "version": "1.15.3",
       "date": "Nov 21",
       "title": "Behind the scenes",

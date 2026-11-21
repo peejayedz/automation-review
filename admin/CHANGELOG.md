@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.16.0 — 21 Nov 2026: shared shell 2.9.0 (Reports, the 4th tool)
+- **[internal]** Shared shell 2.9.0 (`lfmp-session.js`, `lfmp-ui.css`, byte-identical in the three tools): the top bar and the phone bottom tabs have a 4th tool, **Reports** (LeadPro Reports, in the Builder at `#reports`); the five phone tabs share the width. Nothing else changes on this page; client pages untouched.
+
 ## Review admin v1.15.3 — 21 Nov 2026: shared shell CSS 2.8.1
 - **[internal]** Shared shell CSS 2.8.1 (`lfmp-ui.css`, byte-identical in the three tools): the Builder's "From GHL" pill also styles `div.f`. Nothing changes on this page.
 
