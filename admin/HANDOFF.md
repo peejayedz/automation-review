@@ -2,6 +2,9 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## Review admin v1.17.0 Done moments (queue item 6; with Builder v1.32.0 + KPI v1.38.0; shell 2.10.0): pushed 21 Nov 2026
+- The shared Done moments settings (name menu → Done moments) and the voice greeting. This page has no job in the popup (decision 6.1: package builds run in the Builder's Review tab). Client pages untouched. Tests: shell 55/55, e2e 69/69.
+
 ## Review admin v1.16.0 Shared shell 2.9.0 (queue item 5; with Builder v1.31.0 + KPI v1.37.0): pushed 21 Nov 2026
 - The top bar and phone bottom tabs have a 4th tool, Reports (in the Builder at #reports); the five phone tabs share the width. Nothing else on this page; client pages untouched. Tests: shell 47/47, e2e 69/69 (tab lists updated).
 
