@@ -2,6 +2,9 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## Review admin v1.15.3 Shared shell CSS 2.8.1 (queue item 4; with Builder v1.30.1 + KPI v1.36.1): pushed 21 Nov 2026
+- `lfmp-ui.css` 2.8.1 (byte-identical in the three tools): the Builder's "From GHL" pill also styles `div.f`. Nothing changes on the Reviews page; client pages untouched.
+
 ## Review admin v1.15.2 Shared shell 2.8.0 (queue item 2; with Builder v1.29.0 + KPI v1.35.0): pushed 21 Nov 2026
 - `lfmp-session.js` 2.8.0 (byte-identical in the three tools): `startJob(...).steps(done, total)`; the bar never repeats its title in the line under it. Nothing on the Reviews page uses steps() yet. `admin/tests/shell.test.mjs` 47/47.
 
