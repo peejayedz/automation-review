@@ -2,6 +2,9 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.18.0 Done moments On / Off (shared shell 2.11.0; queue item 10): pushed 24 Nov 2026
+- The shell's Done moments panel has On / Off at the top (Off = the usual working bar + Done popup; the voice greeting keeps its own switch). Test browsers are muted (admin/tests/quiet-browser.mjs, FIX 10.0).
+
 ## Review admin v1.17.0 Done moments (queue item 6; with Builder v1.32.0 + KPI v1.38.0; shell 2.10.0): pushed 21 Nov 2026
 - The shared Done moments settings (name menu → Done moments) and the voice greeting. This page has no job in the popup (decision 6.1: package builds run in the Builder's Review tab). Client pages untouched. Tests: shell 55/55, e2e 69/69.
 
