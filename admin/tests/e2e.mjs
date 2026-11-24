@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 import { readFile, readdir, mkdir } from 'node:fs/promises';
 import { join, extname, normalize } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { quiet } from './quiet-browser.mjs';   // FIX 10.0: no sound from test browsers
 
 const AR = fileURLToPath(new URL('../../', import.meta.url));
 const B = join(AR, '../ghl-subaccount-builder');
@@ -134,7 +135,7 @@ let cur = null;
 async function check(label, fn) { try { await fn(); results.push(1); console.log(`✔ ${label}`); } catch (e) { results.push(0); console.log(`✖ ${label}\n    ${e.message.split('\n')[0]}`); if (cur) await cur.screenshot({ path: join(OUT, `FAIL_${results.length}.png`) }).catch(() => {}); } }
 const noBrand = s => String(s).replace(/^(LFMP|WPP) · /, '');   // v1.15.0: "All clients" rows start with the brand
 const assert = (c, m) => { if (!c) throw new Error(m); };
-const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+const browser = await quiet(await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--mute-audio'] }));
 async function ctxFor({ width = 1440, height = 900, scheme = 'light' } = {}) {
   // Motion (Nov 2026): reduced motion, so the details panel opens/closes at once here; the slide is tested in ghl-subaccount-builder tests/e2e/motion.mjs.
   const ctx = await browser.newContext({ reducedMotion: 'reduce', viewport: { width, height }, colorScheme: scheme });

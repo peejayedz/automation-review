@@ -11,6 +11,7 @@ import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
+import { quiet } from './quiet-browser.mjs';   // FIX 10.0: no sound from test browsers
 
 const HERE = dirname(fileURLToPath(import.meta.url)), REPO = join(HERE, '../..'), BUILDER = join(REPO, '../ghl-subaccount-builder');
 const OUT = join(BUILDER, 'test-results/logo-pages'), SIDE = process.argv[2] || '';
@@ -43,7 +44,7 @@ async function main() {
   const pages = { new: { plan: await readFile(join(REPO, 'plan.html'), 'utf8'), messages: await readFile(join(REPO, 'messages.html'), 'utf8') }, old: { plan: oldPage('plan.html'), messages: oldPage('messages.html') } };
   const config = await readFile(join(REPO, 'config.js'), 'utf8');
   const LOGO = `data:image/svg+xml;base64,${Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 12 214 60"><path d="M16 20c5-7 12-5 17 0 5-5 12-7 17 0 5 7 0 22-2.4 31-2 7-7 7-7.4 0l-2.2-12c-.4-4.6-5.4-4.6-5.8 0l-2.2 12c-.4 7-5.4 7-7.4 0C18.4 42 11 27 16 20z" fill="#2fa4a8"/><text x="68" y="44" font-family="Georgia,serif" font-size="30" font-weight="700" fill="#1d3b5c">ZZ Dental</text><text x="70" y="66" font-family="Arial,sans-serif" font-size="11" letter-spacing="3" fill="#2fa4a8">SMILE STUDIO</text></svg>').toString('base64')}`;
-  const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+  const browser = await quiet(await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--mute-audio'] }));
   try {
     const open = async (which, page, code, files, { width = 1440, height = 900, scheme = 'light' } = {}) => {
       const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: scheme, deviceScaleFactor: 1, reducedMotion: 'reduce' });
