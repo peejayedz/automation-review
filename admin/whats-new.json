@@ -2,12 +2,27 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.18.0",
+      "date": "Nov 24",
+      "title": "Done moments On / Off",
+      "line": "Done moments can now be switched off.",
+      "items": [
+        {
+          "type": "new",
+          "text": "Done moments: On / Off. Switch Done moments off in your name menu → Done moments for no popup, sound or voice on any job: you get the usual progress bar and Done popup. The voice greeting has its own switch."
+        }
+      ]
+    },
+    {
       "version": "1.17.0",
       "date": "Nov 21",
       "title": "Done moments",
       "line": "Your name menu has a new Done moments setting.",
       "items": [
-        { "type": "new", "text": "Name menu → Done moments: the finish animation, sound and voice that play when your jobs finish (in the Builder and KPI admin), and the voice that can read your morning greeting. Classic keeps things as they were." }
+        {
+          "type": "new",
+          "text": "Name menu → Done moments: the finish animation, sound and voice that play when your jobs finish (in the Builder and KPI admin), and the voice that can read your morning greeting. Classic keeps things as they were."
+        }
       ]
     },
     {
@@ -16,7 +31,10 @@
       "title": "Reports, the 4th tool",
       "line": "The top bar and the phone tabs have a new tool: Reports.",
       "items": [
-        { "type": "new", "text": "Reports sits next to Clients, Scorecards and Reviews: LeadPro Reports for each client (BrightLocal rankings first). Nothing changes on the Reviews page." }
+        {
+          "type": "new",
+          "text": "Reports sits next to Clients, Scorecards and Reviews: LeadPro Reports for each client (BrightLocal rankings first). Nothing changes on the Reviews page."
+        }
       ]
     },
     {
@@ -25,7 +43,10 @@
       "title": "Behind the scenes",
       "line": "A small shared update; nothing changes on this page.",
       "items": [
-        { "type": "improved", "text": "A shared style of the three tools was updated. Nothing changes on the Reviews page." }
+        {
+          "type": "improved",
+          "text": "A shared style of the three tools was updated. Nothing changes on the Reviews page."
+        }
       ]
     },
     {
@@ -34,7 +55,10 @@
       "title": "Behind the scenes",
       "line": "A small shared update; nothing changes on this page.",
       "items": [
-        { "type": "improved", "text": "A shared part of the three tools was updated (the working bar can show the step count). Nothing changes on the Reviews page." }
+        {
+          "type": "improved",
+          "text": "A shared part of the three tools was updated (the working bar can show the step count). Nothing changes on the Reviews page."
+        }
       ]
     },
     {
@@ -43,8 +67,14 @@
       "title": "The real WPP logo",
       "line": "WPP clients' review pages show the real Web Promotion Partners logo, in colour.",
       "items": [
-        { "type": "fixed", "text": "WPP clients' review pages show the real Web Promotion Partners logo in full colour (in dark mode only \"WEB\" turns white). LFMP clients' pages don't change." },
-        { "type": "fixed", "text": "Boca Dental's own logo is cropped so it reads at its normal size." }
+        {
+          "type": "fixed",
+          "text": "WPP clients' review pages show the real Web Promotion Partners logo in full colour (in dark mode only \"WEB\" turns white). LFMP clients' pages don't change."
+        },
+        {
+          "type": "fixed",
+          "text": "Boca Dental's own logo is cropped so it reads at its normal size."
+        }
       ]
     },
     {
@@ -53,8 +83,14 @@
       "title": "Show only LFMP or only WPP clients",
       "line": "A new filter next to the search shows only LFMP or only WPP clients, on all three pages.",
       "items": [
-        { "type": "new", "text": "\"All clients ▾\" next to the search shows only LFMP or only WPP clients. The same choice applies on Clients, Scorecards and Reviews on this device." },
-        { "type": "improved", "text": "On a phone, the status filter and the new brand filter are one Filter button, with the filters that are on shown under the search. \"Needs you\" stays one tap away." }
+        {
+          "type": "new",
+          "text": "\"All clients ▾\" next to the search shows only LFMP or only WPP clients. The same choice applies on Clients, Scorecards and Reviews on this device."
+        },
+        {
+          "type": "improved",
+          "text": "On a phone, the status filter and the new brand filter are one Filter button, with the filters that are on shown under the search. \"Needs you\" stays one tap away."
+        }
       ]
     },
     {
@@ -63,8 +99,14 @@
       "title": "Remove review package works, in the right brand",
       "line": "Remove review package now finds the client's Builder package, and the client's links keep the agency's look.",
       "items": [
-        { "type": "fixed", "text": "Remove review package (⋯ menu) no longer says the package wasn't made in the Builder when it was." },
-        { "type": "improved", "text": "After a remove, WPP clients' links show the WPP logo and say their WPP team will be in touch." }
+        {
+          "type": "fixed",
+          "text": "Remove review package (⋯ menu) no longer says the package wasn't made in the Builder when it was."
+        },
+        {
+          "type": "improved",
+          "text": "After a remove, WPP clients' links show the WPP logo and say their WPP team will be in touch."
+        }
       ]
     },
     {
@@ -73,9 +115,18 @@
       "title": "Ask first, undo an edit, remove a package",
       "line": "Saving wording asks first, and an edit or a new version can be undone.",
       "items": [
-        { "type": "new", "text": "Save wording now asks first, since the client sees it on Link B straight away." },
-        { "type": "new", "text": "Undo edit and Undo version bring back what the client saw before. Nothing is deleted from the Sheet." },
-        { "type": "new", "text": "Remove review package (⋯ menu): the client's links then say the review isn't available. Their answers and Submissions are kept." }
+        {
+          "type": "new",
+          "text": "Save wording now asks first, since the client sees it on Link B straight away."
+        },
+        {
+          "type": "new",
+          "text": "Undo edit and Undo version bring back what the client saw before. Nothing is deleted from the Sheet."
+        },
+        {
+          "type": "new",
+          "text": "Remove review package (⋯ menu): the client's links then say the review isn't available. Their answers and Submissions are kept."
+        }
       ]
     },
     {
@@ -84,8 +135,14 @@
       "title": "A clear Done for every save",
       "line": "A popup says what changed (or why it didn't work), and the bell keeps the list.",
       "items": [
-        { "type": "new", "text": "Saving wording, starting a new version, saving a reply or deleting responses now ends with a popup that says Done and what changed, or why it didn't work." },
-        { "type": "new", "text": "A bell at the top lists your recent jobs from all three tools." }
+        {
+          "type": "new",
+          "text": "Saving wording, starting a new version, saving a reply or deleting responses now ends with a popup that says Done and what changed, or why it didn't work."
+        },
+        {
+          "type": "new",
+          "text": "A bell at the top lists your recent jobs from all three tools."
+        }
       ]
     },
     {
@@ -94,7 +151,10 @@
       "title": "The greeting's three numbers show at once",
       "line": "The team site keeps them ready, so they don't wait on the other tools.",
       "items": [
-        { "type": "fixed", "text": "The greeting's three numbers now show at once, also on the first sign-in of the day. The team site keeps them ready (updated every 10 minutes)." }
+        {
+          "type": "fixed",
+          "text": "The greeting's three numbers now show at once, also on the first sign-in of the day. The team site keeps them ready (updated every 10 minutes)."
+        }
       ]
     },
     {
@@ -103,7 +163,10 @@
       "title": "The greeting plays again after you sign out and back in",
       "line": "And it always shows all three numbers.",
       "items": [
-        { "type": "fixed", "text": "The greeting plays again after you sign out and back in, and always shows all three numbers." }
+        {
+          "type": "fixed",
+          "text": "The greeting plays again after you sign out and back in, and always shows all three numbers."
+        }
       ]
     },
     {
@@ -112,8 +175,14 @@
       "title": "A greeting when you sign in, once a day, with what needs you",
       "line": "Your name, theme and Sign out are now under your initials.",
       "items": [
-        { "type": "new", "text": "A greeting when you sign in, once a day, with what needs you: reviews that need you, scorecards that need attention and clients in progress. Click, tap or press any key to skip it." },
-        { "type": "improved", "text": "Your name, theme and Sign out are now under your initials. Click your initials (on the phone too) to open the menu." }
+        {
+          "type": "new",
+          "text": "A greeting when you sign in, once a day, with what needs you: reviews that need you, scorecards that need attention and clients in progress. Click, tap or press any key to skip it."
+        },
+        {
+          "type": "improved",
+          "text": "Your name, theme and Sign out are now under your initials. Click your initials (on the phone too) to open the menu."
+        }
       ]
     },
     {
@@ -122,9 +191,18 @@
       "title": "Every click shows it's working",
       "line": "The button you press fills with gold while it works, then says what it did.",
       "items": [
-        { "type": "new", "text": "The button you press fills with gold from left to right and says what it's doing (\"Saving…\", \"Deleting…\"), then \"✓\" when it's done. Other buttons next to it wait, so nothing is sent twice." },
-        { "type": "new", "text": "A thin gold line under the top bar shows while anything is loading." },
-        { "type": "improved", "text": "Every button, row and tab dips slightly the moment you press it. If something fails, you see the error; nothing finishes silently." }
+        {
+          "type": "new",
+          "text": "The button you press fills with gold from left to right and says what it's doing (\"Saving…\", \"Deleting…\"), then \"✓\" when it's done. Other buttons next to it wait, so nothing is sent twice."
+        },
+        {
+          "type": "new",
+          "text": "A thin gold line under the top bar shows while anything is loading."
+        },
+        {
+          "type": "improved",
+          "text": "Every button, row and tab dips slightly the moment you press it. If something fails, you see the error; nothing finishes silently."
+        }
       ]
     },
     {
@@ -133,9 +211,18 @@
       "title": "Clients A to Z",
       "line": "The Reviews list is now in A to Z order by client name, in every filter and search.",
       "items": [
-        { "type": "improved", "text": "Clients are listed A to Z by the name you see, in every filter and in search results, on a computer and on a phone. \"The\" at the start is skipped, so The Mahdavi Law Firm is under M." },
-        { "type": "improved", "text": "The status on each row and the counts on the filters still show who needs you first." },
-        { "type": "improved", "text": "Scorecards uses the same A to Z order." }
+        {
+          "type": "improved",
+          "text": "Clients are listed A to Z by the name you see, in every filter and in search results, on a computer and on a phone. \"The\" at the start is skipped, so The Mahdavi Law Firm is under M."
+        },
+        {
+          "type": "improved",
+          "text": "The status on each row and the counts on the filters still show who needs you first."
+        },
+        {
+          "type": "improved",
+          "text": "Scorecards uses the same A to Z order."
+        }
       ]
     },
     {
@@ -144,7 +231,10 @@
       "title": "Small fix on phones",
       "line": "A shared style fix for Scorecards on phones; nothing changes here.",
       "items": [
-        { "type": "fixed", "text": "Shared style fix (Scorecards' \"No leads yet\" on phones). Nothing changes in Reviews." }
+        {
+          "type": "fixed",
+          "text": "Shared style fix (Scorecards' \"No leads yet\" on phones). Nothing changes in Reviews."
+        }
       ]
     },
     {
@@ -153,10 +243,22 @@
       "title": "Honest statuses",
       "line": "A client without a client link now shows Not sent, with a Create package link.",
       "items": [
-        { "type": "new", "text": "A client with no client link yet shows a grey \"Not sent\" and \"Create package ›\", which opens the Builder." },
-        { "type": "improved", "text": "Waiting now only means a link exists: \"Link A sent · date\" when it was copied, and \"No reply yet\" or \"Replied · date\" in the last column." },
-        { "type": "new", "text": "New filter: All · Needs you · Waiting · Not sent · Done; the summary counts the same way." },
-        { "type": "improved", "text": "Pop-ups and buttons match the list, and each client has one name in all three tools." }
+        {
+          "type": "new",
+          "text": "A client with no client link yet shows a grey \"Not sent\" and \"Create package ›\", which opens the Builder."
+        },
+        {
+          "type": "improved",
+          "text": "Waiting now only means a link exists: \"Link A sent · date\" when it was copied, and \"No reply yet\" or \"Replied · date\" in the last column."
+        },
+        {
+          "type": "new",
+          "text": "New filter: All · Needs you · Waiting · Not sent · Done; the summary counts the same way."
+        },
+        {
+          "type": "improved",
+          "text": "Pop-ups and buttons match the list, and each client has one name in all three tools."
+        }
       ]
     },
     {
@@ -164,9 +266,18 @@
       "date": "Nov 18",
       "title": "Smoother loading and details",
       "items": [
-        { "type": "improved", "text": "While the list loads you see the LFMP blocks and \"Loading reviews…\", then the list fades in. After 20 seconds without an answer you get Try again." },
-        { "type": "improved", "text": "Client details slide in from the right and the list dims behind them; ✕, Esc, a click on the dim or ‹ Reviews slides them away again." },
-        { "type": "improved", "text": "If your device is set to reduce motion, nothing moves." }
+        {
+          "type": "improved",
+          "text": "While the list loads you see the LFMP blocks and \"Loading reviews…\", then the list fades in. After 20 seconds without an answer you get Try again."
+        },
+        {
+          "type": "improved",
+          "text": "Client details slide in from the right and the list dims behind them; ✕, Esc, a click on the dim or ‹ Reviews slides them away again."
+        },
+        {
+          "type": "improved",
+          "text": "If your device is set to reduce motion, nothing moves."
+        }
       ]
     },
     {
@@ -174,9 +285,18 @@
       "date": "Nov 18",
       "title": "One look for all three tools",
       "items": [
-        { "type": "improved", "text": "Reviews now has the same top bar, colours and list as Clients and Scorecards. On a phone: the tabs at the bottom (Clients · Scorecards · Reviews · Me)." },
-        { "type": "improved", "text": "One list: each client with what needs doing, the status and its Link A/B. Tap a client for its details (review pages, Copy, Edit)." },
-        { "type": "improved", "text": "Theme, Show test clients, Refresh, Team sign-ins and Sign out are under Me (your initials). Submissions: “All submissions ›” at the top on a computer, under the list on a phone." }
+        {
+          "type": "improved",
+          "text": "Reviews now has the same top bar, colours and list as Clients and Scorecards. On a phone: the tabs at the bottom (Clients · Scorecards · Reviews · Me)."
+        },
+        {
+          "type": "improved",
+          "text": "One list: each client with what needs doing, the status and its Link A/B. Tap a client for its details (review pages, Copy, Edit)."
+        },
+        {
+          "type": "improved",
+          "text": "Theme, Show test clients, Refresh, Team sign-ins and Sign out are under Me (your initials). Submissions: “All submissions ›” at the top on a computer, under the list on a phone."
+        }
       ]
     }
   ]
