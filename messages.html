@@ -143,6 +143,19 @@ button.opt[aria-pressed="true"]{background:var(--accent);border-color:var(--acce
 .prog b{font-size:14px}
 .track{height:6px;background:var(--line);border-radius:6px;margin-top:6px;overflow:hidden}
 .track i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.subs-f{display:flex;flex-wrap:wrap;gap:8px}   /* v1.20.0: Submissions section ("showSubmissions": true) */
+.subs-f button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.subrow{display:grid;grid-template-columns:130px minmax(0,1fr) 170px;gap:18px;padding:14px 18px;border-top:1px solid var(--line)}
+.subrow:first-child{border-top:0}
+.subrow .what{display:flex;flex-direction:column;gap:6px;min-width:0;overflow-wrap:anywhere}
+.subrow .what p{font-size:14px}
+.subrow .what .kind{align-self:flex-start}
+button.goto{border:0;background:none;padding:0;font:inherit;font-weight:600;color:var(--fg);text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+button.goto:hover{text-decoration-color:var(--accent)}
+.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%{box-shadow:inset 0 0 0 3px var(--accent)}100%{box-shadow:inset 0 0 0 3px transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+@media (max-width:700px){.subrow{grid-template-columns:minmax(0,1fr);gap:8px}}
 .toast{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:20;max-width:calc(100% - 32px)}
 footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
 footer a{color:var(--accent)}
@@ -185,6 +198,12 @@ footer a{color:var(--accent)}
     <p class="sub">We need these answers to finish the setup.</p>
     <div id="qs" class="qs"></div>
   </section>
+  <section id="subs-sec" hidden>
+    <h2>Submissions</h2>
+    <p class="sub">Everything sent from this page, newest first, with where each request stands.</p>
+    <div class="subs-f" id="subs-f" role="group" aria-label="Show"></div>
+    <div id="subs" class="list"></div>
+  </section>
   <footer><span id="footer-text">Prepared by Law Firm Marketing Pros · You can come back to this page any time; your answers are saved.</span> <a id="plan-link" href="#" hidden>See how it all works on your plan page</a></footer>
 </div>
 <div class="bar"><div class="in">
@@ -208,7 +227,7 @@ const $ = s => document.querySelector(s);
 const docId = id => String(id).replace(/[^A-Za-z0-9_-]/g, "_");
 let C = null, MSGS = [], byId = {}, versions = {}, edits = {}, editAt = {}, rows = [];
 const state = { reviews:{}, answers:{}, loaded:false, failed:false };
-const ui = { open:null, picks:{}, busy:false, bulk:null, dirty:new Set() };
+const ui = { open:null, picks:{}, busy:false, bulk:null, dirty:new Set(), subsF:"all" };
 
 function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 // [Merge field] = blue, filled in for each lead. A name listed in the messages file's "blanks" = amber, still to fill in.
@@ -375,6 +394,64 @@ function qHTML(q, i){
   return '<div class="q' + (a ? " is-ok" : "") + '"><div class="qh"><span class="n">' + (i + 1) + "</span><div><h3>" + esc(q.q) + '</h3><p class="why">' + esc(q.why) + "</p></div>" + saved + "</div>" + opts +
     '<div class="qin"><input id="qt-' + q.id + '" aria-label="' + esc(ph) + '" placeholder="' + esc(ph) + '" value="' + esc(a ? a.text || "" : "") + '"' + dis + '><button type="button" data-act="qsave" data-q="' + q.id + '"' + dis + ">Save</button></div>" + meta + "</div>";
 }
+/* ---------- v1.20.0: Submissions list ("showSubmissions": true in the messages file) ---------- */
+const SUB_ST = { [ST.REQ]: ["req", "Change requested"], [ST.PROG]: ["prog", "We're on it"], [ST.UPD]: ["upd", "Updated, please check"], [ST.OK]: ["ok", "Approved"] };
+function subItems(){
+  const qa = C.questionsAutomation || "setup-questions", out = [];
+  const byTime = (x, y) => String(y.timestamp).localeCompare(String(x.timestamp));
+  rows.forEach(r => {
+    if (r.automation === qa){
+      if (r.action !== "answer") return;
+      const q = C.questions.find(x => x.id === r.step); if (!q) return;
+      const newer = rows.some(x => x.automation === qa && x.step === r.step && x.action === "answer" && String(x.timestamp) > String(r.timestamp));
+      out.push({kind: "answer", r, title: q.q, q: q.id, stale: newer}); return;
+    }
+    const m = byId[r.automation + "." + r.step]; if (!m) return;
+    if (!sameV(r.version, versions[r.automation] || "1")) return; // current round only
+    if (isReq(r)){
+      const later = rows.some(x => x.automation === r.automation && x.step === r.step && sameV(x.version, r.version) && x.action === "approve" && String(x.timestamp) > String(r.timestamp));
+      out.push({kind: "change", r, m, status: later ? ST.OK : (normStatus(r.status) || ST.REQ)});
+    } else if (r.action === "approve"){
+      const st = (state.reviews[docId(m.id)] || {}).state;
+      const undone = rows.some(x => x.automation === r.automation && x.step === r.step && sameV(x.version, r.version) && x.action === "undo" && String(x.timestamp) > String(r.timestamp));
+      if (!undone && st === "ok") out.push({kind: "ok", r, m});
+    }
+  });
+  return out.sort((x, y) => byTime(x.r, y.r));
+}
+function subHTML(it){
+  const r = it.r, when = '<div class="when"><b>' + esc(fmt(r.timestamp)) + "</b><span>" + esc(r.name || "") + "</span></div>";
+  let body = "", st = "";
+  if (it.kind === "answer"){
+    body = '<span class="kind">Answer</span><button class="goto" type="button" data-act="goto" data-q="' + esc(it.q) + '">' + esc(it.title) + "</button><p>" + esc(r.details) + "</p>";
+    st = it.stale ? '<span class="st mut">Replaced by a newer answer</span>' : '<span class="st ok">✓ Saved</span>';
+  } else {
+    const m = it.m, label = esc(m.when) + (m.subject ? " · " + esc(m.subject) : "");
+    body = '<span class="kind ' + esc(m.kind.toLowerCase()) + '">' + esc(m.to || m.kind) + '</span><button class="goto" type="button" data-act="goto" data-id="' + esc(m.id) + '">' + label + "</button>";
+    if (it.kind === "ok"){ body += '<p class="mut">Marked Looks good' + (r.type === "Everything else looks good" ? " (with “Everything else looks good”)" : "") + "</p>"; st = '<span class="st ok">✓ Looks good</span>'; }
+    else {
+      if (r.new_copy) body += '<div class="lbl">New wording</div><p>' + chips(r.new_copy).replace(/\n/g, "<br>") + "</p>";
+      if (r.details) body += '<div class="lbl">' + (r.new_copy ? "Note" : "Request") + "</div><p>" + esc(r.details).replace(/\n/g, "<br>") + "</p>";
+      if (r.lfmp_reply) body += '<div class="reply"><div class="lbl">Reply from ' + esc(AGENCY_NAME) + "</div><p>" + esc(r.lfmp_reply) + "</p></div>";
+      const s2 = SUB_ST[it.status] || ["req", it.status]; st = '<span class="st ' + s2[0] + '">' + esc(s2[1]) + "</span>";
+    }
+  }
+  return '<article class="subrow">' + when + '<div class="what">' + body + '</div><div class="acts">' + st + "</div></article>";
+}
+function renderSubs(){
+  const sec = $("#subs-sec"); if (!sec) return;
+  sec.hidden = !C.showSubmissions; if (!C.showSubmissions) return;
+  const items = subItems(), n = k => items.filter(i => k === "all" || i.kind === k).length;
+  const F = [["all", "All"], ["change", "Changes"], ["answer", "Answers"], ["ok", "Looks good"]];
+  $("#subs-f").innerHTML = F.map(([k, t]) => '<button type="button" data-act="subsf" data-v="' + k + '" aria-pressed="' + (ui.subsF === k) + '">' + t + " (" + n(k) + ")</button>").join("");
+  const list = items.filter(i => ui.subsF === "all" || i.kind === ui.subsF);
+  $("#subs").innerHTML = !state.loaded ? '<p class="subrow mut">Loading…</p>' : list.length ? list.map(subHTML).join("") : '<p class="subrow mut">Nothing here yet.</p>';
+}
+function goTo(el){
+  if (!el) return;
+  el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"});
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+}
 function render(){
   const keepFocus = document.activeElement && document.activeElement.id;
   const vals = {}; document.querySelectorAll("textarea[id],input[id]").forEach(el => vals[el.id] = el.value);
@@ -393,6 +470,7 @@ function render(){
   $("#prog-sm").textContent = ui.bulk ? "Saving…" : state.loaded ? ok + "/" + total + " approved · " + ans + "/" + C.questions.length + " answered" : "Loading…";
   $("#track").style.width = Math.round(ok / total * 100) + "%";
   $("#approve-rest").disabled = !state.loaded || state.failed || !!ui.bulk || ok + req + upd === total;
+  renderSubs();
 }
 
 /* ---------- writes ---------- */
@@ -417,6 +495,8 @@ async function act(a, el){
     if (!newText && !n){ toast("Change the wording or add a note first"); return; }
     if (await write(rec(m, newText ? {action: "copy", type: r && r.state === "req" ? "New wording (replaces earlier request)" : "New wording", new_copy: newText, details: n} : {action: "change", type: "Comment", details: n}), "Change sent. We'll update it and let you know here.")){ ui.open = null; ui.dirty.delete("ed-" + key); ui.dirty.delete("note-" + key); }
   }
+  else if (a === "subsf"){ ui.subsF = el.dataset.v; renderSubs(); return; }
+  else if (a === "goto"){ if (id) goTo(document.getElementById("m-" + docId(id))); else if (q){ const i = C.questions.findIndex(x => x.id === q); goTo(document.querySelectorAll("#qs .q")[i]); } return; }
   else if (a === "pick"){ ui.picks[q] = ui.picks[q] === el.dataset.v ? null : el.dataset.v; render(); return; }
   else if (a === "qsave"){
     const qq = C.questions.find(x => x.id === q), text = document.getElementById("qt-" + q).value.trim();
