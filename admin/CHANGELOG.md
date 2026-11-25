@@ -2,6 +2,9 @@
 
 The team's admin page (`admin/` only). The client pages (index.html, plan.html, messages.html, plans/, data/) have no changelog of their own; changes to them are listed here tagged **[client]** (first time: v1.6.0).
 
+## Review admin v1.20.0 — 26 Nov 2026: Submissions list on Link B (MKM Luxury)
+- **[client]** messages.html: a messages file with `"showSubmissions": true` shows a **Submissions** section under the questions: every change request (new wording, note, status, LFMP reply), answer (older answers marked "Replaced by a newer answer") and current Looks good, newest first, with All / Changes / Answers / Looks good filters; a title jumps to its message. Current round (version) only. Pages without the flag are unchanged. On for `mkm-luxury-esafzi`.
+
 ## Review admin v1.19.1 — 26 Nov 2026: header without logos (MKM Luxury)
 - **[client]** messages.html: a messages file with `"hideBrands": true` shows no logos in the header (LeadPro, agency, client); the theme switch stays. Pages without it are unchanged. Letters and video scripts (`kind` "Letter" / "Video") get a purple tag.
 - **[client]** New Link B package: MKM Luxury, `mkm-luxury-esafzi` (12-month seller follow-up: 34 texts, 33 emails, 12 letters, 1 video script, 7 questions; automations month-1, month-2, months-3-12). Saving needs the code in the Apps Script `CLIENTS` script property.
