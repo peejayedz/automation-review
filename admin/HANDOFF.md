@@ -2,6 +2,9 @@
 
 The repo README covers the client pages, the Apps Script and the Sheet. This file covers the team's admin page in `admin/`.
 
+## v1.19.0 NEW marker + Reports settings in the name menu (shared shell 2.12.0; queue item 14): pushed 25 Nov 2026 (`9d560e3`)
+- Reviews rows: `codeNew` (shell `newInfo` by reviewCode / record id) → NEW pill + "Added …", pinned first (only clients added after 2026-11-25T10:22Z, for 7 days). The name menu has Reports settings ("N of 5 connected", opens the Builder's #reports/settings). The list load sits mid-screen. `admin/tests/e2e.mjs` answers /api/reports/catalog?connected=1.
+
 ## v1.18.0 Done moments On / Off (shared shell 2.11.0; queue item 10): pushed 24 Nov 2026
 - The shell's Done moments panel has On / Off at the top (Off = the usual working bar + Done popup; the voice greeting keeps its own switch). Test browsers are muted (admin/tests/quiet-browser.mjs, FIX 10.0).
 
