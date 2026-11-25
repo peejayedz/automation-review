@@ -2,6 +2,26 @@
   "_about": "What's new cards for the Review admin (newest first), same format as the Builder's page/whats-new.json. Plain words only: no file names, commits, secrets or workflow names. CHANGELOG.md is the developer history.",
   "versions": [
     {
+      "version": "1.19.0",
+      "date": "Nov 25",
+      "title": "New clients stand out",
+      "line": "Clients added this week have a NEW tag and sit at the top; Reports settings is in your name menu.",
+      "items": [
+        {
+          "type": "new",
+          "text": "Clients added in the last 7 days have a gold NEW tag and \"Added today\" (or the date), and sit at the top of the list, newest first."
+        },
+        {
+          "type": "new",
+          "text": "Your name menu has Reports settings, with how many of the 5 report connections are set up."
+        },
+        {
+          "type": "improved",
+          "text": "While the list loads, the LFMP mark sits in the middle of the screen."
+        }
+      ]
+    },
+    {
       "version": "1.18.0",
       "date": "Nov 24",
       "title": "Done moments On / Off",

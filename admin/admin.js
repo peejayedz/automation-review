@@ -7,10 +7,11 @@
 // Backend: the same Apps Script admin actions (admin_ping, admin_all, admin_status, admin_delete, admin_edit) with the same
 // fields, sent through the team site's server (/api/review), which adds the review admin key and the signed-in person's
 // first name. The browser never holds the key or a GitHub token (lfmp-session.js).
+import { newInfo, newFirst } from './lfmp-session.js';   // v1.19.0 (queue item 14): NEW pill + pinned order
 import { startSession, api, ghFetch, signOut, paintMe, mountShell, pageHeadHtml, brandFor, brandSub, brandWord, brandCounts, getBrandFilter, setBrandFilter, wireListFilter, rowHtml as lvRow, statusHtml as lvStatus, SEARCH_ICON, loadingHtml, loadErrorHtml, fadeIn, panelOpen, panelClose, LOAD_LIMIT_MS, LOAD_SLOW_TEXT, loadBuilderRecords, displayName, showNewsCard, hideNewsCard, newsLine, busyButton, noteCount, startJob, confirmAction } from './lfmp-session.js';
 import * as L from './review-logic.mjs?v=1.14.0';   // versioned: admin.js needs this release's rules (greet-count.mjs: the same)
 import * as GC from './greet-count.mjs?v=1.12.2';   // v1.12.1: the load + the "Needs you" count (list + greeting)
-export const VERSION = '1.18.0';
+export const VERSION = '1.19.0';
 
 const CFG = window.REVIEW_CONFIG || {};
 const SAVE_URL = String(CFG.saveUrl || '').trim();
@@ -131,6 +132,9 @@ const clientsAll = () => GC.clientsAll(D);
 const visibleClients = () => GC.visibleClients(D, F.tests);
 // v1.15.0: LFMP / WPP = the Builder record's brand (shared shell brandFor: review code, or the record matched by name); none = LFMP
 const codeBrand = c => brandFor(D.recs, { reviewCode: c, id: recOf(c)?.id });
+// v1.19.0 (queue item 14): NEW for a client whose Builder record was made / added less than 7 days ago (the shell's lookup)
+const lvNow = () => (globalThis.__LV_NOW ? Number(globalThis.__LV_NOW) : Date.now());   // tests can pin the clock
+const codeNew = c => newInfo(D.recs, { reviewCode: c, id: recOf(c)?.id }, lvNow());
 const inBrand = (codes, b = F.brand) => (b === 'LFMP' || b === 'WPP' ? codes.filter(c => codeBrand(c) === b) : codes);
 const homeSegs = (b = F.brand) => {
   const st = inBrand(visibleClients(), b).map(c => sumOf(c).state), n = f => st.filter(x => L.inHome(f, x)).length, need = n('need');
@@ -274,11 +278,11 @@ function thirdCell(x) {
 function drawHome() {
   const cs = inBrand(visibleClients()).map(c => ({ c, s: sumOf(c), name: nameOf(c) }));   // v1.15.0: the brand filter first
   const q = F.q.trim().toLowerCase();
-  const list = L.homeList(cs, F.home, q);   // v1.10.0: A–Z by the shown name in every filter and search (status still on each row)
+  const list = newFirst(L.homeList(cs, F.home, q), x => codeNew(x.c));   // v1.10.0: A–Z by the shown name in every filter and search (status still on each row); v1.19.0: new clients first
   const keepFocus = document.activeElement?.id === 'homeQ';
   const empty = F.brand !== 'all' && !q && !list.length ? `No clients here in this view. <button class="linkbtn" type="button" data-brand-all>Show all</button>` : q ? 'No client matches that search.' : F.home === 'need' ? 'Nothing needs you right now.' : F.home === 'wait' ? 'Nothing is waiting for a client.' : F.home === 'unsent' ? 'Every client has a client link.' : F.home === 'done' ? 'No client is done yet.' : 'No review clients yet.';
   $('screen').innerHTML = `${headHtml('home')}
-    ${list.length ? `<div class="lv-list" id="clist" style="--lv-cols:1.5fr 200px 260px 70px">${list.map(x => lvRow({ name: x.name, sub: brandSub(codeBrand(x.c), F.brand, rowSub(x)), label: `${x.name}: open details`,
+    ${list.length ? `<div class="lv-list" id="clist" style="--lv-cols:1.5fr 200px 260px 70px">${list.map(x => lvRow({ ...codeNew(x.c), name: x.name, sub: brandSub(codeBrand(x.c), F.brand, rowSub(x)), label: `${x.name}: open details`,
       attrs: `data-client="${esc(x.c)}" data-state="${esc(x.s.state)}"`, cells: [rowStatus(x), thirdCell(x)] })).join('')}</div>`
       : `<div class="lv-list lv-empty">${empty}</div>`}
     <div class="lv-list subsrow"><a class="lv-row" href="#/subs" aria-label="All submissions"><span class="lv-c0">All submissions</span><span class="lv-chev" aria-hidden="true">›</span></a></div>`;

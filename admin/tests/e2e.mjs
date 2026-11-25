@@ -113,6 +113,8 @@ const routeTeamLogout = page => page.route('https://lfmp.cloudflareaccess.com/cd
 const LAST = /^Last signed in (Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec), \d{1,2}:\d{2} (AM|PM)$/;
 const server = createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x'), p = decodeURIComponent(u.pathname);
+  // v1.19.0 (shell 2.12.0): /api/reports/catalog?connected=1 is the team site's own function (the name menu's Reports settings row)
+  if (p === '/api/reports/catalog') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ connected: 0, of: 5 })); }
   if (p.startsWith('/api/')) return ACCESS.serve(req, res, { env: ENV, deps: DEPS, email: SIGNED.email });
   let body = ''; for await (const c of req) body += c;
   if (p === '/signin/') return send(res, 200, '<!doctype html><title>Sign in</title><h1>Sign in with Google</h1>', 'text/html');
@@ -622,7 +624,7 @@ try {
     await page.keyboard.press('Escape');
     await openMe(page);
     const items = await page.$$eval('.lv-pop .lv-mi', b => b.map(x => x.querySelector('span')?.textContent || x.textContent).map(s => s.trim()));
-    assert(items.join('|') === "Theme|Done moments|Show test clients|Refresh now|What's new|Team sign-ins|Install the app|Sign out", items.join('|'));   // the name menu is the same in all three tools
+    assert(items.join('|') === "Theme|Done moments|Reports settings|Show test clients|Refresh now|What's new|Team sign-ins|Install the app|Sign out", items.join('|'));   // the name menu is the same in all three tools
     assert(/^updated \d{1,2}:\d\d [AP]M$/.test(await page.innerText('.lv-pop [data-lv="refresh"] .lv-v')), await page.innerText('.lv-pop [data-lv="refresh"] .lv-v'));
     { const v = (await readFile(new URL('../admin.js', import.meta.url), 'utf8')).match(/VERSION = '([\d.]+)'/)[1]; assert((await page.innerText('.lv-pop [data-lv="news"]')).includes(`v${v}`), `version v${v}`); }   // the current admin.js VERSION
     assert(await page.locator('.lv-pop .lv-gl').count() === 0 && (await page.innerText(`${openPop} .lv-sw`)).replace(/\s+/g, ' ').trim() === 'Light Dark Auto', 'the compact name menu: no group labels, no tool extras; Theme Light / Dark / Auto');
