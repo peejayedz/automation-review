@@ -1,0 +1,670 @@
+{
+ "hideBrands": true,
+ "eyebrow": "MKM Luxury",
+ "title": "Your follow-up messages, for review",
+ "intro": "These are the texts, emails and letters your PPC and mailer leads get over 12 months, word for word. Mark each one **Looks good**, or click **Change it** and type the wording you'd like. Words in amber are details we still need from you. Your answers save as you go, and nothing is sent until you approve.",
+ "footer": "Prepared for MKM Luxury · November 2026 · You can come back to this page any time; your answers are saved.",
+ "reviewer": "MKM Luxury (Mario / Ann)",
+ "questionsAutomation": "setup-questions",
+ "pageTitle": "Message review · MKM Luxury",
+ "blanks": [
+  "Ann's phone",
+  "QR code to Ann's video",
+  "Seller name",
+  "after photo",
+  "area",
+  "area market update",
+  "before photo",
+  "booking link",
+  "nearby address",
+  "number",
+  "price range for homes like theirs",
+  "project name",
+  "recent sales near them",
+  "sale price",
+  "seller quote",
+  "seller's situation",
+  "street",
+  "timeline",
+  "type of work",
+  "video link",
+  "walk-through length",
+  "what MKM looks for",
+  "what happened"
+ ],
+ "sections": [
+  {
+   "title": "Month 1: The first three days",
+   "sub": "A text and an email each day. The first pair goes out 30 minutes after the lead comes in. Ann's welcome video is in the first email.",
+   "msgs": [
+    {
+     "id": "month-1.v1",
+     "kind": "Video",
+     "when": "Day 1 · in email 1",
+     "to": "Video script · Ann records it",
+     "text": "Hi, I'm Annemarie with MKM Luxury. Thanks for reaching out about your home. We're a local company that buys high-end homes and refurbishes them, so you don't have to fix or show anything. I'd love to hear what you have in mind. Reply to this email or book a time below, and I'll talk to you soon."
+    },
+    {
+     "id": "month-1.t1",
+     "kind": "Text",
+     "when": "Day 1 · 30 min after they come in",
+     "text": "Hi [First name], it's Ann with MKM Luxury. Thanks for reaching out about your home. When's a good time for a quick call? Reply STOP to opt out."
+    },
+    {
+     "id": "month-1.e1",
+     "kind": "Email",
+     "when": "Day 1 · 30 min after they come in",
+     "subject": "A quick hello from Ann",
+     "text": "Hi [First name],\n\nThanks for reaching out about your home. I'm Ann, and I'll be your contact at MKM Luxury.\n\nI recorded a 30-second video so you can put a face to the name: [video link]\n\nA little about us: we're a local real estate company that buys high-end homes and refurbishes them for new families. You don't fix anything, stage anything or hold open houses.\n\nIf you'd like to talk it through, pick a time that works for you here: [booking link]. Or just reply to this email.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "month-1.t2",
+     "kind": "Text",
+     "when": "Day 2 · 12:30 PM",
+     "text": "Hi [First name], Ann again. Quick question: are you hoping to sell in the next few months, or just seeing what it's worth?"
+    },
+    {
+     "id": "month-1.e2",
+     "kind": "Email",
+     "when": "Day 2 · 12:30 PM",
+     "subject": "Who we are (and who we're not)",
+     "text": "Hi [First name],\n\nWhen people hear \"we buy homes,\" they often picture someone looking for a steal. That's not us.\n\nMKM Luxury is a real estate company that buys high-end homes and refurbishes them for the next family. Our offer is based on what your home is worth, so you get a fair price for the home you have today.\n\nWhat that means for you:\n• No repairs or upgrades before you sell\n• No showings or open houses\n• You pick the closing date\n\nCurious what that could look like for your home? Reply and I'll give you a call.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "month-1.t3",
+     "kind": "Text",
+     "when": "Day 3 · 5:15 PM",
+     "text": "[First name], did you see what's been selling near you lately? Happy to share what we're seeing. Want me to text it over?"
+    },
+    {
+     "id": "month-1.e3",
+     "kind": "Email",
+     "when": "Day 3 · 5:15 PM",
+     "subject": "What's happening in your neighborhood",
+     "text": "Hi [First name],\n\nHomes in [area] have been moving, and the prices tell an interesting story. Here's what sold nearby recently:\n\n[recent sales near them]\n\nEvery home is different, so these numbers are only a starting point. If you'd like, I can put together a free price range for your home based on its size, condition and what's selling around you. No obligation.\n\nJust reply \"range\" and I'll send it over.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    }
+   ]
+  },
+  {
+   "title": "Month 1: Days 7 to 26",
+   "sub": "A touch every 2 to 4 days, plus the first letter.",
+   "msgs": [
+    {
+     "id": "month-1.l1",
+     "kind": "Letter",
+     "when": "Day 7 · Ann mails it",
+     "to": "Letter · note + MKM pen",
+     "text": "Hi [First name],\n\nThanks again for reaching out about your home on [street]. I know selling is a big decision, so there's no rush. Whenever you're ready to talk, I'm here.\n\nThe pen is yours to keep.\n\nAnn · MKM Luxury · [Ann's phone]"
+    },
+    {
+     "id": "month-1.t4",
+     "kind": "Text",
+     "when": "Day 8 · 10:10 AM",
+     "text": "Hi [First name], we buy high-end homes as-is and refurbish them, so no showings or repairs on your end. Still thinking about selling?"
+    },
+    {
+     "id": "month-1.e4",
+     "kind": "Email",
+     "when": "Day 9 · 3:40 PM",
+     "subject": "5 mistakes sellers make with high-end homes",
+     "text": "Hi [First name],\n\nSelling a high-end home is different. Here are five mistakes we see most often:\n\n1. Pricing off the wrong sales. A few big sales nearby can make a home look worth more, or less, than it is.\n2. Spending on the wrong updates. Sellers often pay for projects buyers won't pay them back for.\n3. Months of showings. Every weekend becomes cleaning, leaving and waiting for feedback.\n4. Waiting for perfect timing. Holding out for the right season can cost more than it earns.\n5. The wrong buyer. A buyer whose financing falls through sends you back to square one.\n\nSelling to MKM avoids all five: we price your home as it is, you make no repairs, there are no showings, and you choose when to close.\n\nWant to talk it through? Reply here or call me at [Ann's phone].\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "month-1.t5",
+     "kind": "Text",
+     "when": "Day 11 · 9:20 AM",
+     "text": "Quick one: would a short call with Ann this week work, or is text easier for you?"
+    },
+    {
+     "id": "month-1.e5",
+     "kind": "Email",
+     "when": "Day 12 · 1:50 PM",
+     "subject": "Before and after: [project name]",
+     "text": "Hi [First name],\n\nI wanted to show you a home we recently finished in [area].\n\n[before photo]  [after photo]\n\nThe owners [seller's situation] and wanted to sell without months of repairs and showings. We bought it as-is, closed on the date they picked, and then refurbished it for a new family.\n\nIf your home needs some work, or you'd just rather skip the hassle, we might be a good fit. Reply and tell me a bit about your home.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "month-1.t6",
+     "kind": "Text",
+     "when": "Day 15 · 4:30 PM",
+     "text": "[First name], most sellers we talk to want two things: a fair price and no hassle. What matters most to you?"
+    },
+    {
+     "id": "month-1.e6",
+     "kind": "Email",
+     "when": "Day 17 · 11:15 AM",
+     "subject": "How selling to MKM works",
+     "text": "Hi [First name],\n\nHere's how selling to MKM works, start to finish:\n\n1. A quick call. You tell me about your home and your plans.\n2. A walk-through. We visit once, at a time that suits you.\n3. Your offer. We give you a clear offer, usually within [number] days.\n4. You pick the closing date. Close in a few weeks or a few months, whatever works for you.\n\nNo repairs, no showings, no open houses.\n\nIf you'd like to start with step 1, reply to this email or book a time here: [booking link].\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "month-1.t7",
+     "kind": "Text",
+     "when": "Day 19 · 5:40 PM",
+     "text": "Hi [First name], just checking in. If the timing isn't right, no problem. Should I check back in a month?"
+    },
+    {
+     "id": "month-1.e7",
+     "kind": "Email",
+     "when": "Day 23 · 9:45 AM",
+     "subject": "Still on your radar?",
+     "text": "Hi [First name],\n\nI don't want to fill up your inbox, so I'll keep this short.\n\nIs selling your home still on your mind? Just reply with one word:\n\nYes: I'll give you a call.\nLater: I'll check back in a few months.\nNo: I'll stop reaching out.\n\nThanks,\nAnn"
+    },
+    {
+     "id": "month-1.t8",
+     "kind": "Text",
+     "when": "Day 26 · 2:20 PM",
+     "text": "We just finished a home in [area]. Want to see the before and after? It shows exactly what we look for."
+    }
+   ]
+  },
+  {
+   "title": "Month 2: Weeks 5 to 8",
+   "sub": "One text and one email a week, plus letter 2.",
+   "msgs": [
+    {
+     "id": "month-2.t9",
+     "kind": "Text",
+     "when": "Day 30 · week 5",
+     "text": "Hi [First name], it's Ann at MKM Luxury. Did you see what [nearby address] just sold for? Happy to tell you what it means for your home."
+    },
+    {
+     "id": "month-2.e8",
+     "kind": "Email",
+     "when": "Day 33 · week 5",
+     "subject": "What [nearby address] just sold for",
+     "text": "Hi [First name],\n\nA home near you at [nearby address] just sold for [sale price]. Sales like this one shape what your home is worth too.\n\nIf you'd like to know where your home stands, I can send you a free price range. Just reply \"range.\"\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "month-2.l2",
+     "kind": "Letter",
+     "when": "Day 37 · Ann mails it",
+     "to": "Letter · before/after card",
+     "text": "Hi [First name],\n\nHere's a home we finished in [area] last month, before and after. I thought you'd like to see the kind of work we do.\n\nIf you're still thinking about selling, I'd love to hear from you.\n\nAnn · [Ann's phone]"
+    },
+    {
+     "id": "month-2.t10",
+     "kind": "Text",
+     "when": "Day 37 · week 6",
+     "text": "[First name], home values in [area] moved this month. Want me to text you your updated range? No strings attached."
+    },
+    {
+     "id": "month-2.e9",
+     "kind": "Email",
+     "when": "Day 40 · week 6",
+     "subject": "Why one seller chose MKM over listing",
+     "text": "Hi [First name],\n\n[Seller name] owned a home in [area] for [number] years. When it came time to sell, they had two choices: fix it up and list it, or sell it as-is.\n\nListing meant months of repairs and showings. With MKM, they [what happened], and closed on the date that worked for their move.\n\nEvery situation is different, and listing is the right choice for some people. If you'd like help comparing the two for your home, reply and I'll walk you through it.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "month-2.t11",
+     "kind": "Text",
+     "when": "Day 44 · week 7",
+     "text": "Hi [First name], we just wrapped up a home in [area]. Here's a 30-second before and after: [video link]"
+    },
+    {
+     "id": "month-2.e10",
+     "kind": "Email",
+     "when": "Day 47 · week 7",
+     "subject": "Does timing really change the price?",
+     "text": "Hi [First name],\n\nA question I hear a lot: \"Should I wait for a better time to sell?\"\n\nTiming matters less than most people think. Market shifts move prices a little; condition, location and how the home is sold move them a lot more.\n\nIf you're weighing when to sell, I'm happy to look at your timeline with you. No pressure either way.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "month-2.t12",
+     "kind": "Text",
+     "when": "Day 51 · week 8",
+     "text": "Hi [First name], is anyone else involved in the decision about your home? I'm happy to talk with them too."
+    },
+    {
+     "id": "month-2.e11",
+     "kind": "Email",
+     "when": "Day 54 · week 8",
+     "subject": "Your questions, answered",
+     "text": "Hi [First name],\n\nHere are answers to the three questions sellers ask us most:\n\nDo I need to fix anything first? No. We buy homes as they are.\nWill strangers walk through my home? No. We visit once, and that's it.\nHow fast do I have to move? You choose. Some sellers close in weeks, others in months.\n\nAnything else on your mind? Just reply. I read every email myself.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    }
+   ]
+  },
+  {
+   "title": "Months 3 and 4: Weeks 9 to 17",
+   "sub": "From here on: one touch a week, alternating text and email, and a letter every 30 days.",
+   "msgs": [
+    {
+     "id": "months-3-12.t13",
+     "kind": "Text",
+     "when": "Week 9 · day 58",
+     "text": "Hi [First name], Ann at MKM Luxury. Still thinking about your home, or has the plan changed? Either answer helps."
+    },
+    {
+     "id": "months-3-12.e12",
+     "kind": "Email",
+     "when": "Week 10 · day 65",
+     "subject": "Is your home worth more than you think?",
+     "text": "Hi [First name],\n\nMany owners of high-end homes go by an online estimate. Those tools can miss by a lot, especially for homes with custom work, big lots or updates they don't know about.\n\nIf you'd like a real number, I can give you a free price range based on your home, not an algorithm. Just reply \"range.\"\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.l3",
+     "kind": "Letter",
+     "when": "Day 67 · Ann mails it",
+     "to": "Letter · recent sales",
+     "text": "Hi [First name],\n\nHere are a few homes that sold on or near [street] recently:\n\n[recent sales near them]\n\nIf you'd like to know what this means for your home, give me a call.\n\nAnn · [Ann's phone]"
+    },
+    {
+     "id": "months-3-12.t14",
+     "kind": "Text",
+     "when": "Week 11 · day 72",
+     "text": "[First name], quick one: if you could sell with no repairs and no showings, would that change your timing?"
+    },
+    {
+     "id": "months-3-12.e13",
+     "kind": "Email",
+     "when": "Week 12 · day 79",
+     "subject": "What \"as-is\" really means",
+     "text": "Hi [First name],\n\nWhen we say we buy homes as-is, we mean it. An old roof, a dated kitchen, a pool that needs work, things left in the garage: you don't have to fix, clear out or stage anything.\n\nWe take care of it after closing, as part of refurbishing the home for the next family.\n\nIf there's something about your home you've been worried about, reply and tell me. Chances are we've seen it before.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t15",
+     "kind": "Text",
+     "when": "Week 13 · day 86",
+     "text": "Hi [First name], homes near you are still selling. Want an updated price range for yours? Just reply \"range.\""
+    },
+    {
+     "id": "months-3-12.e14",
+     "kind": "Email",
+     "when": "Week 14 · day 93",
+     "subject": "Another before and after",
+     "text": "Hi [First name],\n\nHere's another home we recently finished in [area].\n\n[before photo]  [after photo]\n\nThe owners [seller's situation]. We bought it as-is, and they moved on their own schedule.\n\nCurious whether your home could be a fit? Reply and I'll let you know.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.l4",
+     "kind": "Letter",
+     "when": "Day 97 · Ann mails it",
+     "to": "Letter · Ann's card",
+     "text": "Hi [First name],\n\nJust a quick note to say I'm still here whenever you're ready. Still thinking about selling? My card is inside.\n\nAnn"
+    },
+    {
+     "id": "months-3-12.t16",
+     "kind": "Text",
+     "when": "Week 15 · day 100",
+     "text": "Hi [First name], is this still the best number to reach you? Ann, MKM Luxury"
+    },
+    {
+     "id": "months-3-12.e15",
+     "kind": "Email",
+     "when": "Week 16 · day 107",
+     "subject": "Listing vs. selling to MKM",
+     "text": "Hi [First name],\n\nHere's a simple side-by-side.\n\nListing: repairs and staging first, weeks of showings, then a buyer's inspection and financing to wait on, and a closing date that depends on the buyer.\n\nSelling to MKM: no repairs, one visit, a clear offer, and a closing date you choose.\n\nListing is the right move for some homes, and I'll tell you if I think it's right for yours. Want to compare the numbers? Just reply.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t17",
+     "kind": "Text",
+     "when": "Week 17 · day 114",
+     "text": "[First name], we just bought a home in [area] that needed [type of work]. The seller didn't lift a finger. Want to hear how it went?"
+    }
+   ]
+  },
+  {
+   "title": "Months 5 and 6: Weeks 18 to 26",
+   "sub": "One touch a week, alternating, plus letters 5 and 6.",
+   "msgs": [
+    {
+     "id": "months-3-12.e16",
+     "kind": "Email",
+     "when": "Week 18 · day 121",
+     "subject": "A quick story from a recent seller",
+     "text": "Hi [First name],\n\n[Seller name] called us after [seller's situation]. They didn't want to spend months fixing up a home they were ready to leave.\n\nWe walked through once, made an offer, and closed [timeline]. In their words: \"[seller quote]\"\n\nIf your situation sounds similar, I'd love to hear about it.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.l5",
+     "kind": "Letter",
+     "when": "Day 127 · Ann mails it",
+     "to": "Letter · QR to Ann's video",
+     "text": "Hi [First name],\n\nScan the code below for a 30-second hello from me and a look at what we do.\n\n[QR code to Ann's video]\n\nAnn · [Ann's phone]"
+    },
+    {
+     "id": "months-3-12.t18",
+     "kind": "Text",
+     "when": "Week 19 · day 128",
+     "text": "Hi [First name], Ann here. Any questions about selling I can answer for you? Happy to help even if you're not ready yet."
+    },
+    {
+     "id": "months-3-12.e17",
+     "kind": "Email",
+     "when": "Week 20 · day 135",
+     "subject": "3 questions to ask before you sell",
+     "text": "Hi [First name],\n\nBefore you decide how to sell, it helps to answer three questions:\n\n1. How soon do you want to move?\n2. How much time and money are you willing to put into the home first?\n3. How would you feel about strangers touring your home every weekend?\n\nIf your answers are \"soon,\" \"not much\" and \"not great,\" selling to MKM may suit you well. Reply with your answers and I'll give you my honest take.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t19",
+     "kind": "Text",
+     "when": "Week 21 · day 142",
+     "text": "[First name], what would make this the right time to sell? A price, a date, a new place lined up? I'm curious."
+    },
+    {
+     "id": "months-3-12.e18",
+     "kind": "Email",
+     "when": "Week 22 · day 149",
+     "subject": "What's selling near you",
+     "text": "Hi [First name],\n\nHere's a quick look at what's sold recently in [area]:\n\n[recent sales near them]\n\nWant to know what this means for your home? Reply \"range\" and I'll send you a free price range.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t20",
+     "kind": "Text",
+     "when": "Week 23 · day 156",
+     "text": "Hi [First name], we just finished another home in [area]. Want the before and after photos?"
+    },
+    {
+     "id": "months-3-12.l6",
+     "kind": "Letter",
+     "when": "Day 157 · Ann mails it",
+     "to": "Letter · seller story card",
+     "text": "Hi [First name],\n\n[Seller name] sold us their home in [area] this year without a single repair or showing. They said: \"[seller quote]\"\n\nIf that sounds good to you, I'm a phone call away.\n\nAnn · [Ann's phone]"
+    },
+    {
+     "id": "months-3-12.e19",
+     "kind": "Email",
+     "when": "Week 24 · day 163",
+     "subject": "Moving on your own schedule",
+     "text": "Hi [First name],\n\nOne thing sellers tell us they value most: control over the move.\n\nWith MKM, you choose the closing date. Need a few extra weeks to find your next place? That's fine. Need to close fast? We can do that too.\n\nIf timing is what's holding you back, let's talk about it.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t21",
+     "kind": "Text",
+     "when": "Week 25 · day 170",
+     "text": "Hi [First name], it's been about six months since you reached out. Should I keep checking in, or close your file for now?"
+    },
+    {
+     "id": "months-3-12.e20",
+     "kind": "Email",
+     "when": "Week 26 · day 177",
+     "subject": "Should I keep your file open?",
+     "text": "Hi [First name],\n\nIt's been about six months since you first reached out about your home, and I don't want to keep emailing if your plans have changed.\n\nCould you reply with one word?\n\nYes: you're still thinking about selling.\nLater: check back in a few months.\nNo: you've decided not to sell.\n\nThanks,\nAnn"
+    }
+   ]
+  },
+  {
+   "title": "Months 7 to 9: Weeks 27 to 39",
+   "sub": "One touch a week, alternating, plus letters 7 to 9.",
+   "msgs": [
+    {
+     "id": "months-3-12.t22",
+     "kind": "Text",
+     "when": "Week 27 · day 184",
+     "text": "Hi [First name], Ann with MKM Luxury. Home values in [area] shifted again. Want your updated range?"
+    },
+    {
+     "id": "months-3-12.l7",
+     "kind": "Letter",
+     "when": "Day 187 · Ann mails it",
+     "to": "Letter · market note",
+     "text": "Hi [First name],\n\nHalfway through the year, here's what homes like yours are selling for in [area]: [price range for homes like theirs].\n\nIf you'd like a number for your home, just call.\n\nAnn · [Ann's phone]"
+    },
+    {
+     "id": "months-3-12.e21",
+     "kind": "Email",
+     "when": "Week 28 · day 191",
+     "subject": "What makes a home a fit for MKM",
+     "text": "Hi [First name],\n\nWe're picky about the homes we buy. We look for [what MKM looks for]: homes that could shine with the right refurbish.\n\nYours doesn't need to be perfect. In fact, homes that need work are often the best fit.\n\nWant to know whether yours fits? Reply with a few details and I'll let you know.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t23",
+     "kind": "Text",
+     "when": "Week 29 · day 198",
+     "text": "[First name], one thing sellers like about us: you pick the closing date, even months out. Would that help your plans?"
+    },
+    {
+     "id": "months-3-12.e22",
+     "kind": "Email",
+     "when": "Week 30 · day 205",
+     "subject": "A home we just finished in [area]",
+     "text": "Hi [First name],\n\nWe just finished refurbishing a home in [area], and I wanted to share it.\n\n[before photo]  [after photo]\n\nIt's the kind of project we love: a great home that needed the right updates. If yours is like that, I'd be glad to take a look.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t24",
+     "kind": "Text",
+     "when": "Week 31 · day 212",
+     "text": "Hi [First name], just checking in. Is selling still on the table this year?"
+    },
+    {
+     "id": "months-3-12.l8",
+     "kind": "Letter",
+     "when": "Day 217 · Ann mails it",
+     "to": "Letter · handwritten check-in",
+     "text": "Hi [First name],\n\nI was thinking about your home on [street] and wanted to check in. If anything has changed with your plans, I'd love to hear from you.\n\nAnn · [Ann's phone]"
+    },
+    {
+     "id": "months-3-12.e23",
+     "kind": "Email",
+     "when": "Week 32 · day 219",
+     "subject": "The real cost of getting a home ready to list",
+     "text": "Hi [First name],\n\nBefore listing, most sellers spend on paint, repairs, landscaping, cleaning and staging, and then pay commissions and closing costs on top.\n\nWhen you sell to MKM, there's nothing to fix or stage, and I'll walk you through exactly what you'd walk away with.\n\nWant to see the numbers side by side for your home? Just reply.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t25",
+     "kind": "Text",
+     "when": "Week 33 · day 226",
+     "text": "Hi [First name], is anyone else helping you decide about the house? Happy to talk with them too."
+    },
+    {
+     "id": "months-3-12.e24",
+     "kind": "Email",
+     "when": "Week 34 · day 233",
+     "subject": "Your home's updated price range",
+     "text": "Hi [First name],\n\nMarkets move, and your home's value moves with them. If it's been a while since you looked, now is a good time to check.\n\nReply \"range\" and I'll send you an updated price range for your home. It's free, with no obligation.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t26",
+     "kind": "Text",
+     "when": "Week 35 · day 240",
+     "text": "[First name], a home near you at [nearby address] just sold. Want to know what it went for?"
+    },
+    {
+     "id": "months-3-12.e25",
+     "kind": "Email",
+     "when": "Week 36 · day 247",
+     "subject": "Your questions about selling as-is",
+     "text": "Hi [First name],\n\nA few questions sellers have asked me lately:\n\nWhat if I still have a mortgage? That's normal. It's paid off at closing, like any sale.\nHow long does the walk-through take? Usually about [walk-through length].\nWill your offer be a lowball? No. We price your home on what it's worth, and we'll show you how we got there.\n\nGot a question I didn't cover? Reply and ask.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.l9",
+     "kind": "Letter",
+     "when": "Day 247 · Ann mails it",
+     "to": "Letter · before/after card",
+     "text": "Hi [First name],\n\nAnother before and after from [area]. Homes like yours are exactly what we look for.\n\nWhenever you're ready, I'm here.\n\nAnn · [Ann's phone]"
+    },
+    {
+     "id": "months-3-12.t27",
+     "kind": "Text",
+     "when": "Week 37 · day 254",
+     "text": "Hi [First name], no pressure, just a quick check-in from Ann. Anything changed with your plans for the house?"
+    },
+    {
+     "id": "months-3-12.e26",
+     "kind": "Email",
+     "when": "Week 38 · day 261",
+     "subject": "A quick note from Ann",
+     "text": "Hi [First name],\n\nNo sales pitch today. I just wanted to say thanks for thinking of MKM when you first reached out about your home.\n\nWhenever the time is right, whether that's next month or next year, I'm here. Reply to this email or call me at [Ann's phone].\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t28",
+     "kind": "Text",
+     "when": "Week 39 · day 268",
+     "text": "Hi [First name], we're looking for one or two more homes in [area]. Would you like an offer on yours, no strings attached?"
+    }
+   ]
+  },
+  {
+   "title": "Months 10 to 12: Weeks 40 to 52",
+   "sub": "One touch a week, alternating, plus letters 10 to 12. The last email closes the loop.",
+   "msgs": [
+    {
+     "id": "months-3-12.e27",
+     "kind": "Email",
+     "when": "Week 40 · day 275",
+     "subject": "Why sellers choose MKM",
+     "text": "Hi [First name],\n\nSome buyers want a quick deal. We want a great home.\n\nMKM buys high-end homes and refurbishes them with care for the next family. That means we see what your home could be, and our offer reflects it.\n\nIf you'd like to hear what we'd do with yours, just reply.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.l10",
+     "kind": "Letter",
+     "when": "Day 277 · Ann mails it",
+     "to": "Letter · recent sales",
+     "text": "Hi [First name],\n\nHere's what's sold near [street] lately:\n\n[recent sales near them]\n\nWant to know what yours could sell for? Give me a call.\n\nAnn · [Ann's phone]"
+    },
+    {
+     "id": "months-3-12.t29",
+     "kind": "Text",
+     "when": "Week 41 · day 282",
+     "text": "[First name], Ann here. If you're still thinking it over, what's the biggest question holding you back?"
+    },
+    {
+     "id": "months-3-12.e28",
+     "kind": "Email",
+     "when": "Week 42 · day 289",
+     "subject": "Before and after: [project name]",
+     "text": "Hi [First name],\n\nOne more project I'm proud of, in [area].\n\n[before photo]  [after photo]\n\nThe owners [seller's situation]. They sold to us as-is and closed when it suited them.\n\nIf your home could use the same kind of care, reply and let's talk.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t30",
+     "kind": "Text",
+     "when": "Week 43 · day 296",
+     "text": "Hi [First name], want to see a 30-second walk-through of a home we just finished? [video link]"
+    },
+    {
+     "id": "months-3-12.e29",
+     "kind": "Email",
+     "when": "Week 44 · day 303",
+     "subject": "Your neighborhood, by the numbers",
+     "text": "Hi [First name],\n\nHere's a quick update on homes in [area]:\n\n[area market update]\n\nIf you'd like to know what this means for your home, reply \"range\" and I'll send you a free price range.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.l11",
+     "kind": "Letter",
+     "when": "Day 307 · Ann mails it",
+     "to": "Letter · holiday card",
+     "text": "Hi [First name],\n\nWishing you and your family a wonderful season. Thank you for letting me stay in touch this year.\n\nAnn"
+    },
+    {
+     "id": "months-3-12.t31",
+     "kind": "Text",
+     "when": "Week 45 · day 310",
+     "text": "Hi [First name], still the right number for you? Ann, MKM Luxury"
+    },
+    {
+     "id": "months-3-12.e30",
+     "kind": "Email",
+     "when": "Week 46 · day 317",
+     "subject": "Thinking about your next home?",
+     "text": "Hi [First name],\n\nFor many sellers, the hardest part isn't selling. It's lining up the next place.\n\nBecause you choose your closing date with MKM, you can time your sale around your move, not the other way around.\n\nIf that would make things easier, let's talk through your plans.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.t32",
+     "kind": "Text",
+     "when": "Week 47 · day 324",
+     "text": "[First name], if you sold this year, where would you go next? Sometimes that answer settles the timing."
+    },
+    {
+     "id": "months-3-12.e31",
+     "kind": "Email",
+     "when": "Week 48 · day 331",
+     "subject": "Why [Seller name] didn't list",
+     "text": "Hi [First name],\n\n[Seller name] had their home in [area] ready to list. Then they added up the repairs, the showings and the months of waiting.\n\nThey called us instead. We made an offer after one visit, and they closed [timeline].\n\nIf you're weighing the same choice, I'm happy to help you compare.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    },
+    {
+     "id": "months-3-12.l12",
+     "kind": "Letter",
+     "when": "Day 337 · Ann mails it",
+     "to": "Letter · one-year note",
+     "text": "Hi [First name],\n\nIt's been about a year since you reached out about your home. Should I keep your file open, or check back another time? Either way, call or text me at [Ann's phone].\n\nAnn"
+    },
+    {
+     "id": "months-3-12.t33",
+     "kind": "Text",
+     "when": "Week 49 · day 338",
+     "text": "Hi [First name], homes in [area] are still in demand. Want a fresh price range for yours?"
+    },
+    {
+     "id": "months-3-12.e32",
+     "kind": "Email",
+     "when": "Week 50 · day 345",
+     "subject": "Is selling still on your mind?",
+     "text": "Hi [First name],\n\nJust checking in one more time. Is selling your home still on your mind?\n\nReply with one word:\n\nYes: I'll give you a call.\nLater: I'll check back in a few months.\nNo: I'll stop reaching out.\n\nThanks,\nAnn"
+    },
+    {
+     "id": "months-3-12.t34",
+     "kind": "Text",
+     "when": "Week 51 · day 352",
+     "text": "Hi [First name], it's been almost a year since you first reached out. Should I close your file, or check back in a few months?"
+    },
+    {
+     "id": "months-3-12.e33",
+     "kind": "Email",
+     "when": "Week 52 · day 359",
+     "subject": "One year later",
+     "text": "Hi [First name],\n\nIt's been about a year since you first reached out about your home. Thank you for letting me stay in touch.\n\nThis is my last scheduled email. If selling is still on your mind, reply anytime and I'll pick right back up. If not, I wish you all the best in your home.\n\nAnn\nAnnemarie Lee · MKM Luxury"
+    }
+   ]
+  }
+ ],
+ "questions": [
+  {
+   "id": "q1",
+   "q": "After the first two months, is one touch a week (alternating text and email) right?",
+   "why": "Weeks 5 to 8 get a text and an email each week. From month 3, it's one touch a week.",
+   "opts": [
+    "Yes, as shown",
+    "Less often",
+    "More often"
+   ]
+  },
+  {
+   "id": "q2",
+   "q": "Mailer callers didn't fill in a form. Who gets their OK to text them?",
+   "why": "We can only text leads who agreed to it.",
+   "opts": [
+    "Michelle asks on the call",
+    "Ann asks",
+    "Only email them"
+   ]
+  },
+  {
+   "id": "q3",
+   "q": "Should the follow-up stop once Ann talks to them?",
+   "why": "Right now it stops when they reply or move to Engaged or later.",
+   "opts": [
+    "Stop when they reply",
+    "Keep going until under contract"
+   ]
+  },
+  {
+   "id": "q4",
+   "q": "Who sends the monthly letters?",
+   "why": "GHL can't mail letters, so today each one is a task for Ann.",
+   "opts": [
+    "Ann by hand",
+    "Look at a handwritten-mail service"
+   ]
+  },
+  {
+   "id": "q5",
+   "q": "Who fills in the amber details (projects, photos, recent sales, seller stories)?",
+   "why": "We won't invent projects or numbers. Messages with blanks wait until we have real ones.",
+   "opts": [
+    "Mario",
+    "Ann",
+    "Send me a list to fill in"
+   ]
+  },
+  {
+   "id": "q6",
+   "q": "PPC leads already get a text right away from the PPC Launch workflow. Should the day 1 text here be skipped for PPC leads?",
+   "why": "So nobody gets two texts in the first hour.",
+   "opts": [
+    "Skip it for PPC leads",
+    "Keep both"
+   ]
+  },
+  {
+   "id": "q7",
+   "q": "Anything you'd like to add, remove or say differently overall?",
+   "why": "Tone, offers, anything we missed.",
+   "opts": []
+  }
+ ]
+}
