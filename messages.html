@@ -77,6 +77,7 @@ section{display:flex;flex-direction:column;gap:10px}
 .when{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px;align-items:flex-start;font-variant-numeric:tabular-nums}
 .kind{font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
 .kind.alert{background:var(--team-soft);color:var(--team)}
+.kind.letter,.kind.video{background:var(--prog-soft);color:var(--prog)}   /* v1.19.1: a letter or video script the client's team sends by hand */
 .body{display:flex;flex-direction:column;gap:8px;min-width:0;overflow-wrap:anywhere}
 .subj{font-weight:600}
 .field{color:var(--accent);font-weight:600}
@@ -448,11 +449,14 @@ function applyAgency(C){
 }
 function renderBrand(C){
   BLANKS = new Set((C.blanks || []).map(esc));
+  // v1.19.1: "hideBrands": true in the messages file = no logos in the header (LeadPro, agency, client); the theme switch stays
   applyAgency(C);
+  const noLogos = C.hideBrands === true;
+  if (noLogos){ document.querySelectorAll("#brands > .brand").forEach(x => x.hidden = true); $("#brands").setAttribute("aria-label", "Page settings"); }
   const b = C.brand || {}, slot = $("#client-brand");
   // the client's own logo (a copy kept with the package, never hotlinked) takes the name's place; no logo = as before
   const logo = b.logo && /^data:image\/(png|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+\/=]+$/.test(b.logo.src || "") ? b.logo : null;
-  if (slot && (logo || b.logoMask || b.name)){
+  if (slot && !noLogos && (logo || b.logoMask || b.name)){
     slot.innerHTML = logo
       ? '<img class="client-img" src="' + logo.src + '" alt="' + esc(b.name || "") + '"' + (+logo.w && +logo.h ? ' width="' + Math.round(+logo.w) + '" height="' + Math.round(+logo.h) + '"' : '') + '>'
       : b.logoMask
